@@ -55,20 +55,21 @@ export function createCalendarGridStyles(ctx: CalendarViewStyleContext) {
       }
     `,
     taggedCell: css`
-      padding-top: 8px;
+      padding-top: 6px;
     `,
+    // 普通连休日只保留角标，不再铺满杏橘色块。
     restDay: css`
-      background: ${isDark ? 'rgba(156, 92, 70, 0.28)' : '#f8e3d4'};
-      border-color: ${isDark ? 'rgba(220, 145, 113, 0.22)' : '#efcbb1'};
-      color: ${isDark ? '#ffc0a8' : '#a9512c'};
+      background: transparent;
+      border-color: transparent;
+      color: var(--text-main);
 
       .${cx(lunar)} {
-        color: ${isDark ? '#f2b9a5' : '#9f5839'};
+        color: ${isDark ? '#a8a8a8' : '#68717d'};
       }
 
       &:hover {
-        background: ${isDark ? 'rgba(156, 92, 70, 0.36)' : '#f5d9c5'};
-        border-color: ${isDark ? 'rgba(220, 145, 113, 0.32)' : '#e9b993'};
+        background: ${isDark ? 'rgba(180,95,67,.10)' : '#fff7f2'};
+        border-color: transparent;
       }
     `,
     otherMonth: css`
@@ -76,6 +77,21 @@ export function createCalendarGridStyles(ctx: CalendarViewStyleContext) {
 
       .${cx(lunar)} {
         color: ${isDark ? '#62666d' : '#b8bdc5'};
+      }
+    `,
+    // 真正的节日本日才保留完整浅杏橘背景，形成“节日 > 放假 > 调休”的层级。
+    festivalRestDay: css`
+      background: ${isDark ? 'rgba(156, 92, 70, 0.24)' : '#fff0e6'};
+      border-color: ${isDark ? 'rgba(220, 145, 113, 0.24)' : '#f3ceb6'};
+      color: ${isDark ? '#ffc3ac' : '#ad532d'};
+
+      .${cx(lunar)} {
+        color: ${isDark ? '#f0b7a2' : '#9d6044'};
+      }
+
+      &:hover {
+        background: ${isDark ? 'rgba(156, 92, 70, 0.32)' : '#fce7da'};
+        border-color: ${isDark ? 'rgba(220, 145, 113, 0.34)' : '#edbea0'};
       }
     `,
     today: css`
@@ -114,8 +130,8 @@ export function createCalendarGridStyles(ctx: CalendarViewStyleContext) {
       top: 2px;
       right: 2px;
       font-size: 8px;
-      min-width: 14px;
-      height: 14px;
+      min-width: 13px;
+      height: 13px;
       padding: 0 2px;
       box-sizing: border-box;
       display: flex;
@@ -123,16 +139,16 @@ export function createCalendarGridStyles(ctx: CalendarViewStyleContext) {
       justify-content: center;
       font-weight: 750;
       z-index: 2;
-      border-radius: 4px;
+      border-radius: 5px;
       line-height: 1;
-      box-shadow: 0 1px 2px ${isDark ? 'rgba(0,0,0,.22)' : 'rgba(80,50,30,.08)'};
+      box-shadow: 0 1px 2px ${isDark ? 'rgba(0,0,0,.20)' : 'rgba(80,50,30,.06)'};
     `,
     tagWork: css`
       background: ${isDark ? '#34445f' : '#e4eef9'};
       color: ${isDark ? '#b8d5ff' : '#315f91'};
     `,
     tagRest: css`
-      background: ${isDark ? '#b45f43' : '#e8794f'};
+      background: ${isDark ? '#b45f43' : '#ef835e'};
       color: #ffffff;
     `,
   };

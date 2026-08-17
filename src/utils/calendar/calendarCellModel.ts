@@ -17,6 +17,8 @@ export type CalendarCellViewModel = {
   displayText: string;
   /** 是否为节气日（控制农历行样式 class） */
   hasJieQi: boolean;
+  /** 是否是法定休假中的“真正节日本日”，用于比普通连休日更强的视觉提示 */
+  isFestivalHoliday: boolean;
   /** Tooltip 全文，无节日/节气时为 undefined */
   tooltipTitle: string | undefined;
   /** 是否为当天 */
@@ -70,6 +72,9 @@ export function getCalendarCellViewModel(
       ? 'rest'
       : 'work'
     : null;
+  // 只有法定休假且当天本身存在主要节日名称时才做完整杏橘底色。
+  // 国庆/春节等连休的其它日期仅保留「休」角标，避免一大片同色方块压住月历。
+  const isFestivalHoliday = Boolean(isHoliday && allFestivals.length > 0);
 
   const cellFestivals = [...allFestivals];
   if (jieQi) cellFestivals.unshift(jieQi);
@@ -79,6 +84,7 @@ export function getCalendarCellViewModel(
     dateKey: date.format('YYYY-MM-DD'),
     displayText,
     hasJieQi: Boolean(jieQi),
+    isFestivalHoliday,
     tooltipTitle: cellFestivals.length > 0 ? cellFestivals.join(' · ') : undefined,
     isToday,
     isSelected,

@@ -47,6 +47,7 @@ function CalendarMonthGrid(): ReactElement {
                 [styles.taggedCell]: Boolean(cell.badgeText),
                 [styles.otherMonth]: cell.isOtherMonth,
                 [styles.restDay]: cell.badgeVariant === 'rest',
+                [styles.festivalRestDay]: cell.isFestivalHoliday,
                 [styles.today]: cell.isToday,
                 [styles.selected]: cell.isSelected && !cell.isToday,
               })}

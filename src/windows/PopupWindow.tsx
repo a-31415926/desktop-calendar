@@ -19,13 +19,11 @@ import {
   type PopupHideRequestDetail,
 } from '../utils/tauriUtils.ts';
 
-// Fluent Motion 的标准节奏：正常进入 250ms、快速退出 167ms。
-// V7 不再平移整个日历，而是固定底边，用 clip-path 从下往上展开/从上往下收回。
-const POPUP_ENTER_MS = 250;
+// V8 改回更接近 Win11 Flyout 的“整块直上直下”运动。
+// 不再使用 clip-path 展开，因此圆角不会在动画过程中产生卷曲/揭幕感。
+const POPUP_ENTER_MS = 220;
 const POPUP_EXIT_MS = 167;
-const CONTENT_ENTER_MS = 167;
-const CONTENT_EXIT_MS = 83;
-const CONTENT_ENTER_DELAY_MS = 42;
+const POPUP_OFFSET_PX = 18;
 
 const PopupWindow = (): ReactElement => {
   const readyCalled = useRef(false);
@@ -54,7 +52,7 @@ const PopupWindow = (): ReactElement => {
     pendingAfterHideRef.current = undefined;
     popupVisibleRef.current = true;
 
-    // 先让窗口进入可见帧，再把底边锚定的遮罩展开，保证每次 show 都能重播。
+    // 先让原生窗口进入可见帧，再把整块日历从任务栏方向直线拉回最终位置。
     enterFrameRef.current = requestAnimationFrame(() => {
       enterFrameRef.current = null;
       setPopupVisible(true);
@@ -97,7 +95,7 @@ const PopupWindow = (): ReactElement => {
     }
   }, []);
 
-  // 任务栏 Flyout 不应该出现浏览器滚动条。真实内容尺寸由 useTauriCalendarResize 负责把窗口扩到刚好容纳。
+  // 任务栏 Flyout 不应该出现浏览器滚动条。真实内容尺寸由 useTauriCalendarResize 负责。
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
@@ -170,7 +168,6 @@ const PopupWindow = (): ReactElement => {
       }
       unlistenResize?.();
       resizeObserver?.disconnect();
-      // 后端完成首次 show 后再兜底触发一次 enter，避免极端情况下事件监听尚未注册。
       void invoke('popup_ready').then(startEnter).catch(console.error);
     };
 
@@ -213,7 +210,6 @@ const PopupWindow = (): ReactElement => {
       });
     });
 
-    // 与原先「轮询结束必发」一致：极端情况下尺寸事件未触发时仍解锁后端挂起的展示。
     fallbackTimer = setTimeout(() => {
       fireReady();
     }, 450);
@@ -228,7 +224,6 @@ const PopupWindow = (): ReactElement => {
     };
   }, [startEnter]);
 
-  // 统一应用前端圆角遮罩。
   useWindowCornerMask();
 
   useEffect(() => {
@@ -239,30 +234,21 @@ const PopupWindow = (): ReactElement => {
   }, [windowEffect, windowTransparency]);
 
   const transitionStyle: CSSProperties = {
-    clipPath: popupVisible
-      ? `inset(0% 0 0 0 round ${WINDOW_RADIUS}px)`
-      : `inset(100% 0 0 0 round ${WINDOW_RADIUS}px)`,
-    transition: popupVisible
-      ? `clip-path ${POPUP_ENTER_MS}ms cubic-bezier(0, 0, 0, 1)`
-      : `clip-path ${POPUP_EXIT_MS}ms cubic-bezier(1, 0, 1, 1)`,
+    opacity: popupVisible ? 1 : 0.9,
+    transform: popupVisible
+      ? 'translate3d(0, 0, 0)'
+      : `translate3d(0, ${POPUP_OFFSET_PX}px, 0)`,
     transformOrigin: 'bottom right',
-    willChange: 'clip-path',
-    overflow: 'hidden',
-    borderRadius: `${WINDOW_RADIUS}px`,
+    transition: popupVisible
+      ? `transform ${POPUP_ENTER_MS}ms cubic-bezier(0.1, 0.9, 0.2, 1), opacity 120ms linear`
+      : `transform ${POPUP_EXIT_MS}ms cubic-bezier(0.7, 0, 1, 0.5), opacity 100ms linear`,
+    willChange: 'transform, opacity',
     pointerEvents: popupVisible ? 'auto' : 'none',
   };
 
   const calendarStyle = {
     '--calendar-radius': `${WINDOW_RADIUS}px`,
     '--calendar-shadow': 'none',
-    '--calendar-content-opacity': popupVisible ? '1' : '0',
-    '--calendar-content-fade-duration': popupVisible
-      ? `${CONTENT_ENTER_MS}ms`
-      : `${CONTENT_EXIT_MS}ms`,
-    '--calendar-content-fade-delay': popupVisible ? `${CONTENT_ENTER_DELAY_MS}ms` : '0ms',
-    '--calendar-content-fade-easing': popupVisible
-      ? 'cubic-bezier(0, 0, 0, 1)'
-      : 'cubic-bezier(1, 0, 1, 1)',
   } as CSSProperties;
 
   return (
