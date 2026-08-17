@@ -45,6 +45,7 @@ function CalendarMonthGrid(): ReactElement {
               type="button"
               className={classNames(styles.cell, {
                 [styles.otherMonth]: cell.isOtherMonth,
+                [styles.restDay]: cell.badgeVariant === 'rest',
                 [styles.today]: cell.isToday,
                 [styles.selected]: cell.isSelected && !cell.isToday,
               })}
