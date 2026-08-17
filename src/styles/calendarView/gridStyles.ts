@@ -57,19 +57,19 @@ export function createCalendarGridStyles(ctx: CalendarViewStyleContext) {
     taggedCell: css`
       padding-top: 6px;
     `,
-    // 普通连休日只保留角标，不再铺满杏橘色块。
+    // V9 恢复长假连续高亮，但普通休假仅铺一层很淡的奶油杏，避免形成厚重橙色砖块。
     restDay: css`
-      background: transparent;
-      border-color: transparent;
+      background: ${isDark ? 'rgba(141, 91, 69, 0.18)' : '#fff5ee'};
+      border-color: ${isDark ? 'rgba(205, 150, 126, 0.15)' : '#f3ddd0'};
       color: var(--text-main);
 
       .${cx(lunar)} {
-        color: ${isDark ? '#a8a8a8' : '#68717d'};
+        color: ${isDark ? '#c8aaa0' : '#876d61'};
       }
 
       &:hover {
-        background: ${isDark ? 'rgba(180,95,67,.10)' : '#fff7f2'};
-        border-color: transparent;
+        background: ${isDark ? 'rgba(141, 91, 69, 0.26)' : '#ffefe5'};
+        border-color: ${isDark ? 'rgba(205, 150, 126, 0.24)' : '#edcdbd'};
       }
     `,
     otherMonth: css`
@@ -79,19 +79,20 @@ export function createCalendarGridStyles(ctx: CalendarViewStyleContext) {
         color: ${isDark ? '#62666d' : '#b8bdc5'};
       }
     `,
-    // 真正的节日本日才保留完整浅杏橘背景，形成“节日 > 放假 > 调休”的层级。
+    // 真正节日本日在连续休假底色上再提高一级，让“节日”和“只是放假”仍有层级。
     festivalRestDay: css`
-      background: ${isDark ? 'rgba(156, 92, 70, 0.24)' : '#fff0e6'};
-      border-color: ${isDark ? 'rgba(220, 145, 113, 0.24)' : '#f3ceb6'};
-      color: ${isDark ? '#ffc3ac' : '#ad532d'};
+      background: ${isDark ? 'rgba(156, 92, 70, 0.28)' : '#ffebdd'};
+      border-color: ${isDark ? 'rgba(220, 145, 113, 0.28)' : '#f1c8ae'};
+      color: ${isDark ? '#ffd0bc' : '#7d3f25'};
 
       .${cx(lunar)} {
-        color: ${isDark ? '#f0b7a2' : '#9d6044'};
+        color: ${isDark ? '#f3bca7' : '#b95532'};
+        font-weight: 650;
       }
 
       &:hover {
-        background: ${isDark ? 'rgba(156, 92, 70, 0.32)' : '#fce7da'};
-        border-color: ${isDark ? 'rgba(220, 145, 113, 0.34)' : '#edbea0'};
+        background: ${isDark ? 'rgba(156, 92, 70, 0.36)' : '#ffe3d2'};
+        border-color: ${isDark ? 'rgba(220, 145, 113, 0.38)' : '#eab996'};
       }
     `,
     today: css`
@@ -148,7 +149,7 @@ export function createCalendarGridStyles(ctx: CalendarViewStyleContext) {
       color: ${isDark ? '#b8d5ff' : '#315f91'};
     `,
     tagRest: css`
-      background: ${isDark ? '#b45f43' : '#ef835e'};
+      background: ${isDark ? '#b45f43' : '#e97855'};
       color: #ffffff;
     `,
   };

@@ -19,74 +19,140 @@ import {
   type PopupHideRequestDetail,
 } from '../utils/tauriUtils.ts';
 
-// V8 改回更接近 Win11 Flyout 的“整块直上直下”运动。
-// 不再使用 clip-path 展开，因此圆角不会在动画过程中产生卷曲/揭幕感。
-const POPUP_ENTER_MS = 220;
+// V9 使用 Web Animations API 强制关键帧播放，避免 Tauri show() 与 React/CSS 首帧合并后动画被“吃掉”。
+// 整个日历保持完整形状，只做短距离、纯垂直位移与非常轻的透明度变化。
+const POPUP_ENTER_MS = 240;
 const POPUP_EXIT_MS = 167;
-const POPUP_OFFSET_PX = 18;
+const POPUP_OFFSET_PX = 12;
+const POPUP_ENTER_OPACITY = 0.94;
+const POPUP_EXIT_OPACITY = 0.96;
 
 const PopupWindow = (): ReactElement => {
   const readyCalled = useRef(false);
   const { data } = useConfigSync();
   const { isWindowsEffect: windowTransparency, macosEffect: windowEffect } = data;
-  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupInteractive, setPopupInteractive] = useState(false);
   const popupVisibleRef = useRef(false);
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const animationRef = useRef<Animation | null>(null);
   const enterFrameRef = useRef<number | null>(null);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingAfterHideRef = useRef<PopupHideRequestDetail['after']>(undefined);
 
-  const clearPendingTransition = useCallback((): void => {
+  const clearPendingAnimation = useCallback((): void => {
     if (enterFrameRef.current !== null) {
       cancelAnimationFrame(enterFrameRef.current);
       enterFrameRef.current = null;
     }
-    if (hideTimerRef.current !== null) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
+    animationRef.current?.cancel();
+    animationRef.current = null;
   }, []);
 
   const startEnter = useCallback((): void => {
-    if (popupVisibleRef.current) return;
-    clearPendingTransition();
+    if (popupVisibleRef.current && animationRef.current === null) return;
+
+    clearPendingAnimation();
     pendingAfterHideRef.current = undefined;
     popupVisibleRef.current = true;
+    setPopupInteractive(true);
 
-    // 先让原生窗口进入可见帧，再把整块日历从任务栏方向直线拉回最终位置。
+    const surface = surfaceRef.current;
+    if (!surface) return;
+
+    const animation = surface.animate(
+      [
+        {
+          transform: `translate3d(0, ${POPUP_OFFSET_PX}px, 0)`,
+          opacity: POPUP_ENTER_OPACITY,
+        },
+        { transform: 'translate3d(0, 0, 0)', opacity: 1 },
+      ],
+      {
+        duration: POPUP_ENTER_MS,
+        easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)',
+        fill: 'both',
+      },
+    );
+
+    // 先把首关键帧钉住两个绘制帧，确保原生窗口 show 后 WebView 真正显示到“起点”，再开始直线上移。
+    animation.pause();
+    animation.currentTime = 0;
+    animationRef.current = animation;
+
     enterFrameRef.current = requestAnimationFrame(() => {
-      enterFrameRef.current = null;
-      setPopupVisible(true);
+      enterFrameRef.current = requestAnimationFrame(() => {
+        enterFrameRef.current = null;
+        if (popupVisibleRef.current && animationRef.current === animation) {
+          animation.play();
+        }
+      });
     });
-  }, [clearPendingTransition]);
+
+    void animation.finished
+      .then(() => {
+        if (animationRef.current === animation) {
+          animationRef.current = null;
+          animation.cancel();
+        }
+      })
+      .catch(() => {});
+  }, [clearPendingAnimation]);
 
   const startExit = useCallback(
     (after?: PopupHideRequestDetail['after']): void => {
       pendingAfterHideRef.current = after ?? pendingAfterHideRef.current;
-      if (!popupVisibleRef.current && hideTimerRef.current !== null) return;
+      if (!popupVisibleRef.current && animationRef.current !== null) return;
 
-      clearPendingTransition();
+      clearPendingAnimation();
       popupVisibleRef.current = false;
-      setPopupVisible(false);
+      setPopupInteractive(false);
 
-      hideTimerRef.current = setTimeout(() => {
-        hideTimerRef.current = null;
-        const afterHide = pendingAfterHideRef.current;
-        pendingAfterHideRef.current = undefined;
-        const appWindow = getCurrentWindow();
+      const surface = surfaceRef.current;
+      const appWindow = getCurrentWindow();
+      if (!surface) {
+        void appWindow.hide();
+        return;
+      }
 
-        void (async () => {
+      const computed = window.getComputedStyle(surface);
+      const currentTransform = computed.transform === 'none' ? 'translate3d(0, 0, 0)' : computed.transform;
+      const currentOpacity = Number.parseFloat(computed.opacity) || 1;
+      const animation = surface.animate(
+        [
+          { transform: currentTransform, opacity: currentOpacity },
+          {
+            transform: `translate3d(0, ${POPUP_OFFSET_PX}px, 0)`,
+            opacity: POPUP_EXIT_OPACITY,
+          },
+        ],
+        {
+          duration: POPUP_EXIT_MS,
+          easing: 'cubic-bezier(0.7, 0, 1, 0.5)',
+          fill: 'both',
+        },
+      );
+      animationRef.current = animation;
+
+      void animation.finished
+        .then(async () => {
+          if (popupVisibleRef.current || animationRef.current !== animation) return;
+
+          const afterHide = pendingAfterHideRef.current;
+          pendingAfterHideRef.current = undefined;
+          animationRef.current = null;
           try {
             await appWindow.hide();
+            animation.cancel();
             if (afterHide === 'open-main') {
               await invoke('open_main_window');
             }
           } catch (error) {
-            console.error('popup exit transition failed', error);
+            animation.cancel();
+            console.error('popup exit animation failed', error);
           }
-        })();
-      }, POPUP_EXIT_MS);
+        })
+        .catch(() => {});
     },
-    [clearPendingTransition],
+    [clearPendingAnimation],
   );
 
   useEffect(() => {
@@ -137,7 +203,7 @@ const PopupWindow = (): ReactElement => {
         if (cancelled) removeHide();
         else unlistenHide = removeHide;
       } catch (error) {
-        console.error('popup transition listener failed', error);
+        console.error('popup animation listener failed', error);
       }
     })();
 
@@ -146,9 +212,9 @@ const PopupWindow = (): ReactElement => {
       window.removeEventListener(popupHideRequestEvent, handleBrowserHideRequest);
       unlistenShow?.();
       unlistenHide?.();
-      clearPendingTransition();
+      clearPendingAnimation();
     };
-  }, [clearPendingTransition, startEnter, startExit]);
+  }, [clearPendingAnimation, startEnter, startExit]);
 
   useEffect(() => {
     if (readyCalled.current) return;
@@ -233,17 +299,11 @@ const PopupWindow = (): ReactElement => {
     }).catch(console.error);
   }, [windowEffect, windowTransparency]);
 
-  const transitionStyle: CSSProperties = {
-    opacity: popupVisible ? 1 : 0.9,
-    transform: popupVisible
-      ? 'translate3d(0, 0, 0)'
-      : `translate3d(0, ${POPUP_OFFSET_PX}px, 0)`,
-    transformOrigin: 'bottom right',
-    transition: popupVisible
-      ? `transform ${POPUP_ENTER_MS}ms cubic-bezier(0.1, 0.9, 0.2, 1), opacity 120ms linear`
-      : `transform ${POPUP_EXIT_MS}ms cubic-bezier(0.7, 0, 1, 0.5), opacity 100ms linear`,
+  const surfaceStyle: CSSProperties = {
+    transform: 'translate3d(0, 0, 0)',
+    opacity: 1,
     willChange: 'transform, opacity',
-    pointerEvents: popupVisible ? 'auto' : 'none',
+    pointerEvents: popupInteractive ? 'auto' : 'none',
   };
 
   const calendarStyle = {
@@ -252,7 +312,7 @@ const PopupWindow = (): ReactElement => {
   } as CSSProperties;
 
   return (
-    <div style={transitionStyle}>
+    <div ref={surfaceRef} style={surfaceStyle}>
       <CalendarView
         transparent={isWindows ? windowTransparency : true}
         backgroundOpacity={windowTransparency ? 72 : 100}
