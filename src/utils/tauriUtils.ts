@@ -34,16 +34,26 @@ function setMobileAppView(view: MobileAppView): void {
   window.dispatchEvent(new Event(mobileNavigationEvent));
 }
 
-/** 请求任务栏弹窗先执行退场动画，再由 PopupWindow 完成真正 hide。 */
-function requestPopupHide(after?: PopupHideRequestDetail['after']): void {
-  window.dispatchEvent(
-    new CustomEvent<PopupHideRequestDetail>(popupHideRequestEvent, {
-      detail: after ? { after } : {},
-    }),
-  );
+/**
+ * 请求任务栏弹窗关闭。
+ * 先通知 Rust 后端进入“正在关闭”状态并撤掉原生毛玻璃底板，
+ * 再广播浏览器事件兜底触发前端退场动画，避免关闭窗口期间吞掉下一次点击。
+ */
+async function requestPopupHide(after?: PopupHideRequestDetail['after']): Promise<void> {
+  try {
+    await invoke('hide_calendar');
+  } catch (error) {
+    console.error('request popup hide from backend failed', error);
+  } finally {
+    window.dispatchEvent(
+      new CustomEvent<PopupHideRequestDetail>(popupHideRequestEvent, {
+        detail: after ? { after } : {},
+      }),
+    );
+  }
 }
 
-/** 切回移动端日历主页面。 */
+/** 移动端应用当前支持的两种主视图。 */
 export function openMobileCalendarView(): void {
   setMobileAppView('calendar');
 }
@@ -67,7 +77,7 @@ export function getCalendarWindowKindFromLocation(): string | null {
 export async function closeOrHideCalendarWindow(windowKind: string | null): Promise<void> {
   const currentWindow = getCurrentWindow();
   if (windowKind === 'popup') {
-    requestPopupHide();
+    await requestPopupHide();
     return;
   }
   if (windowKind === 'macos-popup') {
@@ -85,7 +95,7 @@ export async function openMainApplicationWindow(): Promise<void> {
     return;
   }
   if (getCalendarWindowKindFromLocation() === 'popup') {
-    requestPopupHide('open-main');
+    await requestPopupHide('open-main');
     return;
   }
   await invoke('open_main_window');

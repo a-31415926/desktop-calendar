@@ -19,11 +19,11 @@ import {
   type PopupHideRequestDetail,
 } from '../utils/tauriUtils.ts';
 
-// V10 回到 V7 已验证稳定的“底边锚定展开/收回”机制。
-// 微调点：clip-path 的运动裁切边改为纯水平直线，不再给裁切线本身加圆角，
-// 从而保留 V7 的稳定可感知动画，同时去掉顶部像卷起来一样的感觉。
+// V11 保留 V10 已验证最舒服的 V7 风格展开机制。
+// 仅修关闭阶段：整个弹窗表面同步淡出，避免内容收走后留下原生窗口空壳。
 const POPUP_ENTER_MS = 250;
 const POPUP_EXIT_MS = 167;
+const POPUP_SURFACE_EXIT_FADE_MS = 130;
 const CONTENT_ENTER_MS = 167;
 const CONTENT_EXIT_MS = 83;
 const CONTENT_ENTER_DELAY_MS = 42;
@@ -238,14 +238,16 @@ const PopupWindow = (): ReactElement => {
   }, [windowEffect, windowTransparency]);
 
   const transitionStyle: CSSProperties = {
-    // 关键微调：动画裁切线保持水平直线；圆角只由容器本身负责。
+    // V10 的水平直线裁切继续保留；V11 只在退出时让整个表面同步淡掉。
     clipPath: popupVisible ? 'inset(0% 0 0 0)' : 'inset(100% 0 0 0)',
+    opacity: popupVisible ? 1 : 0,
     transition: popupVisible
-      ? `clip-path ${POPUP_ENTER_MS}ms cubic-bezier(0, 0, 0, 1)`
-      : `clip-path ${POPUP_EXIT_MS}ms cubic-bezier(1, 0, 1, 1)`,
+      ? `clip-path ${POPUP_ENTER_MS}ms cubic-bezier(0, 0, 0, 1), opacity 0ms linear`
+      : `clip-path ${POPUP_EXIT_MS}ms cubic-bezier(1, 0, 1, 1), opacity ${POPUP_SURFACE_EXIT_FADE_MS}ms cubic-bezier(0.4, 0, 1, 1)`,
     transformOrigin: 'bottom right',
-    willChange: 'clip-path',
+    willChange: 'clip-path, opacity',
     overflow: 'hidden',
+    background: 'transparent',
     borderRadius: `${WINDOW_RADIUS}px`,
     pointerEvents: popupVisible ? 'auto' : 'none',
   };

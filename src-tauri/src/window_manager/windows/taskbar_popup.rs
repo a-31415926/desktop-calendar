@@ -19,19 +19,33 @@ use windows::Win32::{
 /// 表示“在系统时钟附近展示”的挂起坐标哨兵值。
 const PENDING_SHOW_NEAR_CLOCK: (i32, i32) = (99_999, 99_999);
 const STARTUP_FOCUS_GRACE_PERIOD: Duration = Duration::from_millis(1500);
+const FOCUS_LOSS_RECHECK_DELAY: Duration = Duration::from_millis(60);
+
+/// 原生窗口在前端退场动画结束前仍然处于 visible 状态。
+/// 单独记录逻辑关闭状态，避免这段时间里下一次任务栏点击再次被误判成“关闭”。
+static POPUP_HIDE_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+
 impl PopupManager for CalendarWindowManager {
     /// 请求前端执行退场动画；动画结束后由 WebView 自己 hide，保留实例以便快速再次显示。
     fn hide_popup(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.suppress_popup_auto_hide.store(false, Ordering::SeqCst);
         if let Some(popup_window) = &self.taskbar_popup_window {
-            let _ = popup_window.emit("calendar-popup-hide", ());
+            if Self::begin_popup_hide_transition(popup_window) {
+                let _ = popup_window.emit("calendar-popup-hide", ());
+            }
         }
         Ok(())
     }
 
-    /// 检查任务栏弹窗当前是否处于可见状态。
+    /// 检查任务栏弹窗当前是否处于逻辑可见状态。
+    /// 关闭动画一开始即视为“不可见”，允许用户立刻再次点击任务栏重新打开。
     fn is_popup_visible(&self) -> bool {
-        self.taskbar_popup_window.as_ref().map(|w| w.is_visible().unwrap_or(false)).unwrap_or(false)
+        !POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst)
+            && self
+                .taskbar_popup_window
+                .as_ref()
+                .map(|w| w.is_visible().unwrap_or(false))
+                .unwrap_or(false)
     }
 
     /// 在系统时钟附近显示日历窗口，首次创建时先缓存展示意图等待前端就绪。
@@ -145,6 +159,16 @@ impl CalendarWindowManager {
         }
     }
 
+    /// 进入逻辑关闭阶段，并立即撤掉原生毛玻璃底板。
+    /// 前端随后继续播放 V10 的收回动画，这样动画结束前不会留下整块浅色空壳。
+    fn begin_popup_hide_transition(popup_window: &WebviewWindow) -> bool {
+        if POPUP_HIDE_IN_PROGRESS.swap(true, Ordering::SeqCst) {
+            return false;
+        }
+        Self::clear_window_vibrancy(popup_window);
+        true
+    }
+
     fn present_popup_window(
         &self,
         popup_window: &WebviewWindow,
@@ -158,9 +182,14 @@ impl CalendarWindowManager {
         if let Some(last_input_tick) = Self::current_last_input_tick() {
             self.popup_last_show_input_tick.store(last_input_tick, Ordering::SeqCst);
         }
+
+        // 如果用户在关闭动画尚未结束时再次点击任务栏，立即取消“正在关闭”。
+        // 即使原生窗口物理上还 visible，也重新向前端发送 show 事件，让它反向展开。
+        let was_closing = POPUP_HIDE_IN_PROGRESS.swap(false, Ordering::SeqCst);
+        self.reapply_saved_popup_vibrancy(popup_window);
         let was_visible = popup_window.is_visible().unwrap_or(false);
         popup_window.show()?;
-        if !was_visible {
+        if !was_visible || was_closing {
             let _ = popup_window.emit("calendar-popup-show", ());
         }
         popup_window.set_focus()?;
@@ -217,6 +246,7 @@ impl CalendarWindowManager {
             }
             WindowEvent::Focused(false) => {
                 if !popup_window_handle.is_visible().unwrap_or(false)
+                    || POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst)
                     || Instant::now() < ignore_focus_loss_until
                     || !popup_has_gained_focus_clone.load(Ordering::SeqCst)
                     || is_pinned.load(Ordering::SeqCst)
@@ -224,36 +254,61 @@ impl CalendarWindowManager {
                     return;
                 }
 
-                let last_show_input_tick = popup_last_show_input_tick.load(Ordering::SeqCst);
-                let has_new_user_input = CalendarWindowManager::current_last_input_tick()
-                    .is_some_and(|current_tick| current_tick != last_show_input_tick);
+                // Windows 的前台窗口与最后输入时间在 Focused(false) 到达时偶尔还没更新完。
+                // 稍等 60ms 再复查，可避免“已经点到别处但日历仍挂着”的偶发竞态。
+                let popup_window_for_check = popup_window_handle.clone();
+                let popup_has_focus_for_check = popup_has_gained_focus_clone.clone();
+                let is_pinned_for_check = is_pinned.clone();
+                let suppress_auto_hide_for_check = suppress_popup_auto_hide.clone();
+                let last_show_tick_for_check = popup_last_show_input_tick.clone();
+                let app_handle_for_check = app_handle_for_event.clone();
 
-                let desktop_widget_hwnd = app_handle_for_event
-                    .get_webview_window("desktop_calendar")
-                    .and_then(|w| get_window_hwnd(&w))
-                    .map(|hwnd| hwnd.0 as isize);
+                std::thread::spawn(move || {
+                    std::thread::sleep(FOCUS_LOSS_RECHECK_DELAY);
 
-                let should_hide = has_new_user_input
-                    && popup_root_hwnd.is_some_and(|popup_hwnd| unsafe {
-                        let foreground_hwnd = GetForegroundWindow();
-                        if foreground_hwnd.0.is_null() {
-                            return false;
-                        }
-                        let foreground_root_hwnd = GetAncestor(foreground_hwnd, GA_ROOT);
-                        let foreground_isize = foreground_root_hwnd.0 as isize;
-                        if foreground_isize == popup_hwnd {
-                            return false;
-                        }
-                        if desktop_widget_hwnd.is_some_and(|dw| foreground_isize == dw) {
-                            return false;
-                        }
-                        true
-                    });
+                    if !popup_window_for_check.is_visible().unwrap_or(false)
+                        || POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst)
+                        || !popup_has_focus_for_check.load(Ordering::SeqCst)
+                        || is_pinned_for_check.load(Ordering::SeqCst)
+                    {
+                        return;
+                    }
 
-                if should_hide {
-                    let _ = suppress_popup_auto_hide.swap(false, Ordering::SeqCst);
-                    let _ = popup_window_handle.emit("calendar-popup-hide", ());
-                }
+                    let last_show_input_tick = last_show_tick_for_check.load(Ordering::SeqCst);
+                    let has_new_user_input = CalendarWindowManager::current_last_input_tick()
+                        .is_some_and(|current_tick| current_tick != last_show_input_tick);
+
+                    let desktop_widget_hwnd = app_handle_for_check
+                        .get_webview_window("desktop_calendar")
+                        .and_then(|w| get_window_hwnd(&w))
+                        .map(|hwnd| hwnd.0 as isize);
+
+                    let should_hide = has_new_user_input
+                        && popup_root_hwnd.is_some_and(|popup_hwnd| unsafe {
+                            let foreground_hwnd = GetForegroundWindow();
+                            if foreground_hwnd.0.is_null() {
+                                return false;
+                            }
+                            let foreground_root_hwnd = GetAncestor(foreground_hwnd, GA_ROOT);
+                            let foreground_isize = foreground_root_hwnd.0 as isize;
+                            if foreground_isize == popup_hwnd {
+                                return false;
+                            }
+                            if desktop_widget_hwnd.is_some_and(|dw| foreground_isize == dw) {
+                                return false;
+                            }
+                            true
+                        });
+
+                    if should_hide
+                        && CalendarWindowManager::begin_popup_hide_transition(
+                            &popup_window_for_check,
+                        )
+                    {
+                        suppress_auto_hide_for_check.store(false, Ordering::SeqCst);
+                        let _ = popup_window_for_check.emit("calendar-popup-hide", ());
+                    }
+                });
             }
             _ => {}
         });
@@ -263,6 +318,7 @@ impl CalendarWindowManager {
 
     /// 将已构建好的弹窗存入 manager 并应用毛玻璃效果（需持锁调用）。
     pub fn attach_popup_window(&mut self, popup_window: WebviewWindow) {
+        POPUP_HIDE_IN_PROGRESS.store(false, Ordering::SeqCst);
         self.reapply_saved_popup_vibrancy(&popup_window);
         self.taskbar_popup_window = Some(popup_window);
     }
@@ -274,6 +330,7 @@ impl CalendarWindowManager {
             && self.app_handle.get_webview_window("calendar").is_none()
         {
             self.taskbar_popup_window = None;
+            POPUP_HIDE_IN_PROGRESS.store(false, Ordering::SeqCst);
         }
 
         if self.taskbar_popup_window.is_none() {
@@ -290,6 +347,7 @@ impl CalendarWindowManager {
 
     /// 关闭并释放任务栏弹窗窗口实例。
     pub fn close_calendar_window(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        POPUP_HIDE_IN_PROGRESS.store(false, Ordering::SeqCst);
         if let Some(popup_window) = self.taskbar_popup_window.take() {
             popup_window.close()?;
         }
