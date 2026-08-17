@@ -10,17 +10,19 @@ export function computeCalendarTheme({
   const containerBackground = transparent
     ? isDark
       ? `rgba(32, 32, 32, ${safeOpacity})`
-      : `rgba(255, 255, 255, ${safeOpacity})`
+      : `rgba(247, 248, 250, ${Math.max(safeOpacity, 0.9)})`
     : isDark
       ? '#202020'
-      : '#ffffff';
-  const backdropFilter = transparent ? 'none' : 'none';
-  const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+      : '#f7f8fa';
+  const backdropFilter = transparent ? 'blur(18px) saturate(1.08)' : 'none';
+  const borderColor = isDark ? 'rgba(255,255,255,.12)' : '#dde2e7';
   const shadowValue = transparent
-    ? 'none'
+    ? isDark
+      ? '0 12px 34px rgba(0,0,0,.34)'
+      : '0 12px 34px rgba(25,35,45,.15)'
     : isDark
-      ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-      : '0 8px 32px rgba(0, 0, 0, 0.12)';
+      ? '0 10px 34px rgba(0,0,0,.4)'
+      : '0 10px 34px rgba(25,35,45,.14)';
   const overlayBackground = 'none';
   const textureBackground = 'none';
 
