@@ -30,7 +30,7 @@ const PopupWindow = (): ReactElement => {
   const popupVisibleRef = useRef(false);
   const enterFrameRef = useRef<number | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingAfterHideRef = useRef<PopupHideRequestDetail['after']>();
+  const pendingAfterHideRef = useRef<PopupHideRequestDetail['after']>(undefined);
 
   const clearPendingTransition = useCallback((): void => {
     if (enterFrameRef.current !== null) {
