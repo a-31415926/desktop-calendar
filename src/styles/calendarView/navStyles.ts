@@ -8,17 +8,17 @@ export function createCalendarNavStyles(ctx: CalendarViewStyleContext) {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-      padding: 0 4px;
+      margin-bottom: 9px;
+      padding: 0 3px;
     `,
     navTitle: css`
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 650;
       color: var(--text-main);
     `,
     navBtns: css`
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
       font-size: 11px;
       color: var(--text-sec);
@@ -26,8 +26,8 @@ export function createCalendarNavStyles(ctx: CalendarViewStyleContext) {
     navBtn: css`
       && {
         color: var(--text-main);
-        min-width: 30px;
-        height: 30px;
+        min-width: 28px;
+        height: 28px;
       }
 
       &&:not(:disabled):hover {
@@ -37,7 +37,7 @@ export function createCalendarNavStyles(ctx: CalendarViewStyleContext) {
     `,
     todayBtn: css`
       && {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
       }
     `,

@@ -6,11 +6,11 @@ export function createCalendarHeaderStyles(ctx: CalendarViewStyleContext) {
   return {
     header: css`
       text-align: left;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     `,
     headerContent: css`
       display: flex;
@@ -19,15 +19,15 @@ export function createCalendarHeaderStyles(ctx: CalendarViewStyleContext) {
     `,
     headerActions: css`
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
       flex-shrink: 0;
     `,
     headerBtn: css`
       background: ${isDark ? 'rgba(255,255,255,.055)' : '#f4f5f7'};
       border: 1px solid ${isDark ? 'rgba(255,255,255,.06)' : '#eceff2'};
-      width: 34px;
-      height: 34px;
+      width: 30px;
+      height: 30px;
       padding: 0;
       cursor: pointer;
       display: flex;
@@ -44,27 +44,27 @@ export function createCalendarHeaderStyles(ctx: CalendarViewStyleContext) {
       }
     `,
     title: css`
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 650;
-      line-height: 1.2;
-      margin-bottom: 5px;
+      line-height: 1.18;
+      margin-bottom: 4px;
       color: var(--text-main);
       letter-spacing: .1px;
     `,
     subtitle: css`
-      font-size: 15px;
-      line-height: 1.25;
+      font-size: 13px;
+      line-height: 1.2;
       color: var(--text-sec);
       opacity: .92;
     `,
     festivalList: css`
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-main);
       font-weight: 500;
       padding: 0 2px 1px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       min-width: 0;
       flex-wrap: nowrap;
       white-space: nowrap;
@@ -73,7 +73,7 @@ export function createCalendarHeaderStyles(ctx: CalendarViewStyleContext) {
     festivalSection: css`
       display: flex;
       align-items: center;
-      min-height: 20px;
+      min-height: 18px;
     `,
     festivalItem: css`
       cursor: pointer;
@@ -96,7 +96,7 @@ export function createCalendarHeaderStyles(ctx: CalendarViewStyleContext) {
       flex-shrink: 0;
     `,
     festivalEmpty: css`
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-sec);
       opacity: .9;
       padding: 0 2px;

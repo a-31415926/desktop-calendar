@@ -1,6 +1,7 @@
 import { ClockCircleOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import classNames from 'classnames';
+import dayjs from 'dayjs';
 import type { Lunar } from 'lunar-typescript';
 import React, { type ReactElement } from 'react';
 import { useCalendarViewContext } from '../../../hooks/calender/CalendarViewContext.tsx';
@@ -34,12 +35,24 @@ function CalendarFooter(): ReactElement | null {
   } = footerProps;
 
   const showStatusCard = hasFestivalSection || hasCountdownSection;
+  const selectedSolar = selectedLunar.getSolar();
+  const selectedDate = dayjs(
+    `${selectedSolar.getYear()}-${String(selectedSolar.getMonth()).padStart(2, '0')}-${String(selectedSolar.getDay()).padStart(2, '0')}`,
+  ).startOf('day');
+  const today = dayjs().startOf('day');
+  const relativeDays = selectedDate.diff(today, 'day');
+  const relativeLabel =
+    relativeDays === 0
+      ? '就是今天'
+      : relativeDays > 0
+        ? `${relativeDays} 天后`
+        : `${Math.abs(relativeDays)} 天前`;
 
   return (
     <div className={styles.footerInfo}>
       {showStatusCard && (
         <section className={styles.footerCard}>
-          <div className={styles.footerSectionTitle}>今日状态</div>
+          <div className={styles.footerSectionTitle}>日期信息</div>
           {hasFestivalSection && (
             <div className={styles.festivalSection}>
               {selectedFestivals.length > 0 ? (
@@ -66,7 +79,13 @@ function CalendarFooter(): ReactElement | null {
               )}
             </div>
           )}
-          {hasFestivalSection && hasCountdownSection && <div className={styles.footerDivider} />}
+          {hasFestivalSection && <div className={styles.footerDivider} />}
+          <div className={styles.countdown}>
+            <ClockCircleOutlined className={styles.countdownIcon} />
+            <span>
+              距今天 <strong>{relativeLabel}</strong>
+            </span>
+          </div>
           {hasCountdownSection && holidayCountdown && (
             <div className={styles.countdown}>
               <ClockCircleOutlined className={styles.countdownIcon} />
