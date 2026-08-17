@@ -19,8 +19,10 @@ import {
   type PopupHideRequestDetail,
 } from '../utils/tauriUtils.ts';
 
-const POPUP_ENTER_MS = 160;
-const POPUP_EXIT_MS = 120;
+// 接近 Windows 11 控制中心的节奏：出现稍慢、退出更利落；仅做上浮 + 淡入，不再缩放内容。
+const POPUP_ENTER_MS = 250;
+const POPUP_EXIT_MS = 180;
+const POPUP_ENTER_OFFSET_PX = 14;
 
 const PopupWindow = (): ReactElement => {
   const readyCalled = useRef(false);
@@ -216,12 +218,12 @@ const PopupWindow = (): ReactElement => {
   const transitionStyle: CSSProperties = {
     opacity: popupVisible ? 1 : 0,
     transform: popupVisible
-      ? 'translate3d(0, 0, 0) scale(1)'
-      : 'translate3d(0, 8px, 0) scale(0.985)',
+      ? 'translate3d(0, 0, 0)'
+      : `translate3d(0, ${POPUP_ENTER_OFFSET_PX}px, 0)`,
     transformOrigin: 'bottom right',
     transition: popupVisible
-      ? `opacity ${POPUP_ENTER_MS}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${POPUP_ENTER_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`
-      : `opacity ${POPUP_EXIT_MS}ms cubic-bezier(0.4, 0, 1, 1), transform ${POPUP_EXIT_MS}ms cubic-bezier(0.4, 0, 1, 1)`,
+      ? `opacity ${POPUP_ENTER_MS}ms cubic-bezier(0.2, 0, 0, 1), transform ${POPUP_ENTER_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`
+      : `opacity ${POPUP_EXIT_MS}ms cubic-bezier(0.4, 0, 1, 1), transform ${POPUP_EXIT_MS}ms cubic-bezier(0.4, 0, 0.6, 1)`,
     willChange: 'opacity, transform',
     pointerEvents: popupVisible ? 'auto' : 'none',
   };
