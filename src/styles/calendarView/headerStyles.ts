@@ -6,28 +6,33 @@ export function createCalendarHeaderStyles(ctx: CalendarViewStyleContext) {
   return {
     header: css`
       text-align: left;
+      height: 44px;
       margin-bottom: 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     `,
     headerContent: css`
       display: flex;
+      flex: 1 1 auto;
       flex-direction: column;
+      justify-content: center;
       min-width: 0;
+      height: 44px;
+      overflow: hidden;
     `,
     headerActions: css`
       display: flex;
-      gap: 6px;
+      gap: 4px;
       align-items: center;
       flex-shrink: 0;
     `,
     headerBtn: css`
       background: ${isDark ? 'rgba(255,255,255,.055)' : '#f4f5f7'};
       border: 1px solid ${isDark ? 'rgba(255,255,255,.06)' : '#eceff2'};
-      width: 30px;
-      height: 30px;
+      width: 26px;
+      height: 26px;
       padding: 0;
       cursor: pointer;
       display: flex;
@@ -44,18 +49,22 @@ export function createCalendarHeaderStyles(ctx: CalendarViewStyleContext) {
       }
     `,
     title: css`
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 650;
       line-height: 1.18;
       margin-bottom: 4px;
       color: var(--text-main);
-      letter-spacing: .1px;
+      letter-spacing: 0;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     `,
     subtitle: css`
       font-size: 13px;
       line-height: 1.2;
       color: var(--text-sec);
       opacity: .92;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     `,
     festivalList: css`
       font-size: 12px;
