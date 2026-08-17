@@ -7,7 +7,7 @@ use std::sync::{
     Arc,
 };
 use std::time::{Duration, Instant};
-use tauri::{Manager, WebviewWindow, WindowEvent};
+use tauri::{Emitter, Manager, WebviewWindow, WindowEvent};
 use windows::Win32::{
     Foundation::RECT,
     UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO},
@@ -20,11 +20,11 @@ use windows::Win32::{
 const PENDING_SHOW_NEAR_CLOCK: (i32, i32) = (99_999, 99_999);
 const STARTUP_FOCUS_GRACE_PERIOD: Duration = Duration::from_millis(1500);
 impl PopupManager for CalendarWindowManager {
-    /// 隐藏任务栏弹窗但保留窗口实例以便快速再次显示。
+    /// 请求前端执行退场动画；动画结束后由 WebView 自己 hide，保留实例以便快速再次显示。
     fn hide_popup(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.suppress_popup_auto_hide.store(false, Ordering::SeqCst);
         if let Some(popup_window) = &self.taskbar_popup_window {
-            popup_window.hide()?;
+            let _ = popup_window.emit("calendar-popup-hide", ());
         }
         Ok(())
     }
@@ -34,7 +34,7 @@ impl PopupManager for CalendarWindowManager {
         self.taskbar_popup_window.as_ref().map(|w| w.is_visible().unwrap_or(false)).unwrap_or(false)
     }
 
-    /// 在系统时钟附近显示任务栏弹窗，首次创建时先缓存展示意图等待前端就绪。
+    /// 在系统时钟附近显示日历窗口，首次创建时先缓存展示意图等待前端就绪。
     fn show_popup_near_clock(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // 检查后端是否已存活名为 "calendar" 的窗口
         let has_live_popup_window = self.app_handle.get_webview_window("calendar").is_some();
@@ -158,7 +158,11 @@ impl CalendarWindowManager {
         if let Some(last_input_tick) = Self::current_last_input_tick() {
             self.popup_last_show_input_tick.store(last_input_tick, Ordering::SeqCst);
         }
+        let was_visible = popup_window.is_visible().unwrap_or(false);
         popup_window.show()?;
+        if !was_visible {
+            let _ = popup_window.emit("calendar-popup-show", ());
+        }
         popup_window.set_focus()?;
         Ok(())
     }
@@ -248,7 +252,7 @@ impl CalendarWindowManager {
 
                 if should_hide {
                     let _ = suppress_popup_auto_hide.swap(false, Ordering::SeqCst);
-                    let _ = popup_window_handle.hide();
+                    let _ = popup_window_handle.emit("calendar-popup-hide", ());
                 }
             }
             _ => {}

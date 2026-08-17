@@ -4,6 +4,12 @@ import { isMobile } from './platform.ts';
 
 /** 移动端日历页与设置页之间切换时使用的前端事件名。 */
 const mobileNavigationEvent = 'li-calendar:navigation';
+/** Windows 任务栏弹窗请求执行退场动画的前端事件名。 */
+export const popupHideRequestEvent = 'li-calendar:popup-hide-request';
+
+export interface PopupHideRequestDetail {
+  after?: 'open-main';
+}
 
 /** 移动端应用当前支持的两种主视图。 */
 export type MobileAppView = 'calendar' | 'settings';
@@ -26,6 +32,15 @@ function setMobileAppView(view: MobileAppView): void {
   }
   window.history.pushState({}, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
   window.dispatchEvent(new Event(mobileNavigationEvent));
+}
+
+/** 请求任务栏弹窗先执行退场动画，再由 PopupWindow 完成真正 hide。 */
+function requestPopupHide(after?: PopupHideRequestDetail['after']): void {
+  window.dispatchEvent(
+    new CustomEvent<PopupHideRequestDetail>(popupHideRequestEvent, {
+      detail: after ? { after } : {},
+    }),
+  );
 }
 
 /** 切回移动端日历主页面。 */
@@ -51,7 +66,11 @@ export function getCalendarWindowKindFromLocation(): string | null {
  */
 export async function closeOrHideCalendarWindow(windowKind: string | null): Promise<void> {
   const currentWindow = getCurrentWindow();
-  if (windowKind === 'popup' || windowKind === 'macos-popup') {
+  if (windowKind === 'popup') {
+    requestPopupHide();
+    return;
+  }
+  if (windowKind === 'macos-popup') {
     await currentWindow.hide();
     return;
   }
@@ -63,6 +82,10 @@ export async function openMainApplicationWindow(): Promise<void> {
   /** 移动端不弹新窗口，而是在当前页面内切到设置视图。 */
   if (isMobile) {
     setMobileAppView('settings');
+    return;
+  }
+  if (getCalendarWindowKindFromLocation() === 'popup') {
+    requestPopupHide('open-main');
     return;
   }
   await invoke('open_main_window');
