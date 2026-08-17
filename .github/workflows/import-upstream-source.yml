@@ -1,0 +1,41 @@
+name: Import li-calendar source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-upstream-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+
+      - name: Download upstream source
+        run: |
+          git clone --depth 1 https://github.com/CrankZ/li-calendar.git /tmp/li-calendar
+
+      - name: Copy source into this repository
+        run: |
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            /tmp/li-calendar/ ./
+
+      - name: Commit imported source
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No source changes to import.'
+          else
+            git commit -m 'Import li-calendar upstream source'
+            git push
+          fi
