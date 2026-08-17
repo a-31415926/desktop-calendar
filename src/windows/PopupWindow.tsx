@@ -19,10 +19,13 @@ import {
   type PopupHideRequestDetail,
 } from '../utils/tauriUtils.ts';
 
-// 接近 Windows 11 控制中心的节奏：出现稍慢、退出更利落；仅做上浮 + 淡入，不再缩放内容。
+// Fluent Motion 的标准节奏：正常进入 250ms、快速退出 167ms。
+// V7 不再平移整个日历，而是固定底边，用 clip-path 从下往上展开/从上往下收回。
 const POPUP_ENTER_MS = 250;
-const POPUP_EXIT_MS = 180;
-const POPUP_ENTER_OFFSET_PX = 14;
+const POPUP_EXIT_MS = 167;
+const CONTENT_ENTER_MS = 167;
+const CONTENT_EXIT_MS = 83;
+const CONTENT_ENTER_DELAY_MS = 42;
 
 const PopupWindow = (): ReactElement => {
   const readyCalled = useRef(false);
@@ -51,7 +54,7 @@ const PopupWindow = (): ReactElement => {
     pendingAfterHideRef.current = undefined;
     popupVisibleRef.current = true;
 
-    // 等窗口真正进入可见帧后再切到最终状态，确保每次 show 都有完整过渡。
+    // 先让窗口进入可见帧，再把底边锚定的遮罩展开，保证每次 show 都能重播。
     enterFrameRef.current = requestAnimationFrame(() => {
       enterFrameRef.current = null;
       setPopupVisible(true);
@@ -92,6 +95,26 @@ const PopupWindow = (): ReactElement => {
     if (isWindows) {
       void getCurrentWindow().setShadow(false);
     }
+  }, []);
+
+  // 任务栏 Flyout 不应该出现浏览器滚动条。真实内容尺寸由 useTauriCalendarResize 负责把窗口扩到刚好容纳。
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById('root');
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousRootOverflow = root?.style.overflow ?? '';
+
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    if (root) root.style.overflow = 'hidden';
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
+      if (root) root.style.overflow = previousRootOverflow;
+    };
   }, []);
 
   useEffect(() => {
@@ -190,7 +213,7 @@ const PopupWindow = (): ReactElement => {
       });
     });
 
-    // 与原先「轮询结束必发」一致：极端情况下尺寸事件未触发时仍解锁后端挂起的展示
+    // 与原先「轮询结束必发」一致：极端情况下尺寸事件未触发时仍解锁后端挂起的展示。
     fallbackTimer = setTimeout(() => {
       fireReady();
     }, 450);
@@ -205,7 +228,7 @@ const PopupWindow = (): ReactElement => {
     };
   }, [startEnter]);
 
-  // 统一应用前端圆角遮罩
+  // 统一应用前端圆角遮罩。
   useWindowCornerMask();
 
   useEffect(() => {
@@ -216,29 +239,38 @@ const PopupWindow = (): ReactElement => {
   }, [windowEffect, windowTransparency]);
 
   const transitionStyle: CSSProperties = {
-    opacity: popupVisible ? 1 : 0,
-    transform: popupVisible
-      ? 'translate3d(0, 0, 0)'
-      : `translate3d(0, ${POPUP_ENTER_OFFSET_PX}px, 0)`,
-    transformOrigin: 'bottom right',
+    clipPath: popupVisible
+      ? `inset(0% 0 0 0 round ${WINDOW_RADIUS}px)`
+      : `inset(100% 0 0 0 round ${WINDOW_RADIUS}px)`,
     transition: popupVisible
-      ? `opacity ${POPUP_ENTER_MS}ms cubic-bezier(0.2, 0, 0, 1), transform ${POPUP_ENTER_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`
-      : `opacity ${POPUP_EXIT_MS}ms cubic-bezier(0.4, 0, 1, 1), transform ${POPUP_EXIT_MS}ms cubic-bezier(0.4, 0, 0.6, 1)`,
-    willChange: 'opacity, transform',
+      ? `clip-path ${POPUP_ENTER_MS}ms cubic-bezier(0, 0, 0, 1)`
+      : `clip-path ${POPUP_EXIT_MS}ms cubic-bezier(1, 0, 1, 1)`,
+    transformOrigin: 'bottom right',
+    willChange: 'clip-path',
+    overflow: 'hidden',
+    borderRadius: `${WINDOW_RADIUS}px`,
     pointerEvents: popupVisible ? 'auto' : 'none',
   };
+
+  const calendarStyle = {
+    '--calendar-radius': `${WINDOW_RADIUS}px`,
+    '--calendar-shadow': 'none',
+    '--calendar-content-opacity': popupVisible ? '1' : '0',
+    '--calendar-content-fade-duration': popupVisible
+      ? `${CONTENT_ENTER_MS}ms`
+      : `${CONTENT_EXIT_MS}ms`,
+    '--calendar-content-fade-delay': popupVisible ? `${CONTENT_ENTER_DELAY_MS}ms` : '0ms',
+    '--calendar-content-fade-easing': popupVisible
+      ? 'cubic-bezier(0, 0, 0, 1)'
+      : 'cubic-bezier(1, 0, 1, 1)',
+  } as CSSProperties;
 
   return (
     <div style={transitionStyle}>
       <CalendarView
         transparent={isWindows ? windowTransparency : true}
         backgroundOpacity={windowTransparency ? 72 : 100}
-        style={
-          {
-            '--calendar-radius': `${WINDOW_RADIUS}px`,
-            '--calendar-shadow': 'none',
-          } as CSSProperties
-        }
+        style={calendarStyle}
       />
     </div>
   );

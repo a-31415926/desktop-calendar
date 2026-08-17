@@ -61,6 +61,11 @@ export function createCalendarShellStyles(ctx: CalendarViewStyleContext) {
       & > * {
         position: relative;
         z-index: 1;
+        opacity: var(--calendar-content-opacity, 1);
+        transition:
+          opacity var(--calendar-content-fade-duration, 0ms)
+            var(--calendar-content-fade-easing, ease)
+            var(--calendar-content-fade-delay, 0ms);
       }
     `,
   };
