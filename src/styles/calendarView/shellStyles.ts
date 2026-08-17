@@ -15,11 +15,11 @@ export function createCalendarShellStyles(ctx: CalendarViewStyleContext) {
   return {
     micaContainer: css`
       --mica-bg: ${containerBackground};
-      --card-bg: ${isDark ? 'rgba(45, 45, 45, 0.5)' : 'rgba(255, 255, 255, 0.5)'};
-      --accent: ${isDark ? '#60cdff' : '#0067c0'};
-      --text-main: ${isDark ? '#ffffff' : '#1c1c1c'};
-      --text-sec: ${isDark ? '#cccccc' : '#5d5d5d'};
-      width: 320px;
+      --card-bg: ${isDark ? 'rgba(45,45,45,.55)' : '#fcfcfd'};
+      --accent: ${isDark ? '#60cdff' : '#1677d2'};
+      --text-main: ${isDark ? '#ffffff' : '#1f2328'};
+      --text-sec: ${isDark ? '#cccccc' : '#66707c'};
+      width: 360px;
       background: var(--mica-bg);
       backdrop-filter: ${backdropFilter};
       -webkit-backdrop-filter: ${backdropFilter};
@@ -28,7 +28,7 @@ export function createCalendarShellStyles(ctx: CalendarViewStyleContext) {
       border-radius: var(--calendar-radius, 16px);
       clip-path: inset(0 round var(--calendar-radius, 16px));
       overflow: hidden;
-      padding: 8px;
+      padding: 14px;
       color: var(--text-main);
       margin: 0;
       touch-action: none;
