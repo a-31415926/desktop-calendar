@@ -6,8 +6,9 @@
  */
 export const trayClockTimeFormats = {
   HhMm: 'HH:mm',
-  TtH12: 'tt h:mm:ss',
   HhMmSs: 'HH:mm:ss',
+  TtH12NoSeconds: 'tt h:mm',
+  TtH12: 'tt h:mm:ss',
 } as const;
 
 export const trayClockDateFormats = {

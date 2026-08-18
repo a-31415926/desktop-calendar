@@ -6,9 +6,9 @@ import {
   SunOutlined,
 } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import type { Dayjs } from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
 import type { Lunar } from 'lunar-typescript';
-import type { ReactElement } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import { useCalendarViewContext } from '../../../hooks/calender/CalendarViewContext.tsx';
 import type { CalendarViewClassNames } from '../../../styles/useCalendarViewStyles.ts';
 import { weekdayNames } from '../../../utils/calendar/calendarFestivals.ts';
@@ -68,17 +68,33 @@ function CalendarHeader(): ReactElement {
     onClose,
   } = headerProps;
 
+  /** 只让顶栏自己的时钟每秒刷新，避免整个月历因为读秒而重复计算。 */
+  const [clockNow, setClockNow] = useState(() => dayjs());
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockNow(dayjs()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <div className={styles.header}>
       {/* 左侧为日期主标题与农历副标题，同时可选作为原生拖拽区域。 */}
       <div className={styles.headerContent} data-tauri-drag-region={dragRegion || undefined}>
         <div className={styles.title}>
-          {selectedDate.format('YYYY年M月D日')} {weekdayNames[selectedDate.day()]}
+          {selectedDate.format('M月D日')} {weekdayNames[selectedDate.day()]}
         </div>
         <div className={styles.subtitle}>
           {selectedLunar.getMonthInChinese()}月{selectedLunar.getDayInChinese()}{' '}
           {selectedLunar.getYearInGanZhi()}
           {selectedLunar.getYearShengXiao()}年
+          <span
+            style={{
+              marginLeft: 8,
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            · {clockNow.format('HH:mm:ss')}
+          </span>
         </div>
       </div>
       {/* 右侧操作区按按钮粒度控制，便于移动端与桌面端复用同一个头部组件。 */}

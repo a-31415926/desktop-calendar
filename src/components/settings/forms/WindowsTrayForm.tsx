@@ -111,6 +111,23 @@ const formatTrayClockPreview = (now: dayjs.Dayjs, windowsFormat: string): string
   return now.locale(LOCALE_ZH_CN_WIN_CLOCK).format(dayjsFmt);
 };
 
+/** 判断当前 Windows 时间格式里是否已经包含秒。 */
+const trayClockHasSeconds = (format: string): boolean => /:s{1,2}\b/.test(format);
+
+/**
+ * “显示秒数”开关直接改现有的时间格式，不另造第二套时钟状态。
+ * 这样持久化、开机恢复以及 Windows 注册表同步仍沿用原来的稳定链路。
+ */
+const toggleTrayClockSeconds = (format: string, enabled: boolean): TrayClockTimeFormat => {
+  if (enabled) {
+    if (trayClockHasSeconds(format)) {
+      return format as TrayClockTimeFormat;
+    }
+    return `${format}:ss` as TrayClockTimeFormat;
+  }
+  return format.replace(/:ss\b/g, '').replace(/:s\b/g, '') as TrayClockTimeFormat;
+};
+
 const WindowsTrayForm: React.FC = () => {
   const { data: config } = useConfigSync();
   const [form] = Form.useForm();
@@ -139,6 +156,25 @@ const WindowsTrayForm: React.FC = () => {
             void handleRestoreClock();
           }}
         />
+      </Form.Item>
+      <Form.Item label="显示秒数">
+        <Space size="middle">
+          <Switch
+            checked={trayClockHasSeconds(config.timeFormat)}
+            disabled={!config.customTrayClockEnabled}
+            onChange={(checked: boolean) => {
+              const nextTimeFormat = toggleTrayClockSeconds(config.timeFormat, checked);
+              form.setFieldValue('timeFormat', nextTimeFormat);
+              void (async () => {
+                await syncValuesConfig({ timeFormat: nextTimeFormat });
+                if (config.customTrayClockEnabled) {
+                  await handleApplyClock(nextTimeFormat, config.dateFormat);
+                }
+              })();
+            }}
+          />
+          <span style={{ color: '#6b7280' }}>任务栏时间显示到秒</span>
+        </Space>
       </Form.Item>
       <Form.Item name="timeFormat" label="时间预设">
         <Radio.Group
