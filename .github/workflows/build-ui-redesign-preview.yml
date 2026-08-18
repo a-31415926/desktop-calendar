@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   build-windows:
@@ -62,3 +63,14 @@ jobs:
           name: 桌面日历-UI改版预览
           path: src-tauri/target/release/bundle/nsis/桌面日历-UI改版预览-1.0.0-x64.exe
           if-no-files-found: error
+
+      - name: Publish preview build status
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $state = if ('${{ job.status }}' -eq 'success') { 'success' } else { 'failure' }
+          $target = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          $description = 'Windows preview run ${{ github.run_id }}'
+          gh api --method POST 'repos/${{ github.repository }}/statuses/${{ github.sha }}' -f state=$state -f context='preview-build' -f description=$description -f target_url=$target
