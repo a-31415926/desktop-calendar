@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { number, ageLabel, hourlyRows, futureRain, rainIsFresh, timestamp, weatherCode } from '../src/weather/model.ts';
+import { number, ageLabel, hourlyRows, futureRain, rainIsFresh, timestamp, weatherCode, weatherIntensity } from '../src/weather/model.ts';
 const now = Date.parse('2026-10-19T23:50:00+08:00');
 test('missing measurements never become zero', () => {
   assert.equal(number(null, '%'), '—'); assert.equal(number(undefined), '—'); assert.equal(number(NaN), '—'); assert.equal(number(0, '%'), '0%');
@@ -8,6 +8,8 @@ test('missing measurements never become zero', () => {
 test('Shanghai timestamps work independently of the computer timezone', () => {
   assert.equal(timestamp('2026-10-19T23:50'), now);
   assert.equal(timestamp('2026-10-19T15:50Z'), now);
+  assert.equal(timestamp('2026-10-20'), Date.parse('2026-10-20T00:00:00+08:00'));
+  assert.equal(Number.isFinite(timestamp('2026-10-20')), true);
 });
 test('hourly forecast spans midnight and excludes expired rows', () => {
   const f = { hourly: { time: ['2026-10-19T20:00', '2026-10-19T23:00', '2026-10-20T00:00'], temperature_2m: [20, 21, 22], precipitation_probability: [null, 0, 80], precipitation: [0, 0, 1], weather_code: [0, 3, 61] } };
@@ -24,4 +26,13 @@ test('old nowcasts cannot masquerade as live rain predictions', () => {
 });
 test('cache age and unknown weather remain explicit', () => {
   assert.equal(ageLabel(0, now), '尚未获取'); assert.equal(ageLabel(now / 1000 - 3600, now), '1 小时前获取'); assert.equal(weatherCode(999)[0], '暂无数据');
+});
+
+test('precipitation intensity separates light, moderate and heavy conditions', () => {
+  assert.equal(weatherIntensity(51), 'light');
+  assert.equal(weatherIntensity(63), 'moderate');
+  assert.equal(weatherIntensity(65), 'heavy');
+  assert.equal(weatherIntensity(71), 'light');
+  assert.equal(weatherIntensity(73), 'moderate');
+  assert.equal(weatherIntensity(75), 'heavy');
 });
