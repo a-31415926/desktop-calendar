@@ -64,6 +64,7 @@ export default function CalendarWeather() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Settings | null>(null);
   const [apiKey, setApiKey] = useState('');
+  const [detailView, setDetailView] = useState<'hours' | 'days'>('hours');
 
   const retrieve = useCallback(async (settings: Settings, force = false) => {
     const request = ++lastRequest.current;
@@ -166,6 +167,13 @@ export default function CalendarWeather() {
   const probabilities = nextTwoHours.map(h => h.probability)
     .filter((p): p is number => p != null && Number.isFinite(p));
   const maxChance = probabilities.length ? Math.max(...probabilities) : null;
+  const daily = (data?.forecast?.daily.time ?? []).slice(0, 5).map((day, index) => ({
+    time: day,
+    code: data?.forecast?.daily.weather_code[index] ?? 3,
+    high: data?.forecast?.daily.temperature_2m_max[index],
+    low: data?.forecast?.daily.temperature_2m_min[index],
+    probability: data?.forecast?.daily.precipitation_probability_max[index],
+  }));
   const stale = !!data && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
   const summary = nowcast
     ? data?.minutely?.summary ||
@@ -175,7 +183,7 @@ export default function CalendarWeather() {
       : '暂无短时降雨参考数据';
 
   return (
-    <section className={'calendar-weather cw-scene-' + weatherType} ref={root} data-weather-card data-weather-panel aria-label="公司与宿舍天气">
+    <section className={'calendar-weather cw-scene-' + weatherType + (detailView === 'days' ? ' cw-detail-days' : '')} ref={root} data-weather-card data-weather-panel aria-label="公司与宿舍天气">
       <div className="cw-main">
         <div className="cw-now">
           <WeatherGlyph code={current?.weather_code ?? 3} size={42} animated night={current?.is_day === 0}/>
@@ -198,16 +206,37 @@ export default function CalendarWeather() {
       <div className="cw-rain-banner" title={nowcast ? '和风天气分钟级降雨' : 'Open-Meteo 逐小时降雨概率参考，非分钟级临近预报'}>
         <span className="cw-umbrella">☂</span><span>{stale ? '上次预报 · ' : ''}{summary}</span>
       </div>
-      <div className="cw-hourly-label"><span>接下来几小时</span><span>降雨概率</span></div>
-      <div className="cw-hours" role="list" aria-label="逐小时天气与降雨概率">
-        {hours.length ? hours.map((h, index) => (
-          <div className="cw-hour" role="listitem" key={h.time}>
-            <span className="cw-time">{index === 0 ? '现在' : timeLabel(h.time)}</span>
-            <WeatherGlyph code={h.code} size={24} />
-            <strong>{number(h.temp, '°')}</strong>
-            <span className="cw-prob">{number(h.probability, '%')}</span>
+      <div className="cw-detail-nav">
+        <div className="cw-hourly-label"><span>{detailView === 'hours' ? '接下来几小时' : '未来五天'}</span><span>{detailView === 'hours' ? '降雨概率' : '最高 / 最低'}</span></div>
+        <button type="button" className="cw-detail-toggle" onClick={() => setDetailView(v => v === 'hours' ? 'days' : 'hours')} aria-label={detailView === 'hours' ? '查看未来五天天气' : '返回逐小时天气'} title={detailView === 'hours' ? '查看未来五天天气' : '返回逐小时天气'}>
+          {detailView === 'hours' ? '未来几天 ›' : '‹ 逐小时'}
+        </button>
+      </div>
+      <div className="cw-forecast-stage" key={detailView}>
+        {detailView === 'hours' ? (
+          <div className="cw-hours" role="list" aria-label="逐小时天气与降雨概率">
+            {hours.length ? hours.map((h, index) => (
+              <div className="cw-hour" role="listitem" key={h.time}>
+                <span className="cw-time">{index === 0 ? '现在' : timeLabel(h.time)}</span>
+                <WeatherGlyph code={h.code} size={25} />
+                <strong>{number(h.temp, '°')}</strong>
+                <span className="cw-prob">{number(h.probability, '%')}</span>
+              </div>
+            )) : <div className="cw-hour-empty">天气数据加载中{error ? ' · 请检查网络' : '…'}</div>}
           </div>
-        )) : <div className="cw-hour-empty">天气数据加载中{error ? ' · 请检查网络' : '…'}</div>}
+        ) : (
+          <div className="cw-days" role="list" aria-label="未来五天天气">
+            {daily.length ? daily.map((d, index) => (
+              <div className="cw-day" role="listitem" key={d.time}>
+                <span className="cw-time">{index === 0 ? '今天' : new Date(timestamp(d.time)).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', weekday: 'short' })}</span>
+                <WeatherGlyph code={d.code} size={25} />
+                <strong>{number(d.high, '°')}</strong>
+                <span className="cw-day-low">{number(d.low, '°')}</span>
+                <span className="cw-prob">{number(d.probability, '%')}</span>
+              </div>
+            )) : <div className="cw-hour-empty">未来几天天气暂不可用</div>}
+          </div>
+        )}
       </div>
       <div className="cw-bottom">
         <span>{nowcast ? '和风降雨 / ' : ''}Open-Meteo · {ageLabel(data?.forecastFetchedAt ?? 0, clock)}</span>
