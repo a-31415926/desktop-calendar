@@ -65,8 +65,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   return (
     <CalendarViewProvider value={model}>
       <div {...model.rootProps}>
-        <CalendarHeader />
-        <CalendarWeatherHero selectedDate={model.headerProps.selectedDate} />
+        <CalendarWeatherHero selectedDate={model.headerProps.selectedDate}>
+          <CalendarHeader />
+        </CalendarWeatherHero>
         <CalendarMonthNav />
         <CalendarMonthGrid />
         <CalendarWeather />
