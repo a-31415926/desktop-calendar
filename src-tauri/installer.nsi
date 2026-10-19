@@ -33,7 +33,7 @@ ${StrLoc}
 
 !define MANUFACTURER "{{manufacturer}}"
 !define PRODUCTNAME "{{product_name}}"
-!define SHORTCUTNAME "松鼠日历"
+!define SHORTCUTNAME "桌面日历天气预览"
 !define VERSION "{{version}}"
 !define VERSIONWITHBUILD "{{version_with_build}}"
 !define HOMEPAGE "{{homepage}}"
