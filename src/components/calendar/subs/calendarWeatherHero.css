@@ -27,7 +27,7 @@
 }
 .wh-atmosphere {position:absolute;inset:0;overflow:hidden;pointer-events:none;animation:wh-scene-in 520ms ease-out both;}
 .wh-sky-glow {position:absolute;inset:-30%;opacity:.72;transition:opacity 600ms ease;animation:wh-glow-breathe 8s ease-in-out infinite alternate;}
-.wh-content {position:relative;z-index:3;display:flex;flex-direction:column;justify-content:center;gap:2px;height:100%;box-sizing:border-box;padding:9px 13px;min-width:0;}
+.wh-content {position:relative;z-index:3;display:flex;flex-direction:column;justify-content:center;gap:2px;height:100%;box-sizing:border-box;padding:9px 13px;min-width:0;animation:wh-copy-in 300ms cubic-bezier(.2,.7,.2,1) both;}
 .wh-eyebrow {display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;font-size:10px;letter-spacing:.1px;color:var(--wh-muted);}
 .wh-eyebrow>span:first-child {font-weight:650;white-space:nowrap;}
 .wh-place {display:flex;align-items:center;gap:3px;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -46,6 +46,7 @@
 .wh-scene-fog.wh-day {background:linear-gradient(115deg,#d7e0e6,#e7ecef 55%,#e0e6e9);}
 .wh-scene-storm.wh-day {background:linear-gradient(115deg,#8fa9bf,#a8bdcd 55%,#c0ced8);}
 .wh-scene-sun.wh-night {--wh-ink:#f1f6ff;--wh-muted:#c0cede;background:linear-gradient(112deg,#172b4a,#263e62 55%,#334d70);border-color:rgba(158,190,225,.28);box-shadow:0 4px 16px rgba(8,21,43,.16);}
+.wh-scene-sun.wh-night .wh-sky-glow,.wh-scene-cloud-sun.wh-night .wh-sky-glow {background:radial-gradient(ellipse at 85% 18%,rgba(160,198,237,.26),transparent 48%),radial-gradient(ellipse at 75% 100%,rgba(255,255,255,.08),transparent 52%);}
 .wh-scene-cloud-sun.wh-night,.wh-scene-cloud.wh-night {--wh-ink:#f1f6ff;--wh-muted:#c0cede;background:linear-gradient(112deg,#1c304c,#2d435f 56%,#3b506a);border-color:rgba(158,190,225,.28);}
 .wh-scene-rain.wh-night {--wh-ink:#f0f5fc;--wh-muted:#bac9d9;background:linear-gradient(112deg,#172a40,#263c54 55%,#30485f);border-color:rgba(158,190,225,.22);}
 .wh-scene-snow.wh-night {--wh-ink:#f5f9ff;--wh-muted:#c5d5e6;background:linear-gradient(112deg,#263b58,#354f6b 55%,#48647d);border-color:rgba(178,207,233,.28);}
@@ -98,6 +99,7 @@
 
 /* Weather changes crossfade without moving the calendar or resizing the window. */
 @keyframes wh-scene-in {from{opacity:.25;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+@keyframes wh-copy-in {from{opacity:.45;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 @keyframes wh-glow-breathe {to{transform:translateX(-7px) scale(1.04);opacity:.52}}
 @keyframes wh-sun-breathe {to{transform:scale(1.045);box-shadow:0 0 0 9px rgba(255,213,130,.1),0 0 29px 10px rgba(255,198,92,.28)}}
 @keyframes wh-moon-glow {to{box-shadow:0 0 0 7px rgba(213,228,248,.08),0 0 25px rgba(202,222,247,.34)}}
