@@ -75,11 +75,11 @@ pub fn restore_v13_preferences_once(app_handle: &AppHandle) {
         }
     }
     // 从未配置过 V13 的机器也应该默认显示今日宜忌、日期卡和系统时钟入口。
-    current.entry("calendarFooterVisible".into()).or_insert(Value::Bool(true));
-    current.entry("footerFestivalVisible".into()).or_insert(Value::Bool(true));
-    current.entry("footerYiJiVisible".into()).or_insert(Value::Bool(true));
-    current.entry("footerCountdownVisible".into()).or_insert(Value::Bool(true));
-    current.entry("taskbarWidgetEnabled".into()).or_insert(Value::Bool(true));
+    current.entry("calendarFooterVisible").or_insert(Value::Bool(true));
+    current.entry("footerFestivalVisible").or_insert(Value::Bool(true));
+    current.entry("footerYiJiVisible").or_insert(Value::Bool(true));
+    current.entry("footerCountdownVisible").or_insert(Value::Bool(true));
+    current.entry("taskbarWidgetEnabled").or_insert(Value::Bool(true));
     // 上个天气预览默认关闭了两个选项；没有 V13 数据时纠正该已知回归。
     if old.is_none() {
         current.insert("footerYiJiVisible".into(), Value::Bool(true));
