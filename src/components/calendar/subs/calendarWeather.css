@@ -55,8 +55,8 @@
 .cw-hourly-label span:last-child {font-size:10px;font-weight:400;color:var(--cw-muted);white-space:nowrap;}
 .cw-detail-toggle {padding:2px 0 2px 5px!important;color:var(--cw-accent)!important;font-size:10px!important;white-space:nowrap;flex-shrink:0;}
 .cw-forecast-stage {height:67px;min-height:67px;overflow:hidden;animation:cw-view-in 180ms ease-out both;}
-.cw-hours,.cw-days {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:67px;align-items:stretch;gap:2px;}
-.cw-days {grid-template-columns:repeat(5,minmax(0,1fr));}
+.cw-hours {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));height:67px;align-items:stretch;gap:2px;}
+.cw-days {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:67px;align-items:stretch;gap:2px;}
 .cw-day {gap:1px;}
 .cw-day .cw-time {font-size:9px;}
 .cw-day strong {font-size:12px;}
