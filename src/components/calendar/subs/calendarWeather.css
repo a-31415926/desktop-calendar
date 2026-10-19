@@ -57,6 +57,10 @@
 .cw-forecast-stage {height:67px;min-height:67px;overflow:hidden;animation:cw-view-in 180ms ease-out both;}
 .cw-hours,.cw-days {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:67px;align-items:stretch;gap:2px;}
 .cw-days {grid-template-columns:repeat(5,minmax(0,1fr));}
+.cw-day {gap:1px;}
+.cw-day .cw-time {font-size:9px;}
+.cw-day strong {font-size:12px;}
+.cw-day .cw-day-low,.cw-days .cw-prob {font-size:9px;}
 .cw-hour,.cw-day {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;}
 .cw-hour .cw-icon,.cw-day .cw-icon {margin:0;display:block;flex-shrink:0;}
 .cw-time {color:var(--cw-muted);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap;}
