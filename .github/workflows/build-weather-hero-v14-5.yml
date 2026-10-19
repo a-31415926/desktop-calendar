@@ -1,0 +1,51 @@
+name: Build desktop calendar weather hero V14.5
+on:
+  push:
+    branches: [feature/weather-hero-v14-5]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: pnpm install --frozen-lockfile
+      - name: Test weather data rules
+        run: node --experimental-strip-types --test tests/weather.test.mjs
+      - name: Test weather layout and calendar stability
+        run: node --test tests/weather-layout.test.mjs
+      - name: Build frontend and type-check
+        run: pnpm build
+      - name: Windows weather and credential tests
+        run: cargo test --release --manifest-path src-tauri/Cargo.toml --lib weather::tests
+      - name: Build Windows NSIS installer
+        run: pnpm tauri build --bundles nsis
+      - name: Package preview
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force delivery | Out-Null
+          $original = Get-ChildItem 'src-tauri/target/release/bundle/nsis/*.exe' | Select-Object -First 1
+          if (-not $original) { throw 'NSIS installer not found' }
+          Copy-Item $original.FullName 'delivery/DesktopCalendar-V14.5-Weather-Hero-Setup.exe'
+          Copy-Item 'src-tauri/target/release/DesktopCalendarFusion.exe' delivery
+          Copy-Item 'THIRD_PARTY_WEATHER.md' delivery
+          Get-ChildItem delivery -File | Get-FileHash -Algorithm SHA256 | Select-Object Hash,@{n='File';e={Split-Path $_.Path -Leaf}} | ConvertTo-Json | Set-Content delivery/SHA256SUMS.json
+          if ((Get-Item 'delivery/DesktopCalendar-V14.5-Weather-Hero-Setup.exe').Length -lt 1000000) { throw 'Installer size is unexpectedly small' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-calendar-weather-hero-v14-5-windows
+          path: delivery/
+          retention-days: 90
+          if-no-files-found: error
