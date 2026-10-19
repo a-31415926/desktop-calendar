@@ -261,7 +261,7 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
             ("current", "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day".into()),
             ("hourly", "temperature_2m,precipitation_probability,precipitation,weather_code".into()),
             ("daily", "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset".into()),
-            ("timezone", "Asia/Shanghai".into()), ("forecast_days", "3".into())
+            ("timezone", "Asia/Shanghai".into()), ("forecast_days", "7".into())
         ])).await;
         match result {
             Ok(v) if valid_forecast(&v) => {
