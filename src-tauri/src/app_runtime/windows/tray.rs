@@ -25,7 +25,7 @@ pub fn setup_windows_tray(app_handle: &AppHandle, state: &State<'_, AppState>) {
                 .menu(&tray_menu)
                 .show_menu_on_left_click(false)
                 .tooltip("桌面日历 · 点击打开日历")
-                .on_tray_icon_event(move |tray, event| {
+                .on_tray_icon_event(move |_tray, event| {
                     if let TrayIconEvent::Click { button, button_state, rect, .. } = event {
                         if button == TrayMouseButton::Left
                             && button_state == TrayMouseButtonState::Up
