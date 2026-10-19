@@ -147,10 +147,10 @@ export default function CalendarWeatherHero({ selectedDate }: CalendarWeatherHer
         )}
         {scene === 'storm' && available && <div className="wh-lightning" />}
       </div>
-      <div className="wh-content">
+      <div className="wh-content" key={`${selectedKey}-${scene}-${night}`}>
         <div className="wh-eyebrow">
-          <span>{selectedDate.format('M月D日')} · {place?.name || '上海'}</span>
-          <span className="wh-place"><EnvironmentOutlined />{place?.description || '上海'}</span>
+          <span>{selectedDate.format('M月D日')} · {isToday ? '实时天气' : '日期预报'}</span>
+          <span className="wh-place"><EnvironmentOutlined />{place?.name || '上海'}</span>
         </div>
         <div className="wh-primary">
           <strong>{displayCondition}</strong>
