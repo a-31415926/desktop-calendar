@@ -68,8 +68,8 @@
 .cw-prob {font-size:10px;color:var(--cw-accent);font-variant-numeric:tabular-nums;}
 .cw-day-low {font-size:10px;color:var(--cw-muted);font-variant-numeric:tabular-nums;}
 /* Keep the compact five-day stack inside the same 67px forecast viewport. */
-.cw-day {gap:1px;}
-.cw-day strong {font-size:12px;}
+ .cw-day {gap:1px;line-height:1;}
+.cw-day strong {font-size:12px;line-height:1;}
 .cw-hour-empty {grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:var(--cw-muted);font-size:11px;}
 .cw-bottom {display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:2px;color:var(--cw-muted);font-size:9.5px;line-height:13px;min-width:0;}
 .cw-bottom>span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
