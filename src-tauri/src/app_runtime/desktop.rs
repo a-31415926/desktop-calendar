@@ -55,7 +55,7 @@ pub fn setup_desktop_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error:
     let app_handle = app.handle();
     let app_state: State<AppState> = app.state();
     #[cfg(windows)]
-    let show_startup_popup = false; // Side-by-side weather preview preserves the installed calendar.
+    let show_startup_popup = !std::env::args().any(|arg| arg == "--autostart");
 
     #[cfg(target_os = "macos")]
     {
@@ -161,9 +161,6 @@ pub fn setup_desktop_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error:
         }
     }
 
-    if !std::env::args().any(|a| a == "--autostart") {
-        crate::weather::request_open(app_handle);
-    }
     Ok(())
 }
 

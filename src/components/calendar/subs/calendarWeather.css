@@ -1,0 +1,28 @@
+.calendar-weather{margin-top:9px;border:1px solid var(--weather-border,rgba(120,140,160,.18));border-radius:11px;background:var(--card-bg,rgba(240,244,248,.55));color:var(--text-main);font-size:12px;min-width:0;overflow:hidden}
+.calendar-weather button{font:inherit;border:0;background:transparent;color:inherit;cursor:pointer}
+.calendar-weather button:disabled{opacity:.6;cursor:default}
+.calendar-weather-line{display:flex;align-items:center;min-height:48px;padding:0 9px;gap:6px;min-width:0}
+.calendar-weather-location{display:flex;gap:4px;align-items:center;white-space:nowrap;font-weight:650;flex-shrink:0;padding:6px 0}
+.calendar-weather-switch{font-size:14px;color:var(--text-sec)}
+.calendar-weather-expand{display:flex;align-items:center;gap:6px;min-width:0;flex:1;text-align:left;padding:7px 0}
+.calendar-weather-expand>strong{white-space:nowrap;font-size:13px}
+.calendar-weather-expand>.anticon:first-child{color:#7298bc}
+.calendar-weather-expand>.anticon:last-child{font-size:10px;color:var(--text-sec);flex-shrink:0}
+.calendar-weather-rain{color:var(--text-sec);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:right}
+.calendar-weather-details{padding:8px 11px 10px;border-top:1px solid rgba(125,137,152,.15);max-height:222px;overflow:auto;overscroll-behavior:contain;touch-action:pan-y}
+.calendar-weather-heading{display:flex;align-items:center;justify-content:space-between;font-weight:650;margin-bottom:6px}
+.calendar-weather-heading button,.calendar-weather-bottom button{color:var(--accent);padding:3px}
+.calendar-weather-subtitle{font-size:12px;color:var(--text-sec);margin:0 0 8px}
+.calendar-weather-hours{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.calendar-weather-hours>div{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 1px;border-radius:7px;background:rgba(127,141,155,.08)}
+.calendar-weather-hours>div>span{font-size:11px;color:var(--text-sec)}
+.calendar-weather-hours>div>strong{font-size:14px}
+.calendar-weather-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:6px;color:var(--text-sec);font-size:11px}
+.calendar-weather-settings{display:flex;flex-direction:column;gap:7px}
+.calendar-weather-settings label{display:flex;align-items:center;gap:6px;font-size:11px}
+.calendar-weather-settings input{min-width:0;flex:1;border-radius:5px;border:1px solid rgba(120,140,160,.3);padding:4px 5px;background:var(--mica-bg,#fff);color:var(--text-main)}
+.calendar-weather-config-place{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:5px}
+.calendar-weather-config-place label{display:flex;flex-direction:column;align-items:stretch;gap:2px}
+.calendar-weather-help{color:var(--text-sec);font-size:11px;line-height:1.4}
+.calendar-weather-save{border-radius:6px!important;background:var(--accent)!important;color:white!important;padding:5px!important}
+.calendar-weather-error{font-size:11px;color:#b34a3a;margin:4px 0}

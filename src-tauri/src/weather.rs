@@ -32,12 +32,10 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            locations: vec![Location {
-                name: "上海".into(),
-                description: "市区参考位置，可在设置中修改".into(),
-                latitude: 31.23,
-                longitude: 121.47,
-            }],
+            locations: vec![
+                Location { name: "公司 · 静安".into(), description: "大宁德必易园附近（参考坐标）".into(), latitude: 31.2872, longitude: 121.4468 },
+                Location { name: "宿舍 · 宝山".into(), description: "宝安公路站附近（参考坐标）".into(), latitude: 31.3714, longitude: 121.4263 },
+            ],
             selected: 0,
             host: String::new(),
             pinned: false,

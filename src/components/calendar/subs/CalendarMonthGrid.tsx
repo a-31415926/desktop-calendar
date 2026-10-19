@@ -22,6 +22,8 @@ export interface CalendarMonthGridProps {
 function CalendarMonthGrid(): ReactElement {
   const { gridProps } = useCalendarViewContext();
   const { styles, cellModels, onSelectDate } = gridProps;
+  // 末行全为下月日期时收起第六周。
+  const visibleCells = cellModels[35]?.isOtherMonth ? cellModels.slice(0, 35) : cellModels;
 
   return (
     <div className={styles.calendarGrid}>
@@ -30,7 +32,7 @@ function CalendarMonthGrid(): ReactElement {
           {day}
         </div>
       ))}
-      {cellModels.map((cell) => {
+      {visibleCells.map((cell) => {
         /** 「休」「班」角标对应不同背景色 class */
         const badgeClass =
           cell.badgeVariant === 'rest'

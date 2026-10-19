@@ -25,7 +25,6 @@ pub const MENU_SETTINGS: &str = "settings";
 pub const MENU_TOGGLE_CALENDAR: &str = "toggle_calendar";
 // 菜单事件：退出应用。
 pub const MENU_EXIT: &str = "exit";
-pub const MENU_WEATHER: &str = "weather";
 
 /// 构建主窗口顶部菜单栏（文件/视图），与托盘和任务栏菜单分离。
 ///
@@ -76,7 +75,6 @@ pub fn build_context_menu(
 /// * `menu_id` - 菜单项标识
 pub fn handle_menu_event(app_handle: &AppHandle, menu_id: &str) {
     match menu_id {
-        MENU_WEATHER => { crate::weather::request_open(app_handle); }
         MENU_SHOW | MENU_TOGGLE_CALENDAR => {
             // 获取共享状态中的窗口管理器。
             let app_state: State<AppState> = app_handle.state();

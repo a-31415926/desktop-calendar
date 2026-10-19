@@ -40,6 +40,8 @@ function CalendarMonthNav(): ReactElement {
    */
   useEffect(() => {
     const handleWheel = (event: WheelEvent): void => {
+      // 天气详情里的鼠标滚轮不能触发换月。
+      if (event.target instanceof Element && event.target.closest('[data-weather-panel]')) return;
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY) || Math.abs(event.deltaY) < 1) {
         return;
       }

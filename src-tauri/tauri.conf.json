@@ -1,9 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "桌面日历天气预览",
-  "mainBinaryName": "DesktopCalendarWeather",
-  "version": "1.1.0",
-  "identifier": "pro.softsoft.li-calendar.weather-preview",
+  "productName": "桌面日历融合预览",
+  "mainBinaryName": "DesktopCalendarFusion",
+  "version": "1.1.1",
+  "identifier": "pro.softsoft.li-calendar.weather-fusion-preview",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
@@ -31,12 +31,14 @@
   },
   "bundle": {
     "active": true,
-    "resources": { "../THIRD_PARTY_WEATHER.md": "THIRD_PARTY_WEATHER.md" },
+    "resources": {
+      "../THIRD_PARTY_WEATHER.md": "THIRD_PARTY_WEATHER.md"
+    },
     "createUpdaterArtifacts": false,
     "publisher": "softsoft.pro",
     "category": "Utility",
-    "shortDescription": "松鼠日历",
-    "longDescription": "松鼠日历",
+    "shortDescription": "桌面日历天气融合预览",
+    "longDescription": "桌面日历 V14.1，月历与天气融合预览",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

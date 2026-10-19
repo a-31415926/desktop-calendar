@@ -5,14 +5,14 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
 
   return {
     footerInfo: css`
-      margin-top: 12px;
+      margin-top: 7px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       min-width: 0;
     `,
     footerCard: css`
-      padding: 10px 12px;
+      padding: 7px 10px;
       border-radius: 12px;
       background: ${isDark ? 'rgba(255,255,255,.045)' : '#f3f4f6'};
       border: 1px solid ${isDark ? 'rgba(255,255,255,.07)' : '#e4e7eb'};
@@ -23,7 +23,7 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
       line-height: 1.2;
       font-weight: 650;
       color: var(--text-main);
-      margin-bottom: 7px;
+      margin-bottom: 5px;
     `,
     footerMain: css`
       display: flex;

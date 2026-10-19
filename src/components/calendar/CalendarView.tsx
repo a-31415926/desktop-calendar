@@ -3,6 +3,7 @@ import '../../utils/calendar/setupDayjsCalendar.ts';
 import { CalendarViewProvider } from '../../hooks/calender/CalendarViewContext.tsx';
 import { useCalendarViewModel } from '../../hooks/calender/useCalendarViewModel.ts';
 import CalendarFooter from './subs/CalendarFooter.tsx';
+import CalendarWeather from './subs/CalendarWeather.tsx';
 import CalendarHeader from './subs/CalendarHeader.tsx';
 import CalendarMonthGrid from './subs/CalendarMonthGrid.tsx';
 import CalendarMonthNav from './subs/CalendarMonthNav.tsx';
@@ -66,6 +67,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         <CalendarHeader />
         <CalendarMonthNav />
         <CalendarMonthGrid />
+        <CalendarWeather />
         <CalendarFooter />
       </div>
     </CalendarViewProvider>

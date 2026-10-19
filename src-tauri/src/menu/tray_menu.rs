@@ -14,6 +14,5 @@ pub fn build_tray_menu(app_handle: &AppHandle) -> Result<Menu<Wry>, tauri::Error
     let exit_item = MenuItem::with_id(app_handle, MENU_EXIT, "退出", true, None::<&str>)?;
 
     // 组装托盘菜单。
-    let weather_item = MenuItem::with_id(app_handle, crate::menu::MENU_WEATHER, "天气 · 左侧面板", true, None::<&str>)?;
-    Menu::with_items(app_handle, &[&weather_item, &settings_item, &exit_item])
+    Menu::with_items(app_handle, &[&settings_item, &exit_item])
 }

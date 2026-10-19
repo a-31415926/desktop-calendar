@@ -97,11 +97,8 @@ pub fn run() {
     let build_result = tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            if args.iter().any(|a| a == "--weather") || app.config().identifier.ends_with(".weather-preview") {
-                weather::request_open(app);
-                return;
-            }
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+
             // 单实例回调：如果尝试打开新实例，则聚焦现有窗口
             app_runtime::main_window::focus_first_webview_window(app);
         }))
@@ -144,7 +141,6 @@ pub fn run() {
             set_macos_vibrancy,
             open_main_window,
             set_calendar_pin,
-            weather::open_weather,
             weather::weather_settings,
             weather::weather_save_settings,
             weather::weather_fetch
