@@ -18,13 +18,13 @@ const systemConfigDefaults = {
 const calendarFooterVisibleDefaults = {
   calendarFooterVisible: true,
   footerFestivalVisible: true,
-  footerYiJiVisible: false,
+  footerYiJiVisible: true,
   footerCountdownVisible: true,
 } satisfies CalendarFooterVisible;
 
 const configWindowsDefaults = {
   desktopWidgetEnabled: false,
-  taskbarWidgetEnabled: false,
+  taskbarWidgetEnabled: true,
   desktopWindowPosition: null,
   customTrayClockEnabled: false,
   timeFormat: trayClockTimeFormats.HhMm,

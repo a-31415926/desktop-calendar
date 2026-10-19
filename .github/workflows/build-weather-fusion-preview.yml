@@ -1,4 +1,4 @@
-name: Build calendar-weather fusion V14.1
+name: Build calendar-weather fusion V14.1 repair
 on:
   push:
     branches: [feature/weather-fusion-v14-1]

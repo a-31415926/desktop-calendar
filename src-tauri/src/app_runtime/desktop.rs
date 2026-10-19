@@ -99,6 +99,7 @@ pub fn setup_desktop_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error:
 
     #[cfg(windows)]
     {
+        super::config::restore_v13_preferences_once(app_handle);
         let persisted_config = super::config::load_persisted_feature_config(app_handle);
         let desktop_widget_enabled = persisted_config.desktop_widget_enabled.unwrap_or(false);
         let taskbar_widget_enabled = persisted_config.taskbar_widget_enabled.unwrap_or(false);

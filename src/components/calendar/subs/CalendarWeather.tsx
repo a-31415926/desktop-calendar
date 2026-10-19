@@ -102,12 +102,18 @@ export default function CalendarWeather() {
   const hourly = hourlyRows(data?.forecast ?? null, clock);
   const rain = rainIsFresh(data, clock);
   const rainPoints = futureRain(data?.minutely ?? null, clock);
-  const nextRain = hourly.find(h => h.probability != null && h.probability >= 50);
+  // 仅分钟级和风数据能给出短时降雨结论。Open-Meteo 逐小时概率只展示为参考，不冒充临近预报。
+  const inTwoHours = hourly.filter(h => {
+    const t = Date.parse(h.time.endsWith('Z') || /[+-]\\d{2}:\\d{2}$/.test(h.time) ? h.time : h.time + '+08:00');
+    return Number.isFinite(t) && t >= clock - 60 * 60000 && t <= clock + 2 * 3600000;
+  });
+  const chance = inTwoHours.map(h => h.probability).filter((p): p is number => p != null && Number.isFinite(p));
+  const maxChance = chance.length ? Math.max(...chance) : null;
   const summary = rain
     ? (data?.minutely?.summary || (rainPoints.some(p => Number(p.precip) > 0) ? '未来两小时可能有雨' : '未来两小时暂无明显降雨'))
-    : data?.qweatherConfigured
-      ? '短时降雨暂不可用'
-      : nextRain ? `${timeLabel(nextRain.time)} 降雨概率 ${number(nextRain.probability, '%')}` : '逐小时降雨预报见详情';
+    : maxChance != null
+      ? `近2小时降雨概率最高 ${Math.round(maxChance)}% · 逐小时参考`
+      : '暂无短时降雨数据';
 
   return (
     <section className="calendar-weather" data-weather-panel aria-label="天气概览">
@@ -142,7 +148,7 @@ export default function CalendarWeather() {
           ) : (
             <>
               <div className="calendar-weather-heading"><span>天气详情 · {place?.name}</span><button type="button" title="天气设置" onClick={openSettings}><SettingOutlined /> 设置</button></div>
-              <p className="calendar-weather-subtitle">{rain ? summary : '精准两小时降雨：' + (data?.qweatherConfigured ? '暂不可用' : '需连接和风天气')}</p>
+              <p className="calendar-weather-subtitle">{rain ? summary : `${summary}。分钟级短时降雨${data?.qweatherConfigured ? '暂不可用' : '需另接和风天气'}。`}</p>
               <div className="calendar-weather-hours">
                 {hourly.slice(0,4).map(h => <div key={h.time}>
                   <span>{timeLabel(h.time)}</span>
