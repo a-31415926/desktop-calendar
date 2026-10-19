@@ -128,6 +128,7 @@ export default function CalendarWeather() {
       const result = await call<SettingsResponse>('weather_save_settings', { settings, apiKey: key || undefined });
       currentSettings.current = result.settings;
       setConfig(result);
+      window.dispatchEvent(new Event('calendar-weather-updated'));
       setDraft(result.settings);
       setApiKey('');
       setEditing(false);
@@ -157,7 +158,7 @@ export default function CalendarWeather() {
   const condition = current ? weatherCode(current.weather_code) : null;
   const weatherType = condition?.[1] || 'cloud';
   const hours = hourlyRows(data?.forecast ?? null, clock)
-    .filter(h => timestamp(h.time) >= clock - 60 * 60000).slice(0, 4);
+    .filter(h => timestamp(h.time) >= clock - 60 * 60000).slice(0, 6);
   const nowcast = rainIsFresh(data, clock);
   const rainPoints = futureRain(data?.minutely ?? null, clock);
   const nextTwoHours = hourlyRows(data?.forecast ?? null, clock).filter(h => {
