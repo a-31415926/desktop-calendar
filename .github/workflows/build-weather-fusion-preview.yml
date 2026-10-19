@@ -1,7 +1,7 @@
-name: Build calendar-weather fusion V14.1 repair
+name: Build calendar-weather fusion V14.2
 on:
   push:
-    branches: [feature/weather-fusion-v14-1]
+    branches: [feature/weather-fusion-v14-2]
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,6 +24,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Test weather data rules
         run: node --experimental-strip-types --test tests/weather.test.mjs
+      - run: node --test tests/weather-layout.test.mjs
       - run: pnpm build
       - name: Windows weather/credential tests
         run: cargo test --release --manifest-path src-tauri/Cargo.toml --lib weather::tests
@@ -35,13 +36,13 @@ jobs:
           New-Item -ItemType Directory -Force delivery | Out-Null
           $original = Get-ChildItem 'src-tauri/target/release/bundle/nsis/*.exe' | Select-Object -First 1
           if (-not $original) { throw 'NSIS installer not found' }
-          Copy-Item $original.FullName 'delivery/desktop-calendar-weather-fusion-v14.1-x64-setup.exe'
+          Copy-Item $original.FullName 'delivery/desktop-calendar-weather-fusion-v14.2-x64-setup.exe'
           Copy-Item 'src-tauri/target/release/DesktopCalendarFusion.exe' delivery
           Copy-Item 'THIRD_PARTY_WEATHER.md' delivery
           Get-ChildItem delivery -File | Get-FileHash -Algorithm SHA256 | Select-Object Hash,@{n='File';e={Split-Path $_.Path -Leaf}} | ConvertTo-Json | Set-Content delivery/SHA256SUMS.json
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-calendar-weather-fusion-v14-1-windows
+          name: desktop-calendar-weather-fusion-v14-2-windows
           path: delivery/
           retention-days: 90
           if-no-files-found: error

@@ -1,13 +1,39 @@
-import { CloudOutlined, DownOutlined, EnvironmentOutlined, SettingOutlined, UpOutlined } from '@ant-design/icons';
+import { DownOutlined, EnvironmentOutlined, SettingOutlined, UpOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { ageLabel, futureRain, hourlyRows, number, rainIsFresh, timeLabel, weatherCode, type Settings, type SettingsResponse, type WeatherData } from '../../../weather/model.ts';
+import { ageLabel, futureRain, hourlyRows, number, rainIsFresh, timeLabel, timestamp, weatherCode, type Settings, type SettingsResponse, type WeatherData } from '../../../weather/model.ts';
 import './calendarWeather.css';
 
 const call = <T,>(name: string, args?: Record<string, unknown>): Promise<T> => invoke<T>(name, args);
 
+
+type WeatherGlyphProps = { code: number; size?: number; night?: boolean };
+function WeatherGlyph({ code, size = 34, night = false }: WeatherGlyphProps) {
+  const kind = weatherCode(code)[1];
+  const sunny = kind === 'sun' || kind === 'cloud-sun';
+  const precipitation = ['rain', 'snow', 'storm'].includes(kind);
+  return (
+    <svg viewBox="0 0 48 48" width={size} height={size} aria-hidden="true" className="cw-glyph">
+      {sunny && <g className="cw-glyph-sun">
+        {night ? <path d="M19 4a12 12 0 1 0 12 16A12.3 12.3 0 0 1 19 4Z" fill="#f3cb78"/> : <>
+          <circle cx="19" cy="17" r="8" fill="#f7c05f"/>
+          <path d="M19 3v4m0 20v4M5 17h4m20 0h4M9 7l3 3m14 14 3 3M29 7l-3 3M12 24l-3 3" stroke="#eeb154" strokeWidth="2" strokeLinecap="round"/>
+        </>}
+      </g>}
+      {kind !== 'sun' && <path d="M11 36h26c6 0 10-4.5 10-10s-4-9-9-9h-2C34 9 29 6 23 6c-7 0-12 4.5-13 11-6 0-9 4-9 9s4.2 10 10 10Z"
+        transform="translate(2 4) scale(.91)" fill="#d8e7f4" stroke="#759bb9" strokeWidth="2.4" strokeLinejoin="round"/>}
+      {kind === 'fog' && <g stroke="#8aa3b5" strokeWidth="2.4" strokeLinecap="round"><path d="M13 40h22M18 44h18"/></g>}
+      {precipitation && <g stroke={kind === 'snow' ? '#91b6d2' : '#5c9dd3'} strokeWidth="2.5" strokeLinecap="round">
+        <path d="M15 39l-2 4M27 39l-2 4M36 39l-2 4"/>
+      </g>}
+      {kind === 'storm' && <path d="M27 34l-6 8h6l-3 5 11-10h-6l3-3Z" fill="#efc05c"/>}
+    </svg>
+  );
+}
+
 export default function CalendarWeather() {
+  const root = useRef<HTMLElement | null>(null);
   const [config, setConfig] = useState<SettingsResponse | null>(null);
   const [data, setData] = useState<WeatherData | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -24,10 +50,10 @@ export default function CalendarWeather() {
     const request = ++lastRequest.current;
     setBusy(true);
     try {
-      const value = await call<WeatherData>('weather_fetch', { index: settings.selected, force });
-      if (request === lastRequest.current) { setData(value); setError(''); }
-    } catch (e) {
-      if (request === lastRequest.current) setError(String(e));
+      const result = await call<WeatherData>('weather_fetch', { index: settings.selected, force });
+      if (request === lastRequest.current) { setData(result); setError(''); }
+    } catch (err) {
+      if (request === lastRequest.current) setError(String(err));
     } finally {
       if (request === lastRequest.current) setBusy(false);
     }
@@ -35,32 +61,51 @@ export default function CalendarWeather() {
 
   useEffect(() => {
     if (!isTauri()) return;
-    let live = true;
-    const load = async () => {
-      try {
-        const result = await call<SettingsResponse>('weather_settings');
-        if (!live) return;
-        currentSettings.current = result.settings;
-        setConfig(result);
-        void retrieve(result.settings);
-      } catch (e) { if (live) setError(String(e)); }
-    };
-    void load();
+    let alive = true;
+    void call<SettingsResponse>('weather_settings').then(result => {
+      if (!alive) return;
+      currentSettings.current = result.settings;
+      setConfig(result);
+      void retrieve(result.settings);
+    }).catch(err => { if (alive) setError(String(err)); });
+
     const timer = window.setInterval(() => {
       setClock(Date.now());
       if (!document.hidden && currentSettings.current) void retrieve(currentSettings.current);
     }, 60000);
-    const subscription = listen('calendar-popup-show', () => {
+    const listening = listen('calendar-popup-show', () => {
+      setExpanded(false);
+      setEditing(false);
       setClock(Date.now());
       if (currentSettings.current) void retrieve(currentSettings.current);
     }).catch(() => () => {});
     return () => {
-      live = false;
-      lastRequest.current += 1;
+      alive = false;
+      lastRequest.current++;
       window.clearInterval(timer);
-      void subscription.then(stop => stop());
+      void listening.then(unlisten => unlisten());
     };
   }, [retrieve]);
+
+  // 纯浮层，不参与日历窗口高度测量。点外面或按 ESC 即关闭。
+  useEffect(() => {
+    if (!expanded) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !root.current?.contains(event.target)) {
+        setExpanded(false);
+        setEditing(false);
+      }
+    };
+    const closeEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setExpanded(false); setEditing(false); }
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeEscape);
+    };
+  }, [expanded]);
 
   const save = async (settings: Settings, key?: string) => {
     setBusy(true);
@@ -73,96 +118,120 @@ export default function CalendarWeather() {
       setEditing(false);
       setData(null);
       await retrieve(response.settings, true);
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setBusy(false);
-    }
+    } catch (err) { setError(String(err)); }
+    finally { setBusy(false); }
   };
   const switchPlace = () => {
     if (!config || config.settings.locations.length < 2) return;
-    const next = (config.settings.selected + 1) % config.settings.locations.length;
-    void save({ ...config.settings, selected: next });
+    const selected = (config.settings.selected + 1) % config.settings.locations.length;
+    void save({ ...config.settings, selected });
   };
   const openSettings = () => {
     if (!config) return;
     setDraft(structuredClone(config.settings));
-    setEditing(true);
-    setExpanded(true);
+    setApiKey('');
     setError('');
+    setEditing(true);
   };
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (draft) void save(draft, apiKey.trim());
   };
+
   const place = config?.settings.locations[config.settings.selected];
   const current = data?.forecast?.current;
-  const weather = current ? weatherCode(current.weather_code) : null;
-  const isStale = !!data && !!(data.forecastError || Date.now() / 1000 - data.forecastFetchedAt > 2700);
+  const code = current?.weather_code ?? 3;
+  const condition = current ? weatherCode(code)[0] : '天气';
+  const stale = !!data && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
   const hourly = hourlyRows(data?.forecast ?? null, clock);
-  const rain = rainIsFresh(data, clock);
+  const hours = hourly.filter(row => timestamp(row.time) >= clock - 60 * 60000).slice(0, 5);
+  const nowcast = rainIsFresh(data, clock);
   const rainPoints = futureRain(data?.minutely ?? null, clock);
-  // 仅分钟级和风数据能给出短时降雨结论。Open-Meteo 逐小时概率只展示为参考，不冒充临近预报。
-  const inTwoHours = hourly.filter(h => {
-    const t = Date.parse(h.time.endsWith('Z') || /[+-]\\d{2}:\\d{2}$/.test(h.time) ? h.time : h.time + '+08:00');
-    return Number.isFinite(t) && t >= clock - 60 * 60000 && t <= clock + 2 * 3600000;
+  const nextTwoHours = hourly.filter(row => {
+    const t = timestamp(row.time);
+    return t >= clock - 60 * 60000 && t <= clock + 2 * 3600000;
   });
-  const chance = inTwoHours.map(h => h.probability).filter((p): p is number => p != null && Number.isFinite(p));
-  const maxChance = chance.length ? Math.max(...chance) : null;
-  const summary = rain
-    ? (data?.minutely?.summary || (rainPoints.some(p => Number(p.precip) > 0) ? '未来两小时可能有雨' : '未来两小时暂无明显降雨'))
+  const validProbabilities = nextTwoHours.map(h => h.probability).filter((n): n is number => n != null && Number.isFinite(n));
+  const maxChance = validProbabilities.length ? Math.max(...validProbabilities) : null;
+  // 逐小时预报 != 分钟级临近降雨。没有和风数据时绝不声称短时一定不下雨。
+  const summary = nowcast
+    ? data?.minutely?.summary || (rainPoints.some(p => Number(p.precip) > 0) ? '未来两小时有降雨信号' : '未来两小时无明显降雨信号')
     : maxChance != null
-      ? `近2小时降雨概率最高 ${Math.round(maxChance)}% · 逐小时参考`
-      : '暂无短时降雨数据';
+      ? `近两小时逐小时降雨概率最高 ${Math.round(maxChance)}%`
+      : '短时降雨预测暂不可用';
 
   return (
-    <section className="calendar-weather" data-weather-panel aria-label="天气概览">
-      <div className="calendar-weather-line">
-        <button className="calendar-weather-location" type="button" onClick={switchPlace} title="切换公司／宿舍天气" disabled={!config || config.settings.locations.length < 2}>
-          <EnvironmentOutlined /> <span>{place?.name || '天气'}</span><span className="calendar-weather-switch">{config && config.settings.locations.length > 1 ? '⇄' : ''}</span>
+    <section className="calendar-weather" ref={root} data-weather-panel aria-label="天气">
+      <div className="calendar-weather-summary">
+        <button className="cw-summary-main" type="button" onClick={() => { setExpanded(x => !x); setEditing(false); }} aria-expanded={expanded} aria-label="查看天气详情">
+          <WeatherGlyph code={code} size={36} night={current?.is_day === 0} />
+          <strong className="cw-current-temp">{current ? `${number(current.temperature_2m)}°` : '—°'}</strong>
+          <span className="cw-condition">{busy && !current ? '加载中' : condition}</span>
+          <span className="cw-collapse-arrow">{expanded ? <UpOutlined /> : <DownOutlined />}</span>
         </button>
-        <button type="button" className="calendar-weather-expand" onClick={() => { setExpanded(v => !v); setEditing(false); }} aria-expanded={expanded}>
-          <CloudOutlined />
-          <strong>{current ? `${number(current.temperature_2m)}° ${weather?.[0]}` : busy ? '获取中…' : '暂无天气'}</strong>
-          <span className="calendar-weather-rain">{isStale ? '上次数据 · ' : ''}{data ? summary : '正在连接天气服务'}</span>
-          {expanded ? <UpOutlined /> : <DownOutlined />}
+        <button className="cw-place" type="button" onClick={switchPlace} disabled={!config || config.settings.locations.length < 2} aria-label="切换公司和宿舍天气" title={place?.description || '切换天气地点'}>
+          <EnvironmentOutlined /><span>{place?.name ?? '上海'}</span>{(config?.settings.locations.length ?? 0) > 1 && <span className="cw-switch">⇄</span>}
+        </button>
+        <button className="cw-rain-summary" type="button" onClick={() => { setExpanded(x => !x); setEditing(false); }} aria-expanded={expanded}>
+          <span className="cw-rain-drop">☂</span>
+          <span>{stale ? '上次预报 · ' : ''}{summary}</span>
+          <span className="cw-more">详情</span>
         </button>
       </div>
-      {expanded && (
-        <div className="calendar-weather-details">
-          {editing && draft ? (
-            <form className="calendar-weather-settings" onSubmit={submit}>
-              <div className="calendar-weather-heading">天气设置 <button type="button" onClick={() => setEditing(false)}>返回</button></div>
-              {draft.locations.map((location, index) => (
-                <div className="calendar-weather-config-place" key={index}>
-                  <label>名称 <input maxLength={16} required value={location.name} onChange={e => setDraft({ ...draft, locations: draft.locations.map((l,i) => i === index ? {...l, name: e.target.value} : l) })} /></label>
-                  <label>经度 <input type="number" step="any" required min="-180" max="180" value={location.longitude} onChange={e => setDraft({ ...draft, locations: draft.locations.map((l,i) => i === index ? {...l, longitude: e.target.valueAsNumber} : l) })} /></label>
-                  <label>纬度 <input type="number" step="any" required min="-90" max="90" value={location.latitude} onChange={e => setDraft({ ...draft, locations: draft.locations.map((l,i) => i === index ? {...l, latitude: e.target.valueAsNumber} : l) })} /></label>
-                </div>
-              ))}
-              <div className="calendar-weather-help">基础天气无需账号。精准两小时降雨需配置和风天气（可选）。</div>
-              <label>和风 API Host <input placeholder="xxx.qweatherapi.com" value={draft.host} onChange={e => setDraft({...draft, host: e.target.value})}/></label>
-              <label>API Key <input type="password" autoComplete="new-password" placeholder={config?.hasKey ? '已加密保存，留空不修改' : '未配置'} value={apiKey} onChange={e => setApiKey(e.target.value)}/></label>
-              <button type="submit" className="calendar-weather-save" disabled={busy}>保存并刷新</button>
-            </form>
-          ) : (
-            <>
-              <div className="calendar-weather-heading"><span>天气详情 · {place?.name}</span><button type="button" title="天气设置" onClick={openSettings}><SettingOutlined /> 设置</button></div>
-              <p className="calendar-weather-subtitle">{rain ? summary : `${summary}。分钟级短时降雨${data?.qweatherConfigured ? '暂不可用' : '需另接和风天气'}。`}</p>
-              <div className="calendar-weather-hours">
-                {hourly.slice(0,4).map(h => <div key={h.time}>
-                  <span>{timeLabel(h.time)}</span>
-                  <strong>{number(h.temp,'°')}</strong>
-                  <span>{number(h.probability, '%')} 雨</span>
-                </div>)}
-                {hourly.length === 0 && <span className="calendar-weather-help">等待天气数据，请检查网络或刷新</span>}
+
+      {expanded && <div className="calendar-weather-popover" role="dialog" aria-label={editing ? '天气设置' : '天气详情'}>
+        {editing && draft ? (
+          <form className="cw-settings" onSubmit={submit}>
+            <div className="cw-pop-heading">
+              <strong>天气设置</strong>
+              <button type="button" onClick={() => setEditing(false)}>返回</button>
+            </div>
+            <p className="cw-caption">两个固定地点 · 位置为参考坐标</p>
+            {draft.locations.map((l, i) => (
+              <div className="cw-setting-row" key={i}>
+                <label>地点<input required maxLength={16} value={l.name} onChange={e => setDraft({ ...draft, locations: draft.locations.map((v,n) => n === i ? { ...v,name:e.target.value } : v) })}/></label>
+                <label>经度<input required type="number" step="any" min="-180" max="180" value={l.longitude} onChange={e => setDraft({ ...draft, locations: draft.locations.map((v,n) => n === i ? { ...v,longitude:e.target.valueAsNumber } : v) })}/></label>
+                <label>纬度<input required type="number" step="any" min="-90" max="90" value={l.latitude} onChange={e => setDraft({ ...draft, locations: draft.locations.map((v,n) => n === i ? { ...v,latitude:e.target.valueAsNumber } : v) })}/></label>
               </div>
-              <div className="calendar-weather-bottom"><span>{ageLabel(data?.forecastFetchedAt ?? 0, clock)} · Open-Meteo{rain ? ' / 和风' : ''}</span><button disabled={busy || !config} type="button" onClick={() => { if (config) void retrieve(config.settings, true); }}>刷新</button></div>
-            </>
-          )}
-          {error && <p className="calendar-weather-error">{error}</p>}
-        </div>
-      )}
+            ))}
+            <div className="cw-caption">分钟级短时降雨需要和风天气凭证；基础天气无需账号。</div>
+            <label className="cw-setting-wide">和风 API Host<input placeholder="xxx.qweatherapi.com" value={draft.host} onChange={e => setDraft({...draft,host:e.target.value})}/></label>
+            <label className="cw-setting-wide">API Key<input type="password" autoComplete="new-password" placeholder={config?.hasKey ? '已保存，留空保持不变' : '可选'} value={apiKey} onChange={e => setApiKey(e.target.value)}/></label>
+            <button className="cw-save" type="submit" disabled={busy}>保存并刷新</button>
+          </form>
+        ) : (
+          <>
+            <div className="cw-pop-heading">
+              <div><strong>未来天气</strong><span className="cw-location-label"> · {place?.name}</span></div>
+              <div className="cw-pop-actions">
+                <button type="button" title="天气设置" aria-label="天气设置" onClick={openSettings}><SettingOutlined /></button>
+                <button type="button" title="关闭天气详情" aria-label="关闭天气详情" onClick={() => setExpanded(false)}><CloseOutlined /></button>
+              </div>
+            </div>
+            <div className="cw-rain-notice">
+              <span className="cw-rain-icon">☂</span>
+              <span>{summary}</span>
+            </div>
+            <div className="cw-hourly-caption">接下来几小时 <span>降雨概率</span></div>
+            <div className="cw-hourly-list">
+              {hours.length ? hours.map(h => (
+                <div className="cw-hour" key={h.time}>
+                  <span className="cw-hour-time">{timeLabel(h.time)}</span>
+                  <WeatherGlyph code={h.code} size={28} />
+                  <strong>{number(h.temp, '°')}</strong>
+                  <span className="cw-hour-rain">☂ {number(h.probability, '%')}</span>
+                </div>
+              )) : <p className="cw-empty">天气暂不可用，请检查网络并重试</p>}
+            </div>
+            <div className="cw-footnote">
+              <span>{nowcast ? '分钟级降雨 · 和风天气' : '逐小时预报 · Open-Meteo'} · {ageLabel(data?.forecastFetchedAt ?? 0, clock)}</span>
+              <button type="button" disabled={busy || !config} onClick={() => { if (config) void retrieve(config.settings, true); }} title="刷新天气"><ReloadOutlined /> 刷新</button>
+            </div>
+            {!nowcast && <div className="cw-provider-note">分钟级雷达临近降雨需要连接和风天气。</div>}
+          </>
+        )}
+        {error && <p className="cw-error">{error}</p>}
+      </div>}
     </section>
   );
 }
