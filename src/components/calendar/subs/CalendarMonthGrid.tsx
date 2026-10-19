@@ -22,8 +22,8 @@ export interface CalendarMonthGridProps {
 function CalendarMonthGrid(): ReactElement {
   const { gridProps } = useCalendarViewContext();
   const { styles, cellModels, onSelectDate } = gridProps;
-  // 末行全为下月日期时收起第六周。
-  const visibleCells = cellModels[35]?.isOtherMonth ? cellModels.slice(0, 35) : cellModels;
+  // 始终显示 42 格（六行），避免不同月份切换时根容器高度变化，触发窗口 resize 抽动。
+  const visibleCells = cellModels;
 
   return (
     <div className={styles.calendarGrid}>
