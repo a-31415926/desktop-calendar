@@ -1,4 +1,4 @@
-/* V14.3: 一眼可读的天气卡，固定占位，不再用点击和浮层才能看到小时预报。 */
+/* V14.4: 轻氛围天气背景；小时/五日详情在同一固定高度内切换。 */
 .calendar-weather {
   --cw-ink:var(--text-main);
   --cw-muted:var(--text-sec);
@@ -7,6 +7,7 @@
   z-index:2!important;
   min-width:0;
   overflow:visible;
+  isolation:isolate;
   margin-top:8px;
   padding:8px 11px 7px;
   border:1px solid color-mix(in srgb, var(--text-sec) 16%, transparent);
@@ -16,8 +17,17 @@
   background:linear-gradient(125deg,
     color-mix(in srgb, var(--card-bg) 93%, #d9eafb),
     color-mix(in srgb, var(--card-bg) 90%, #ecf5ff));
-  transition:background-color 250ms ease;
+  transition:background 420ms ease,border-color 420ms ease;
 }
+.calendar-weather::before,.calendar-weather::after {content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;overflow:hidden;}
+.calendar-weather::before {opacity:.8;background:transparent;transition:background 600ms ease,opacity 600ms ease;}
+.calendar-weather::after {opacity:0;background:transparent;}
+.calendar-weather > * {position:relative;z-index:1;}
+.calendar-weather.cw-scene-sun::before,.calendar-weather.cw-scene-cloud-sun::before {background:radial-gradient(ellipse at 12% 0%,rgba(255,207,105,.28),transparent 58%),radial-gradient(ellipse at 85% 20%,rgba(255,238,193,.22),transparent 50%);animation:cw-sun-glow 7s ease-in-out infinite alternate;}
+.calendar-weather.cw-scene-cloud::before,.calendar-weather.cw-scene-fog::before {background:radial-gradient(ellipse at 8% 10%,rgba(146,177,202,.22),transparent 55%),radial-gradient(ellipse at 90% 80%,rgba(190,207,220,.22),transparent 58%);animation:cw-cloud-haze 12s ease-in-out infinite alternate;}
+.calendar-weather.cw-scene-rain::before,.calendar-weather.cw-scene-storm::before {opacity:.48;background:repeating-linear-gradient(108deg,transparent 0 19px,rgba(75,145,190,.15) 20px,transparent 21px 34px);background-size:100% 48px;animation:cw-rain-sheet 2.4s linear infinite;}
+.calendar-weather.cw-scene-snow::before {opacity:.52;background-image:radial-gradient(circle,rgba(103,162,198,.45) 1.2px,transparent 1.8px),radial-gradient(circle,rgba(255,255,255,.92) 1.4px,transparent 2px);background-size:37px 39px,61px 57px;background-position:0 0,20px 16px;animation:cw-snow-sheet 8s linear infinite;}
+.calendar-weather.cw-scene-storm::after {opacity:.2;background:radial-gradient(ellipse at 55% 0%,rgba(255,232,160,.65),transparent 70%);animation:cw-storm-flash 7s steps(1,end) infinite;}
 .calendar-weather.cw-scene-sun {background:linear-gradient(125deg,color-mix(in srgb,var(--card-bg) 88%,#fff1d7),color-mix(in srgb,var(--card-bg) 93%,#ffefd9));}
 .calendar-weather.cw-scene-cloud-sun {background:linear-gradient(125deg,color-mix(in srgb,var(--card-bg) 90%,#e7edf7),color-mix(in srgb,var(--card-bg) 93%,#fff2dc));}
 .calendar-weather.cw-scene-rain,.calendar-weather.cw-scene-storm {background:linear-gradient(125deg,color-mix(in srgb,var(--card-bg) 87%,#bfd6ea),color-mix(in srgb,var(--card-bg) 95%,#c9e1ee));}
@@ -40,14 +50,19 @@
 .cw-rain-banner {height:23px;display:flex;align-items:center;gap:7px;white-space:nowrap;min-width:0;color:var(--cw-muted);font-size:11px;}
 .cw-rain-banner span:last-child {overflow:hidden;text-overflow:ellipsis;}
 .cw-umbrella {font-size:15px;color:var(--cw-accent);line-height:1;}
-.cw-hourly-label {display:flex;justify-content:space-between;align-items:center;gap:3px;margin-top:5px;padding-top:6px;border-top:1px solid color-mix(in srgb,var(--text-sec) 13%,transparent);height:18px;font-size:11px;font-weight:600;}
-.cw-hourly-label span:last-child {font-size:10px;font-weight:400;color:var(--cw-muted);}
-.cw-hours {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:67px;align-items:stretch;gap:2px;}
-.cw-hour {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;}
-.cw-hour .cw-icon {margin:0;display:block;flex-shrink:0;}
-.cw-time {color:var(--cw-muted);font-size:10px;font-variant-numeric:tabular-nums;}
-.cw-hour strong {font-weight:650;font-size:13px;font-variant-numeric:tabular-nums;}
+.cw-detail-nav {display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:5px;padding-top:6px;border-top:1px solid color-mix(in srgb,var(--text-sec) 13%,transparent);height:18px;box-sizing:content-box;}
+.cw-hourly-label {display:flex;justify-content:space-between;align-items:center;gap:3px;min-width:0;font-size:11px;font-weight:600;}
+.cw-hourly-label span:last-child {font-size:10px;font-weight:400;color:var(--cw-muted);white-space:nowrap;}
+.cw-detail-toggle {padding:2px 0 2px 5px!important;color:var(--cw-accent)!important;font-size:10px!important;white-space:nowrap;flex-shrink:0;}
+.cw-forecast-stage {height:67px;min-height:67px;overflow:hidden;animation:cw-view-in 180ms ease-out both;}
+.cw-hours,.cw-days {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:67px;align-items:stretch;gap:2px;}
+.cw-days {grid-template-columns:repeat(5,minmax(0,1fr));}
+.cw-hour,.cw-day {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;}
+.cw-hour .cw-icon,.cw-day .cw-icon {margin:0;display:block;flex-shrink:0;}
+.cw-time {color:var(--cw-muted);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.cw-hour strong,.cw-day strong {font-weight:650;font-size:13px;font-variant-numeric:tabular-nums;}
 .cw-prob {font-size:10px;color:var(--cw-accent);font-variant-numeric:tabular-nums;}
+.cw-day-low {font-size:10px;color:var(--cw-muted);font-variant-numeric:tabular-nums;}
 .cw-hour-empty {grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:var(--cw-muted);font-size:11px;}
 .cw-bottom {display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:2px;color:var(--cw-muted);font-size:9.5px;line-height:13px;min-width:0;}
 .cw-bottom>span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -73,6 +88,12 @@
 @keyframes cw-falling-snow {0%{opacity:0;transform:translateY(-2px)}35%{opacity:1}100%{opacity:0;transform:translateY(3px)}}
 @keyframes cw-fog-float {to{transform:translateX(2px);}}
 @keyframes cw-lightning-flash {0%,40%,42%,48%,100%{opacity:0}41%,44%{opacity:1}}
+@keyframes cw-sun-glow {to{opacity:.5;filter:saturate(1.18);}}
+@keyframes cw-cloud-haze {to{background-position:18px 4px,-12px -6px;opacity:.55;}}
+@keyframes cw-rain-sheet {to{background-position:0 48px;}}
+@keyframes cw-snow-sheet {to{background-position:16px 39px,5px 73px;}}
+@keyframes cw-storm-flash {0%,62%,64%,100%{opacity:0}63%{opacity:.48}}
+@keyframes cw-view-in {from{opacity:.55;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 
 /* 设置仍可编辑，但不再是查看天气的必经入口，不参与日历尺寸测量。 */
 .cw-settings-overlay {
@@ -105,5 +126,5 @@
 .cw-save {padding:5px!important;background:var(--accent)!important;color:#fff!important;border-radius:7px!important;}
 .cw-error {font-size:11px;color:#b34a3a;margin:0;}
 @media (prefers-reduced-motion: reduce) {
-  .cw-icon-live *, .calendar-weather {animation:none!important;transition:none!important;}
+  .cw-icon-live *, .calendar-weather::before,.calendar-weather::after,.cw-forecast-stage {animation:none!important;transition:none!important;}
 }
