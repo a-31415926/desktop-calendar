@@ -2,7 +2,7 @@ import { EnvironmentOutlined } from '@ant-design/icons';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import dayjs, { type Dayjs } from 'dayjs';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
   number, weatherCode, weatherIntensity,
   type SettingsResponse, type WeatherData,
@@ -34,9 +34,9 @@ function shanghaiMinutes(date: Date): number {
   return hour * 60 + minute;
 }
 
-interface CalendarWeatherHeroProps { selectedDate: Dayjs }
+interface CalendarWeatherHeroProps { selectedDate: Dayjs; children: ReactNode }
 
-export default function CalendarWeatherHero({ selectedDate }: CalendarWeatherHeroProps) {
+export default function CalendarWeatherHero({ selectedDate, children }: CalendarWeatherHeroProps) {
   const [config, setConfig] = useState<SettingsResponse | null>(null);
   const [data, setData] = useState<WeatherData | null>(null);
   const [clock, setClock] = useState(Date.now());
@@ -147,9 +147,10 @@ export default function CalendarWeatherHero({ selectedDate }: CalendarWeatherHer
         )}
         {scene === 'storm' && available && <div className="wh-lightning" />}
       </div>
+      <div className="wh-header-slot">{children}</div>
       <div className="wh-content" key={`${selectedKey}-${scene}-${night}`}>
         <div className="wh-eyebrow">
-          <span>{selectedDate.format('M月D日')} · {isToday ? '实时天气' : '日期预报'}</span>
+          <span>{isToday ? '实时天气' : '所选日期天气'}</span>
           <span className="wh-place"><EnvironmentOutlined />{place?.name || '上海'}</span>
         </div>
         <div className="wh-primary">
