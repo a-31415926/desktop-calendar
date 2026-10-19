@@ -23,10 +23,10 @@ const calendarFooterVisibleDefaults = {
 } satisfies CalendarFooterVisible;
 
 const configWindowsDefaults = {
-  desktopWidgetEnabled: true,
-  taskbarWidgetEnabled: true,
+  desktopWidgetEnabled: false,
+  taskbarWidgetEnabled: false,
   desktopWindowPosition: null,
-  customTrayClockEnabled: true,
+  customTrayClockEnabled: false,
   timeFormat: trayClockTimeFormats.HhMm,
   dateFormat: trayClockDateFormats.DddYmd,
 } satisfies ConfigWindows;

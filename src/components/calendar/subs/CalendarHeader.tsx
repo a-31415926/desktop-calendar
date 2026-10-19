@@ -4,7 +4,10 @@ import {
   PushpinOutlined,
   SettingOutlined,
   SunOutlined,
+  CloudOutlined,
 } from '@ant-design/icons';
+import { invoke } from '@tauri-apps/api/core';
+import { isDesktop } from '../../../utils/platform.ts';
 import { Tooltip } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Lunar } from 'lunar-typescript';
@@ -100,6 +103,7 @@ function CalendarHeader(): ReactElement {
       {/* 右侧操作区按按钮粒度控制，便于移动端与桌面端复用同一个头部组件。 */}
       {(showThemeButton || showPinButton || showSettingsButton || showCloseButton) && (
         <div className={styles.headerActions}>
+          {isDesktop && <Tooltip title="天气 · 左侧面板"><button className={styles.headerBtn} type="button" aria-label="打开天气" onClick={() => { void invoke('open_weather'); }}><CloudOutlined /></button></Tooltip>}
           {showThemeButton && (
             <Tooltip title={theme === 'light' ? '切换到暗色模式' : '切换到浅色模式'}>
               <button

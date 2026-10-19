@@ -24,12 +24,16 @@ pub fn setup_windows_tray(app_handle: &AppHandle, state: &State<'_, AppState>) {
                 .icon(default_icon.clone())
                 .menu(&tray_menu)
                 .show_menu_on_left_click(false)
-                .tooltip("松鼠日历")
-                .on_tray_icon_event(move |_tray, event| {
+                .tooltip("天气预览 · 点击打开左侧面板")
+                .on_tray_icon_event(move |tray, event| {
                     if let TrayIconEvent::Click { button, button_state, rect, .. } = event {
                         if button == TrayMouseButton::Left
                             && button_state == TrayMouseButtonState::Up
                         {
+                            if tray.app_handle().config().identifier.ends_with(".weather-preview") {
+                                crate::weather::request_open(tray.app_handle());
+                                return;
+                            }
                             // 提取点击坐标并执行弹窗切换。
                             let (click_x, click_y) = normalize_click_position(rect.position);
                             if toggle_popup_by_click(&shared_window_manager, click_x, click_y) {

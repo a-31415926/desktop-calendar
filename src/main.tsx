@@ -8,6 +8,7 @@ import MainWindow from './windows/MainWindow.tsx';
 import MobileWindow from './windows/mobile/MobileWindow.tsx';
 import PopupWindow from './windows/PopupWindow.tsx';
 import './global.css';
+import WeatherWindow from './weather/WeatherWindow.tsx';
 import { useWindowsTrayClockBootstrap } from './hooks/settings/useWindowsTrayClockBootstrap.ts';
 import { prepareSync } from './sync/base/crossWindowSync.ts';
 
@@ -19,6 +20,7 @@ const resolveWindow = (
   const params = new URLSearchParams(window.location.search);
   /** 桌面端会通过 window 参数区分 popup、desktop 等视图。 */
   const kind = params.get('window');
+  if (kind === 'weather') return <WeatherWindow />;
   if (kind === 'popup') {
     return <PopupWindow />;
   }
@@ -65,6 +67,10 @@ function App(): ReactElement {
 }
 
 /** 等配置同步系统准备完成后，再挂载 React 根节点。 */
-prepareSync().then(() => {
-  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<App />);
-});
+if (new URLSearchParams(window.location.search).get('window') === 'weather') {
+  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<WeatherWindow />);
+} else {
+  prepareSync().then(() => {
+    ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<App />);
+  });
+}

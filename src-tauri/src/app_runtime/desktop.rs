@@ -55,7 +55,7 @@ pub fn setup_desktop_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error:
     let app_handle = app.handle();
     let app_state: State<AppState> = app.state();
     #[cfg(windows)]
-    let show_startup_popup = !std::env::args().any(|arg| arg == "--autostart");
+    let show_startup_popup = false; // Side-by-side weather preview preserves the installed calendar.
 
     #[cfg(target_os = "macos")]
     {
@@ -100,8 +100,8 @@ pub fn setup_desktop_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error:
     #[cfg(windows)]
     {
         let persisted_config = super::config::load_persisted_feature_config(app_handle);
-        let desktop_widget_enabled = persisted_config.desktop_widget_enabled.unwrap_or(true);
-        let taskbar_widget_enabled = persisted_config.taskbar_widget_enabled.unwrap_or(true);
+        let desktop_widget_enabled = persisted_config.desktop_widget_enabled.unwrap_or(false);
+        let taskbar_widget_enabled = persisted_config.taskbar_widget_enabled.unwrap_or(false);
         app_state.desktop_widget_enabled.store(desktop_widget_enabled, Ordering::SeqCst);
         app_state.taskbar_widget_enabled.store(taskbar_widget_enabled, Ordering::SeqCst);
         apply_taskbar_widget_enabled(taskbar_widget_enabled);
@@ -161,6 +161,9 @@ pub fn setup_desktop_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error:
         }
     }
 
+    if !std::env::args().any(|a| a == "--autostart") {
+        crate::weather::request_open(app_handle);
+    }
     Ok(())
 }
 

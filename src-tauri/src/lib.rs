@@ -11,6 +11,8 @@ mod commands;
 mod menu;
 #[cfg(desktop)]
 mod window_manager;
+#[cfg(desktop)]
+mod weather;
 #[cfg(all(desktop, windows))]
 mod windows_hook;
 #[cfg(desktop)]
@@ -95,7 +97,11 @@ pub fn run() {
     let build_result = tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_single_instance::init(|app, _, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if args.iter().any(|a| a == "--weather") || app.config().identifier.ends_with(".weather-preview") {
+                weather::request_open(app);
+                return;
+            }
             // 单实例回调：如果尝试打开新实例，则聚焦现有窗口
             app_runtime::main_window::focus_first_webview_window(app);
         }))
@@ -137,7 +143,11 @@ pub fn run() {
             set_taskbar_widget_enabled_command,
             set_macos_vibrancy,
             open_main_window,
-            set_calendar_pin
+            set_calendar_pin,
+            weather::open_weather,
+            weather::weather_settings,
+            weather::weather_save_settings,
+            weather::weather_fetch
         ])
         .setup(|app| app_runtime::desktop::setup_desktop_app(app)) // 设置生命周期钩子
         .on_page_load(|window, _payload| app_runtime::desktop::on_page_load(window))
