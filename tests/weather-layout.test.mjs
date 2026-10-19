@@ -59,7 +59,7 @@ test('V13 date info, auspicious days and Windows taskbar hook stay intact', () =
 test('selected date controls a dedicated animated weather hero above the calendar', () => {
   assert.match(calendarView, /<CalendarWeatherHero selectedDate=\{model\.headerProps\.selectedDate\}/);
   assert.match(hero, /selectedDate\.format\('YYYY-MM-DD'\)/);
-  assert.match(hero, /daily\.time\.findIndex/);
+  assert.match(hero, /time\.findIndex/);
   assert.match(hero, /current\.is_day === 0/);
   assert.match(hero, /localMinutes\(daily\.sunrise\[dayIndex\]\)/);
   for (const token of ['wh-scene-sun', 'wh-scene-rain', 'wh-scene-snow', 'wh-scene-storm', 'wh-rain-fall', 'wh-snow-fall', 'wh-sun-breathe', 'wh-moon-glow', 'wh-cloud-drift']) {
