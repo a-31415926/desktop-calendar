@@ -24,7 +24,18 @@ export function weatherCode(code: number): [string, string] {
 export function number(value: number | null | undefined, suffix = ''): string {
   return value != null && Number.isFinite(value) ? `${Math.round(value)}${suffix}` : '—';
 }
-export function timestamp(value: string): number { return Date.parse(/[Zz]|[+-]\d\d:\d\d$/.test(value) ? value : `${value}+08:00`); }
+export function timestamp(value: string): number {
+  // Open-Meteo daily dates are date-only strings. Appending +08:00 directly
+  // creates an invalid timestamp in Chromium; normalize to Shanghai midnight.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return Date.parse(`${value}T00:00:00+08:00`);
+  return Date.parse(/[Zz]|[+-]\d\d:\d\d$/.test(value) ? value : `${value}+08:00`);
+}
+export type WeatherIntensity = 'light' | 'moderate' | 'heavy';
+export function weatherIntensity(code: number): WeatherIntensity {
+  if ([55, 57, 65, 67, 75, 82, 86, 99].includes(code)) return 'heavy';
+  if ([53, 56, 63, 66, 73, 81, 85, 96].includes(code)) return 'moderate';
+  return 'light';
+}
 export function timeLabel(value: string | number): string { const t = typeof value === 'number' ? value * 1000 : timestamp(value); return Number.isFinite(t) && t > 0 ? new Date(t).toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false }) : '—'; }
 export function ageLabel(time: number, now = Date.now()): string {
   if (!time) return '尚未获取';
