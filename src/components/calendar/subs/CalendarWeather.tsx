@@ -229,7 +229,7 @@ export default function CalendarWeather() {
             {daily.length ? daily.map((d, index) => (
               <div className="cw-day" role="listitem" key={d.time}>
                 <span className="cw-time">{index === 0 ? '今天' : new Date(timestamp(d.time)).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', weekday: 'short' })}</span>
-                <WeatherGlyph code={d.code} size={25} />
+                <WeatherGlyph code={d.code} size={20} />
                 <strong>{number(d.high, '°')}</strong>
                 <span className="cw-day-low">{number(d.low, '°')}</span>
                 <span className="cw-prob">{number(d.probability, '%')}</span>
