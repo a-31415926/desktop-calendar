@@ -4,8 +4,8 @@
   --wh-muted:#5f7183;
   position:relative;
   isolation:isolate;
-  height:88px;
-  min-height:88px;
+  height:102px;
+  min-height:102px;
   box-sizing:border-box;
   overflow:hidden;
   margin:7px 0 9px;
@@ -27,7 +27,13 @@
 }
 .wh-atmosphere {position:absolute;inset:0;overflow:hidden;pointer-events:none;animation:wh-scene-in 520ms ease-out both;}
 .wh-sky-glow {position:absolute;inset:-30%;opacity:.72;transition:opacity 600ms ease;animation:wh-glow-breathe 8s ease-in-out infinite alternate;}
-.wh-content {position:relative;z-index:3;display:flex;flex-direction:column;justify-content:center;gap:2px;height:100%;box-sizing:border-box;padding:9px 13px;min-width:0;animation:wh-copy-in 300ms cubic-bezier(.2,.7,.2,1) both;}
+.wh-header-slot {position:relative;z-index:3;height:44px;box-sizing:border-box;padding:0 13px;}
+.wh-header-slot > div {height:44px!important;margin-bottom:0!important;}
+.wh-header-slot > div > div:first-child > div:first-child {color:var(--wh-ink)!important;}
+.wh-header-slot > div > div:first-child > div:nth-child(2) {color:var(--wh-muted)!important;}
+.wh-header-slot button {background:rgba(255,255,255,.4)!important;border-color:rgba(255,255,255,.45)!important;color:var(--wh-muted)!important;}
+.wh-night .wh-header-slot button {background:rgba(255,255,255,.075)!important;border-color:rgba(255,255,255,.13)!important;color:var(--wh-muted)!important;}
+.wh-content {position:relative;z-index:3;display:flex;flex-direction:column;justify-content:center;gap:2px;height:58px;box-sizing:border-box;padding:0 13px 5px;min-width:0;animation:wh-copy-in 300ms cubic-bezier(.2,.7,.2,1) both;}
 .wh-eyebrow {display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;font-size:10px;letter-spacing:.1px;color:var(--wh-muted);}
 .wh-eyebrow>span:first-child {font-weight:650;white-space:nowrap;}
 .wh-place {display:flex;align-items:center;gap:3px;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -111,7 +117,7 @@
 @keyframes wh-lightning-flash {0%,41%,43%,70%,72%,100%{opacity:0}42%,71%{opacity:.24}}
 
 @media (max-width:430px) {
-  .calendar-weather-hero {height:84px;min-height:84px;}
+   .calendar-weather-hero {height:102px;min-height:102px;}
   .wh-content {padding:8px 10px;}
   .wh-primary>strong {font-size:16px;max-width:48%;}
   .wh-temperature {font-size:23px;}
