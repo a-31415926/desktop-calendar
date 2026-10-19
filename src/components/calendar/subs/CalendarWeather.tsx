@@ -207,7 +207,7 @@ export default function CalendarWeather() {
         <span className="cw-umbrella">☂</span><span>{stale ? '上次预报 · ' : ''}{summary}</span>
       </div>
       <div className="cw-detail-nav">
-        <div className="cw-hourly-label"><span>{detailView === 'hours' ? '接下来几小时' : '未来五天'}</span><span>{detailView === 'hours' ? '降雨概率' : '最高 / 最低'}</span></div>
+        <div className="cw-hourly-label"><span>{detailView === 'hours' ? '接下来几小时' : '未来五天'}</span><span>{detailView === 'hours' ? '降雨概率' : '高 / 低 · 雨概率'}</span></div>
         <button type="button" className="cw-detail-toggle" onClick={() => setDetailView(v => v === 'hours' ? 'days' : 'hours')} aria-label={detailView === 'hours' ? '查看未来五天天气' : '返回逐小时天气'} title={detailView === 'hours' ? '查看未来五天天气' : '返回逐小时天气'}>
           {detailView === 'hours' ? '未来几天 ›' : '‹ 逐小时'}
         </button>
