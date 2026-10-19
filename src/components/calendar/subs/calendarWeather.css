@@ -1,81 +1,109 @@
-
-/* V14.2: 天气是月历的附属信息，不可通过展开改变外层窗口尺寸。 */
+/* V14.3: 一眼可读的天气卡，固定占位，不再用点击和浮层才能看到小时预报。 */
 .calendar-weather {
-  --cw-blue:#587fa4;
-  margin-top:9px;
+  --cw-ink:var(--text-main);
+  --cw-muted:var(--text-sec);
+  --cw-accent:#528eb5;
   position:relative!important;
-  z-index:12!important;
-  overflow:visible!important;
+  z-index:2!important;
   min-width:0;
-  border:1px solid color-mix(in srgb, var(--text-sec) 18%, transparent);
+  overflow:visible;
+  margin-top:8px;
+  padding:8px 11px 7px;
+  border:1px solid color-mix(in srgb, var(--text-sec) 16%, transparent);
   border-radius:13px;
-  color:var(--text-main);
-  background:linear-gradient(125deg,
-    color-mix(in srgb, var(--card-bg) 91%, #c5dff5),
-    color-mix(in srgb, var(--card-bg) 96%, #e9f5ff));
+  color:var(--cw-ink);
   font-size:12px;
+  background:linear-gradient(125deg,
+    color-mix(in srgb, var(--card-bg) 93%, #d9eafb),
+    color-mix(in srgb, var(--card-bg) 90%, #ecf5ff));
+  transition:background-color 250ms ease;
 }
-.calendar-weather button { border:0; color:inherit; cursor:pointer; background:none; font:inherit; }
-.calendar-weather button:disabled { cursor:default; opacity:.65; }
-.calendar-weather button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:5px; }
-.calendar-weather-summary { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:42px 26px; column-gap:6px; align-items:center; padding:2px 11px 5px; min-width:0; }
-.cw-summary-main { display:flex; gap:7px; align-items:center; justify-self:start; padding:0; min-width:0; }
-.cw-current-temp { font-weight:650; font-size:22px; line-height:1.15; letter-spacing:-.7px; font-variant-numeric:tabular-nums; }
-.cw-condition { white-space:nowrap; font-size:12px; color:var(--text-sec); }
-.cw-collapse-arrow { color:var(--text-sec); font-size:9px; opacity:.65; margin-left:3px; }
-.cw-place { display:flex; gap:4px; align-items:center; justify-content:flex-end; padding:4px 0; font-size:11px; min-width:0; max-width:132px; color:var(--text-sec)!important; }
-.cw-place>span:first-of-type { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.cw-switch { font-size:13px; color:var(--accent); }
-.cw-rain-summary { grid-column:1 / -1; display:flex; align-items:center; text-align:left; width:100%; min-width:0; gap:7px; padding:0; color:var(--text-sec)!important; font-size:11px!important; }
-.cw-rain-drop { font-size:15px; color:#5a95c0; }
-.cw-rain-summary>span:nth-child(2) { min-width:0; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.cw-more { flex-shrink:0; color:var(--accent); opacity:.85; }
-.cw-glyph { flex-shrink:0; display:block; overflow:visible; }
-.calendar-weather-popover {
+.calendar-weather.cw-scene-sun {background:linear-gradient(125deg,color-mix(in srgb,var(--card-bg) 88%,#fff1d7),color-mix(in srgb,var(--card-bg) 93%,#ffefd9));}
+.calendar-weather.cw-scene-cloud-sun {background:linear-gradient(125deg,color-mix(in srgb,var(--card-bg) 90%,#e7edf7),color-mix(in srgb,var(--card-bg) 93%,#fff2dc));}
+.calendar-weather.cw-scene-rain,.calendar-weather.cw-scene-storm {background:linear-gradient(125deg,color-mix(in srgb,var(--card-bg) 87%,#bfd6ea),color-mix(in srgb,var(--card-bg) 95%,#c9e1ee));}
+.calendar-weather.cw-scene-snow {background:linear-gradient(125deg,color-mix(in srgb,var(--card-bg) 84%,#e1f4ff),color-mix(in srgb,var(--card-bg) 95%,#ffffff));}
+.calendar-weather button {border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;}
+.calendar-weather button:disabled {cursor:default;opacity:.55;}
+.calendar-weather button:focus-visible {outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
+.cw-main {height:43px;display:flex;align-items:center;justify-content:space-between;gap:3px;}
+.cw-now {display:flex;align-items:center;gap:6px;min-width:0;}
+.cw-current {display:flex;align-items:baseline;gap:6px;}
+.cw-current strong {font-size:22px;line-height:1;font-weight:650;letter-spacing:-.75px;font-variant-numeric:tabular-nums;}
+.cw-current span {font-size:12px;white-space:nowrap;color:var(--cw-muted);}
+.cw-actions {display:flex;align-items:center;gap:2px;min-width:0;flex-shrink:1;}
+.cw-location {display:flex;align-items:center;justify-content:flex-end;gap:4px;max-width:130px;padding:4px 0;min-width:0;color:var(--cw-muted)!important;font-size:11px!important;}
+.cw-location span:first-of-type {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cw-location .anticon {flex-shrink:0;}
+.cw-arrows {font-size:14px;color:var(--cw-accent);font-weight:650;}
+.cw-settings-trigger {width:23px;height:25px;display:grid;place-items:center;color:var(--cw-muted)!important;flex-shrink:0;}
+.cw-settings-trigger:hover {color:var(--accent)!important;}
+.cw-rain-banner {height:23px;display:flex;align-items:center;gap:7px;white-space:nowrap;min-width:0;color:var(--cw-muted);font-size:11px;}
+.cw-rain-banner span:last-child {overflow:hidden;text-overflow:ellipsis;}
+.cw-umbrella {font-size:15px;color:var(--cw-accent);line-height:1;}
+.cw-hourly-label {display:flex;justify-content:space-between;align-items:center;gap:3px;margin-top:5px;padding-top:6px;border-top:1px solid color-mix(in srgb,var(--text-sec) 13%,transparent);height:18px;font-size:11px;font-weight:600;}
+.cw-hourly-label span:last-child {font-size:10px;font-weight:400;color:var(--cw-muted);}
+.cw-hours {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:67px;align-items:stretch;gap:2px;}
+.cw-hour {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;}
+.cw-hour .cw-icon {margin:0;display:block;flex-shrink:0;}
+.cw-time {color:var(--cw-muted);font-size:10px;font-variant-numeric:tabular-nums;}
+.cw-hour strong {font-weight:650;font-size:13px;font-variant-numeric:tabular-nums;}
+.cw-prob {font-size:10px;color:var(--cw-accent);font-variant-numeric:tabular-nums;}
+.cw-hour-empty {grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:var(--cw-muted);font-size:11px;}
+.cw-bottom {display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:2px;color:var(--cw-muted);font-size:9.5px;line-height:13px;min-width:0;}
+.cw-bottom>span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cw-bottom button {color:var(--accent);flex-shrink:0;font-size:11px;padding:0 3px;}
+
+/* 当前天气独享动态 SVG，小时预报图标保持静态以节省 CPU/GPU。 */
+.cw-icon {overflow:visible;flex-shrink:0;display:block;}
+.cw-icon-live .cw-sun-rays {transform-origin:23px 23px;animation:cw-sun-turn 45s linear infinite;}
+.cw-icon-live .cw-cloud-front {animation:cw-cloud-float 6s ease-in-out infinite alternate;}
+.cw-icon-live .cw-cloud-back {animation:cw-cloud-back 8.5s ease-in-out infinite alternate;}
+.cw-icon-live .cw-drop {animation:cw-falling-rain 1.5s ease-in infinite;transform-box:fill-box;transform-origin:center;}
+.cw-icon-live .cw-drop-2 {animation-delay:-.65s;}
+.cw-icon-live .cw-drop-3 {animation-delay:-1.15s;}
+.cw-icon-live .cw-flake {animation:cw-falling-snow 4.5s ease-in infinite;}
+.cw-icon-live .cw-flake-2 {animation-delay:-1.5s;}
+.cw-icon-live .cw-flake-3 {animation-delay:-3s;}
+.cw-icon-live .cw-fog-lines {animation:cw-fog-float 5s ease-in-out infinite alternate;}
+.cw-icon-live .cw-lightning {animation:cw-lightning-flash 6s step-end infinite;}
+@keyframes cw-sun-turn {to{transform:rotate(360deg);}}
+@keyframes cw-cloud-float {to{transform:translateX(1.6px);}}
+@keyframes cw-cloud-back {to{transform:translateX(-1.7px);}}
+@keyframes cw-falling-rain {0%{opacity:0;transform:translateY(-2px)}35%{opacity:1}100%{opacity:0;transform:translateY(4px)}}
+@keyframes cw-falling-snow {0%{opacity:0;transform:translateY(-2px)}35%{opacity:1}100%{opacity:0;transform:translateY(3px)}}
+@keyframes cw-fog-float {to{transform:translateX(2px);}}
+@keyframes cw-lightning-flash {0%,40%,42%,48%,100%{opacity:0}41%,44%{opacity:1}}
+
+/* 设置仍可编辑，但不再是查看天气的必经入口，不参与日历尺寸测量。 */
+.cw-settings-overlay {
   box-sizing:border-box;
   position:absolute;
-  z-index:40;
-  bottom:calc(100% + 8px);
+  z-index:45;
+  bottom:calc(100% + 6px);
   left:-1px;
   right:-1px;
   max-height:290px;
   overflow-y:auto;
   overscroll-behavior:contain;
   touch-action:pan-y;
-  border:1px solid color-mix(in srgb, var(--text-sec) 24%, transparent);
-  border-radius:14px;
-  background:color-mix(in srgb, var(--mica-bg) 88%, #ecf4ff);
-  color:var(--text-main);
-  box-shadow:0 12px 32px rgba(37,62,86,.19),0 1px 5px rgba(37,62,86,.05);
-  backdrop-filter:blur(22px);
-  -webkit-backdrop-filter:blur(22px);
-  padding:13px 11px 9px;
-  animation:cw-pop-in 140ms ease-out both;
+  border-radius:13px;
+  padding:12px;
+  border:1px solid color-mix(in srgb,var(--text-sec) 22%,transparent);
+  background:color-mix(in srgb,var(--mica-bg) 92%,#e5effc);
+  box-shadow:0 12px 30px rgba(23,45,72,.19);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
 }
-@keyframes cw-pop-in {from{opacity:.2;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.cw-pop-heading { display:flex; justify-content:space-between; align-items:center; gap:4px; margin-bottom:11px; font-size:14px; }
-.cw-location-label { font-size:11px; color:var(--text-sec); font-weight:400; }
-.cw-pop-actions { display:flex; gap:4px; }
-.cw-pop-actions button { width:25px; height:25px; border-radius:7px; color:var(--text-sec); }
-.cw-pop-actions button:hover { background:rgba(100,146,180,.13); color:var(--accent); }
-.cw-rain-notice { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:9px; background:rgba(97,156,206,.10); font-size:12px; line-height:1.45; }
-.cw-rain-icon { font-size:17px; color:#6395bd; }
-.cw-hourly-caption { display:flex; align-items:center; justify-content:space-between; margin:13px 0 9px; color:var(--text-main); font-size:12px; font-weight:600; }
-.cw-hourly-caption>span { color:var(--text-sec); font-size:10px; font-weight:400; }
-.cw-hourly-list { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:1px; }
-.cw-hour { display:flex; flex-direction:column; align-items:center; gap:6px; padding:1px 0 6px; min-width:0; }
-.cw-hour-time { font-size:10px; color:var(--text-sec); font-variant-numeric:tabular-nums; }
-.cw-hour strong { font-size:14px; font-weight:650; font-variant-numeric:tabular-nums; }
-.cw-hour-rain { color:var(--cw-blue); font-size:10px; white-space:nowrap; }
-.cw-footnote { border-top:1px solid color-mix(in srgb,var(--text-sec) 15%, transparent); margin-top:9px; padding-top:6px; display:flex; justify-content:space-between; gap:5px; color:var(--text-sec); font-size:10px; }
-.cw-footnote button { color:var(--accent); padding:0; flex-shrink:0; }
-.cw-provider-note { margin-top:4px; color:var(--text-sec); font-size:10px; opacity:.75; }
-.cw-empty { grid-column:1 / -1; text-align:center; color:var(--text-sec); font-size:11px; }
-.cw-caption { color:var(--text-sec); font-size:11px; line-height:1.4; margin:4px 0; }
-.cw-settings { display:flex; flex-direction:column; gap:8px; }
-.cw-settings label { display:flex; flex-direction:column; gap:3px; font-size:11px; min-width:0; }
-.cw-settings input { background:var(--card-bg); color:var(--text-main); border:1px solid color-mix(in srgb,var(--text-sec) 30%,transparent); border-radius:5px; padding:4px 5px; min-width:0; width:100%; box-sizing:border-box; }
-.cw-setting-row { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:6px; }
-.cw-save { padding:6px!important; border-radius:7px!important; background:var(--accent)!important; color:#fff!important; }
-.cw-error { color:#bc5844; font-size:11px; }
-@media (prefers-reduced-motion: reduce) {.calendar-weather-popover{animation:none;}}
+.cw-settings {display:flex;flex-direction:column;gap:7px;}
+.cw-settings-heading {display:flex;justify-content:space-between;align-items:center;}
+.cw-settings-heading strong {font-size:14px;}
+.cw-settings-heading button {font-size:13px;}
+.cw-settings label {display:flex;flex-direction:column;gap:2px;font-size:11px;min-width:0;}
+.cw-settings input {width:100%;min-width:0;box-sizing:border-box;border-radius:5px;border:1px solid color-mix(in srgb,var(--text-sec) 25%,transparent);background:var(--card-bg);color:var(--text-main);padding:4px 5px;}
+.cw-helper {margin:0;color:var(--cw-muted);font-size:10.5px;line-height:1.4;}
+.cw-place-editor {display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:5px;}
+.cw-save {padding:5px!important;background:var(--accent)!important;color:#fff!important;border-radius:7px!important;}
+.cw-error {font-size:11px;color:#b34a3a;margin:0;}
+@media (prefers-reduced-motion: reduce) {
+  .cw-icon-live *, .calendar-weather {animation:none!important;transition:none!important;}
+}

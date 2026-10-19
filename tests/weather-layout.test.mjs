@@ -1,29 +1,39 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const component=readFileSync('src/components/calendar/subs/CalendarWeather.tsx','utf8');
+const view=readFileSync('src/components/calendar/subs/CalendarWeather.tsx','utf8');
 const css=readFileSync('src/components/calendar/subs/calendarWeather.css','utf8');
 const footer=readFileSync('src/components/calendar/subs/CalendarFooter.tsx','utf8');
-const hook=readFileSync('src-tauri/src/app_runtime/windows/hook_runtime.rs','utf8');
+const taskbar=readFileSync('src-tauri/src/app_runtime/windows/hook_runtime.rs','utf8');
+const config=readFileSync('src-tauri/src/app_runtime/config.rs','utf8');
 
-test('weather details are an absolute overlay, not an expanding layout block', () => {
-  assert.match(css, /\.calendar-weather-popover\s*\{[^}]*position:\s*absolute/s);
-  assert.match(css, /bottom:\s*calc\(100% \+ 8px\)/);
-  assert.match(component,/className="calendar-weather-popover"/);
-  assert.doesNotMatch(css, /\.calendar-weather-popover\s*\{[^}]*position:\s*relative/s);
+test('hourly forecast is permanently visible, with no detail toggle', () => {
+  assert.match(view, /className="cw-hours"/);
+  assert.match(view, /className="cw-hourly-label"/);
+  assert.doesNotMatch(view, /setExpanded|calendar-weather-popover/);
+  assert.doesNotMatch(css, /\.calendar-weather-popover/);
 });
-test('hourly chance is described as a probability, not a rain guarantee', () => {
-  assert.match(component,/逐小时降雨概率/);
-  assert.match(component,/降雨概率/);
-  assert.match(component,/rainIsFresh/);
+test('weather card has a stable non-expanding footprint', () => {
+  assert.match(css, /\.cw-hours\s*\{[^}]*height:67px/s);
+  assert.match(css, /\.cw-main\s*\{[^}]*height:43px/s);
+  assert.match(css, /\.cw-rain-banner\s*\{[^}]*height:23px/s);
+  assert.match(css, /\.cw-settings-overlay\s*\{[^}]*position:absolute/s);
 });
-test('V13 date info, 宜忌, taskbar clock listener are retained', () => {
-  assert.match(footer,/日期信息/);
-  assert.match(footer,/今日宜忌/);
-  assert.match(footer,/距今天/);
-  assert.match(hook,/handle_left_click/);
+test('weather has differentiated motion with reduced-motion support', () => {
+  for(const token of ['cw-sun-turn','cw-cloud-float','cw-falling-rain','cw-falling-snow','cw-fog-float','cw-lightning-flash']) {
+    assert.match(css, new RegExp(token));
+  }
+  assert.match(css, /prefers-reduced-motion: reduce/);
+  assert.match(view, /animated\s+night=/);
 });
-test('weather overlay closes outside and by Escape', () => {
-  assert.match(component,/pointerdown/);
-  assert.match(component,/Escape/);
+test('hourly precipitation probability is labeled, not claimed as rain amount', () => {
+  assert.match(view, /降雨概率/);
+  assert.match(view, /雨概率最高/);
+  assert.match(view, /rainIsFresh/);
+  assert.match(view, /Open-Meteo/);
+});
+test('V13 date info, auspicious days and Windows taskbar hook stay intact', () => {
+  for(const token of ['日期信息','今日宜忌','距今天']) assert.match(footer,new RegExp(token));
+  assert.match(taskbar, /handle_left_click/);
+  assert.match(config,/restore_v13_preferences_once/);
 });
