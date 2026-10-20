@@ -254,7 +254,16 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
         .user_agent("DesktopCalendar/1.1.0")
         .build()
         .map_err(|_| "无法初始化天气连接")?;
-    if !fresh(cache.forecast_attempt, 60) && (force || !fresh(cache.forecast_fetched_at, 1800)) {
+    // V14.5 requests seven days. The shared V14 cache may still contain the
+    // previous three-day payload; refresh it rather than displaying only three days.
+    let old_short_forecast = cache
+        .forecast
+        .as_ref()
+        .and_then(|v| v["daily"]["time"].as_array())
+        .map_or(true, |days| days.len() < 7);
+    if !fresh(cache.forecast_attempt, 60)
+        && (force || old_short_forecast || !fresh(cache.forecast_fetched_at, 1800))
+    {
         cache.forecast_attempt = now();
         let result = get_json(client.get("https://api.open-meteo.com/v1/forecast").query(&[
             ("latitude", location.latitude.to_string()), ("longitude", location.longitude.to_string()),
