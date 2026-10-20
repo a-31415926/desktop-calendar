@@ -77,6 +77,7 @@ function CalendarMonthGrid(): ReactElement {
               })}
               onClick={() => onSelectDate(cell.date)}
             >
+              {cell.isToday&&<span className="calendar-today-mark" aria-label="今天">今</span>}
               {cell.badgeText && (
                 <span data-holiday-badge className={classNames(styles.tag, badgeClass)}>{cell.badgeText}</span>
               )}

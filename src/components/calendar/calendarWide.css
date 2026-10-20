@@ -663,3 +663,18 @@
  [data-calendar-layout="wide"] .calendar-cell-weather {font-size:11px;gap:0;}
  [data-calendar-layout="wide"] .calendar-cell-weather svg {width:13px;height:13px;}
 }
+/* V14.14: readable night hero on the shared window surface. */
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {--wh-ink:var(--text-main)!important;--wh-muted:var(--text-sec)!important;color:var(--text-main);}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-weather-hero.wh-night .wh-moon {background:transparent;box-shadow:inset -8px -3px 0 #d5b66a;}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-weather-hero.wh-night .wh-moon::after {display:none;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air[data-aqi-risk] {background:var(--aqi-bg,rgba(255,255,255,.27));border-color:var(--aqi-border,rgba(96,119,140,.16));}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air[data-aqi-risk] strong {color:var(--aqi-ink,var(--text-main));}
+.cw-glance-air[data-aqi-risk="good"] {--aqi-bg:#e6f4eacc;--aqi-ink:#236b45;--aqi-border:#82b794;}
+.cw-glance-air[data-aqi-risk="fair"] {--aqi-bg:#fff1cacc;--aqi-ink:#795000;--aqi-border:#d6b354;}
+.cw-glance-air[data-aqi-risk="light"] {--aqi-bg:#ffe7cfcc;--aqi-ink:#8a3b07;--aqi-border:#db9d64;}
+.cw-glance-air[data-aqi-risk="moderate"] {--aqi-bg:#ffe2e1cc;--aqi-ink:#a42626;--aqi-border:#d68c88;}
+.cw-glance-air[data-aqi-risk="heavy"] {--aqi-bg:#efdff5cc;--aqi-ink:#71377e;--aqi-border:#b28bbb;}
+.cw-glance-air[data-aqi-risk="severe"] {--aqi-bg:#eedcdccc;--aqi-ink:#79252c;--aqi-border:#a77378;}
+.cw-uv-guidance {grid-column:1/-1;margin:2px 0 0;font-size:11px;line-height:16px;color:var(--text-sec);}
+[data-calendar-layout="wide"] [data-month-nav] .calendar-back-today {width:auto!important;min-width:86px!important;height:28px!important;padding:0 9px!important;border-radius:7px;background:#176fb8!important;color:#fff!important;font-size:13px;font-weight:650;}
+.calendar-today-mark {position:absolute;left:3px;top:3px;min-width:14px;height:14px;line-height:14px;text-align:center;font-size:10px;font-weight:700;border-radius:4px;background:#fff;color:#176fb8;}

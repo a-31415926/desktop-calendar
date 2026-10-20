@@ -37,3 +37,10 @@ export function commuteSummary(f:Forecast|null,now=Date.now()):string|null {
   const from=timeLabel(rows[0].t),to=timeLabel(rows[rows.length-1].t);
   return `${next?'明日':'今日'} ${from}${from!==to?'–'+to:''} · ${temps.length?number(Math.min(...temps))+'–'+number(Math.max(...temps))+'°':'温度暂无'} · ${ps.length?'降雨概率最高 '+number(Math.max(...ps),'%'):'降雨概率暂无'}`;
 }
+
+/** Chinese AQI bands only; unknown or foreign scales stay neutral. */
+export function chineseAirBand(air:AirIndex|null) {
+  if(!air||air.code!=='cn-mee'||air.aqi==null||!Number.isFinite(air.aqi)||air.aqi<0)return {risk:'unknown',label:air?.category??'数据暂缺'};
+  const n=air.aqi;
+  return n<=50?{risk:'good',label:'优'}:n<=100?{risk:'fair',label:'良'}:n<=150?{risk:'light',label:'轻度污染'}:n<=200?{risk:'moderate',label:'中度污染'}:n<=300?{risk:'heavy',label:'重度污染'}:{risk:'severe',label:'严重污染'};
+}

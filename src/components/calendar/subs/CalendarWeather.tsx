@@ -7,7 +7,7 @@ import {
   ageLabel, number, timeLabel, weatherCode,
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
-import { localAir, extraIsFresh } from '../../../weather/extras.ts';
+import { localAir, extraIsFresh, chineseAirBand } from '../../../weather/extras.ts';
 import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeather.ts';
 import {selectedForecast} from '../../../weather/selectedForecast.ts';
 import {dayWeatherFacts} from '../../../weather/dayWeatherFacts.ts';
@@ -193,17 +193,19 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
         {provider==='qweather' && (() => {
           const air=localAir(data?.extras?.air);
           const fresh=extraIsFresh(data?.extras?.air,clock,60*60000);
-          return <div className={'cw-glance-air'+(!fresh?' is-stale':'')}>
+          const band=chineseAirBand(air);
+          return <div className={'cw-glance-air'+(!fresh?' is-stale':'')} data-aqi-risk={band.risk}>
             <span className="cw-glance-label">当前空气质量</span>
-            <strong>{air ? `AQI ${number(air.aqi)} · ${air.category}` : '数据暂缺'}</strong>
+            <strong>{air ? `AQI ${number(air.aqi)} · ${band.label}` : '数据暂缺'}</strong>
             {air?.primaryPollutant?.name && air.aqi!=null && air.aqi>100 && <span className="cw-glance-pollutant">首要污染物：{air.primaryPollutant.name}</span>}
             {air && !fresh && <span className="cw-glance-stale">旧数据</span>}
           </div>;
         })()}
         {facts&&<div className={"cw-day-facts"+(facts.today?"":" cw-day-facts-future")} aria-label={`${selectedDate.format('M月D日')}天气要点`}>
-          <div title={`${facts.uvCategory?`和风等级：${facts.uvCategory}${facts.uvCached?'（缓存）':''}。`:''}${facts.uvProtection.tip}`}><span>紫外线指数</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${number(facts.uv)} · ${facts.uvProtection.label}`:facts.uvProtection.label}</strong></div>
+          <div title={`${facts.uvCategory?`和风等级：${facts.uvCategory}${facts.uvCached?'（缓存）':''}。`:''}${facts.uvProtection.tip}`}><span>{facts.today?'今日最高UV':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${number(facts.uv)} · ${facts.uvProtection.strength}`:facts.uvProtection.label}</strong></div>
           <div><span>{facts.today?'当前风速':'最大风速'}</span><strong>{number(facts.wind,' km/h')}</strong></div>
           {facts.today&&<div><span>空气湿度</span><strong>{number(facts.humidity,'%')}</strong></div>}
+          <p className="cw-uv-guidance">{facts.uvProtection.tip}</p>
         </div>}
         <div className="cw-glance-forecast">
           <div className="cw-glance-heading"><span>{selected.isToday?'接下来几小时':hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span>{stale?'预报可能已过期':'逐小时预报'}</span>}</div>

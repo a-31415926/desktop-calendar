@@ -4,10 +4,12 @@ const finite=(n:number|null|undefined)=>n!=null&&Number.isFinite(n)?n:null;
 // WHO recommends sun protection at UVI >= 3; this uses UVI, never the life-index level.
 // https://www.who.int/news-room/questions-and-answers/item/radiation-the-ultraviolet-(uv)-index/
 export function uvProtection(value:number|null|undefined) {
-  if(value==null||!Number.isFinite(value)||value<0)return {risk:'unknown',label:'指数暂缺',tip:'暂无可靠紫外线指数，不能判断防护需求'};
-  if(value<3)return {risk:'low',label:'低',tip:'紫外线指数较低，按外出时间和个人需要防护'};
-  if(value<8)return {risk:value<6?'moderate':'high',label:'需防晒',tip:'午间尽量在阴凉处，使用遮阳帽、防护衣物和防晒霜'};
-  return {risk:value<11?'very-high':'extreme',label:'加强防晒',tip:'避免午间暴晒，使用遮阳帽、防护衣物和防晒霜'};
+  if(value==null||!Number.isFinite(value)||value<0)return {risk:'unknown',strength:'未知',label:'指数暂缺',tip:'指数暂缺，无法判断防护需求'};
+  if(value<3)return {risk:'low',strength:'低',label:'低',tip:'强度较低，按外出时间和个人需要防护'};
+  if(value<6)return {risk:'moderate',strength:'中等',label:'需防晒',tip:'外出防晒，午间遮阴，可用帽子和防晒霜'};
+  if(value<8)return {risk:'high',strength:'高',label:'需防晒',tip:'加强防晒，减少暴晒，遮阳帽和防护衣物配合防晒霜'};
+  if(value<11)return {risk:'very-high',strength:'很高',label:'加强防晒',tip:'尽量避免午间暴晒，外出做好遮挡和防晒'};
+  return {risk:'extreme',strength:'极高',label:'加强防晒',tip:'尽量避开强日照时段，必须外出时充分遮挡和防晒'};
 }
 // China Weather's five UV intensity bands, not the QWeather life-index level number.
 // https://js.weather.com.cn/qxkp/rdzt/08/1952286.shtml

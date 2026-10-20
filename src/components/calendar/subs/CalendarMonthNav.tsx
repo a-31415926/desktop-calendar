@@ -28,7 +28,8 @@ export interface CalendarMonthNavProps {
  * 年月标题与「今天」、上/下月切换控件（数据来自 `CalendarViewContext`）。
  */
 function CalendarMonthNav(): ReactElement {
-  const { navProps } = useCalendarViewContext();
+  const { navProps, gridProps } = useCalendarViewContext();
+  const awayFromToday=!gridProps.cellModels.some(cell=>cell.isToday&&cell.isSelected);
   const { styles, panelMonth, onGoToToday, onPrevMonth, onNextMonth } = navProps;
   const wheelDeltaRef = useRef(0);
   const wheelLockUntilRef = useRef(0);
@@ -91,13 +92,14 @@ function CalendarMonthNav(): ReactElement {
         <Tooltip title="回到今天">
           <Button
             autoInsertSpace={false}
-            className={classNames(styles.navBtn, styles.todayBtn)}
+            className={classNames(styles.navBtn, styles.todayBtn, {'calendar-back-today':awayFromToday})}
+            aria-label="回到今天"
             size="small"
             type="text"
             shape="circle"
             onClick={onGoToToday}
           >
-            今
+            {awayFromToday?'回到今天':'今'}
           </Button>
         </Tooltip>
         <Tooltip title="上个月">
