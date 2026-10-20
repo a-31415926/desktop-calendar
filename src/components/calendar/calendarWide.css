@@ -488,3 +488,121 @@
 @media (prefers-reduced-motion:reduce) {
   .weather-atmosphere-layer {animation:none!important;transition:none!important;}
 }
+
+
+/* V14.10 glance-first weather panel: no scrolling detail list or nested detail popups. */
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-header,
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-columns,
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather,
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-calendar {
+  background:transparent!important;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather {
+  z-index:1;
+  border-right:1px solid rgba(91,112,132,.18);
+}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-calendar {z-index:1;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-calendar-footer] {background:transparent;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {
+  background:rgba(255,255,255,.13);
+  border-color:rgba(95,119,139,.14);
+  backdrop-filter:blur(2px);
+}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell][class*="today"],
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell][aria-current="date"] {
+  background:var(--accent);
+}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {
+  background:transparent!important;
+  border-radius:0;
+  flex-basis:146px;
+  height:146px;
+  min-height:146px;
+  box-shadow:none;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .wh-content {
+  background:rgba(255,255,255,.14);
+  backdrop-filter:blur(1px);
+}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .wh-fog-band {
+  opacity:.6;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance {
+  display:flex;flex-direction:column;gap:10px;
+  padding:12px 13px 10px;min-height:0;flex:1 1 auto;
+  color:var(--text-main);overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.03));
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-alert {
+  display:flex;align-items:flex-start;gap:7px;padding:8px 9px;border-radius:9px;
+  font-size:12px;line-height:1.45;font-weight:600;
+  background:rgba(220,166,64,.19);border-left:3px solid #cb983c;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-alert-official {
+  background:rgba(213,93,64,.17);border-left-color:#c85c43;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-alert-mark {flex:0 0 auto;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-status {
+  padding:7px 8px;border-radius:8px;background:rgba(115,133,151,.13);
+  font-size:11px;line-height:1.45;color:var(--text-sec);
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-error {
+  color:#9e3b2d;background:rgba(201,74,54,.12);
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air {
+  display:flex;flex-direction:column;gap:4px;padding:10px;
+  border:1px solid rgba(96,119,140,.16);border-radius:10px;
+  background:rgba(255,255,255,.27);backdrop-filter:blur(3px);
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-label,
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-heading {
+  font-size:11px;color:var(--text-sec);
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air strong {font-size:15px;font-weight:650;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-pollutant,
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-stale {font-size:10px;color:var(--text-sec);}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-stale {color:#a15d20;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-forecast {
+  padding-top:9px;border-top:1px solid rgba(96,119,140,.2);min-height:0;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-heading {
+  display:flex;justify-content:space-between;gap:5px;margin-bottom:9px;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hours {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour {
+  min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:4px 1px;border-radius:7px;background:rgba(255,255,255,.12);
+  font-size:10px;color:var(--text-sec);
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour strong {
+  font-size:14px;color:var(--text-main);font-weight:600;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour small {font-size:9px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-empty {
+  grid-column:1/-1;font-size:11px;color:var(--text-sec);padding:10px 0;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-bottom {
+  margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:5px;
+  font-size:9px;color:var(--text-sec);border-top:1px solid rgba(96,119,140,.16);padding-top:7px;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-bottom button {
+  flex:0 0 auto;border:0;background:rgba(255,255,255,.22);border-radius:6px;
+  width:25px;height:25px;cursor:pointer;color:inherit;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-bottom button:disabled {opacity:.45;}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-weather-atmosphere {border-radius:inherit;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell]:hover {
+  background:rgba(255,255,255,.42);
+}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell][class*="today"]:hover {
+  background:var(--accent);
+}
+@media (prefers-reduced-transparency:reduce) {
+  [data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air,
+  [data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour,
+  [data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {
+    backdrop-filter:none;
+  }
+}
