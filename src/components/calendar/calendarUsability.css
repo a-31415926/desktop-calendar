@@ -37,7 +37,7 @@
 .cw-unified .cw-location {font-size:12px!important;max-width:170px;}
 .cw-unified .cw-life-toggle {display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:4px 0;font-size:12px;color:var(--cw-muted);text-align:left;}
 .cw-life-panel {border-top:1px solid #8c9dad30;padding-top:5px;font-size:12px;line-height:1.5;}
-.cw-details {max-height:max(140px,calc(var(--calendar-max-height,100dvh) - 230px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;}
+.cw-details {max-height:min(360px,max(110px,calc(var(--calendar-max-height,100dvh) - 350px)));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;}
 .cw-forecast-toggle {display:block;width:100%;padding:4px 0!important;text-align:left;font-size:12px!important;color:var(--cw-accent)!important;}
 .cw-life-panel {max-height:240px;overflow-y:auto;overscroll-behavior:contain;}
 .cw-life-panel p {margin:4px 0;}
