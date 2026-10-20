@@ -165,8 +165,6 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
   };
 
   const place = config?.settings.locations[config.settings.selected];
-  const selectedKey = selectedDate.format('YYYY-MM-DD');
-  const isToday = selectedKey === dateKey(clock);
   const hours = hourlyRows(data?.forecast ?? null, clock).slice(0,4);
   const stale = !!data?.forecast && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
   const provider = data?.provider ?? config?.settings.provider ?? 'qweather';
