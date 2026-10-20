@@ -7,7 +7,7 @@ import {
   ageLabel, futureRain, hourlyRows, selectedHours, dateKey, number, rainIsFresh, timeLabel, timestamp, weatherCode,
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
-import { commuteSummary } from '../../../weather/extras.ts';
+import { commuteSummary, localAir, activeAlerts, extraIsFresh } from '../../../weather/extras.ts';
 import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeather.ts';
 import CalendarWeatherExtras from './CalendarWeatherExtras.tsx';
 import CalendarWeatherHero from './CalendarWeatherHero.tsx';
@@ -219,59 +219,45 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
           </button>
         </div>
       }>{children}</CalendarWeatherHero>
-      <div className="cw-details">
-      {attention && <details className={'cw-attention cw-attention-'+attention.kind}><summary>{attention.kind==='official'?'官方预警 · ':''}{attention.title}{attention.count>1?`（共${attention.count}条）`:''}{attention.kind==='official'&&attention.detail&&<small className="cw-alert-impact">{attention.detail.split('\n')[0]}</small>}</summary><p>{attention.detail}</p></details>}
-      {provider === 'qweather' && <CalendarWeatherExtras data={data} clock={clock}/>}
-      <div className="cw-rain-banner" title={nowcast ? '和风天气每五分钟降雨临近预报' : '降水概率参考，不代表一定降雨'}>
-        <span className="cw-umbrella">☂</span><span>{stale ? '上次预报 · ' : ''}{summary}</span>
-        {nowcast && <div className="cw-mini-rain" aria-label="未来两小时每五分钟累计降水量">{rainPoints.map(p => <i key={p.fxTime} title={timeLabel(p.fxTime) + ' · ' + p.precip + '毫米/5分钟'} style={{height: Math.min(18, 2 + Number(p.precip) * 12) + 'px'}}/>)}</div>}
-      </div>
-      <button className="cw-forecast-toggle" type="button" aria-expanded={forecastExpanded} onClick={() => setForecastChoice(!forecastExpanded)}>{forecastExpanded ? '收起预报 ▴' : '六小时 / 多日预报 ▾'}</button>
-      {forecastExpanded && <><div className="cw-detail-nav">
-        <div className="cw-hourly-label"><span>{view === 'days' ? '未来五天' : view === 'summary' ? '当天概况' : isToday ? '接下来六小时' : `${selectedDate.format('M月D日')}逐小时`}</span><span>{view === 'days' ? '高 / 低 · 雨概率' : view === 'hours' ? '降雨概率' : ''}</span></div>
-        <button type="button" className="cw-detail-toggle" onClick={() => setDetailView(v => v === 'hours' ? 'days' : 'hours')} aria-label={detailView === 'hours' ? '查看未来五天天气' : '返回逐小时天气'} title={detailView === 'hours' ? '查看未来五天天气' : '返回逐小时天气'}>
-          {detailView === 'hours' ? '未来几天 ›' : '‹ 逐小时'}
-        </button>
-      </div>
-      <div className={view === 'summary' ? 'cw-forecast-summary' : 'cw-forecast-stage'} key={view}>
-        {view === 'summary' ? (
-          selectedIndex >= 0 ? <span>风速 {number(data?.forecast?.daily.wind_speed_10m_max?.[selectedIndex], ' km/h')} · 紫外线 {number(data?.forecast?.daily.uv_index_max?.[selectedIndex])}<br/><small>逐小时预报尚未覆盖此日期</small></span> : <span>{busy ? '正在获取天气…' : '当前预报范围内没有该日期数据'}</span>
-        ) : view === 'hours' ? (
-          <div className="cw-hours" role="list" aria-label="逐小时天气与降雨概率">
-            {hours.length ? hours.map(h => (
-              <div className="cw-hour" role="listitem" key={h.time}>
-                <span className="cw-time">{timeLabel(h.time)}</span>
-                <WeatherGlyph code={h.code} size={25} />
-                <strong>{number(h.temp, '°')}</strong>
-                <span className="cw-prob">{number(h.probability, '%')}</span>
-              </div>
-            )) : <div className="cw-hour-empty">{busy ? '正在获取天气…' : '该日期暂无逐小时预报'}</div>}
-          </div>
-        ) : (
-          <div className="cw-days" role="list" aria-label="未来五天天气">
-            {daily.length ? daily.map((d, index) => (
-              <div className="cw-day" role="listitem" key={d.time}>
-                <span className="cw-time">{index === 0 ? '今天' : new Date(timestamp(d.time)).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', weekday: 'short' })}</span>
-                <WeatherGlyph code={d.code} size={20} />
-                <strong>{number(d.high, '°')}</strong>
-                <span className="cw-day-low">{number(d.low, '°')}</span>
-                <span className="cw-prob">{number(d.probability, '%')}</span>
-              </div>
-            )) : <div className="cw-hour-empty">未来几天天气暂不可用</div>}
+      <div className="cw-glance">
+        {attention && (
+          <div className={'cw-glance-alert cw-glance-alert-'+attention.kind} role="status">
+            <span className="cw-glance-alert-mark">{attention.kind==='official'?'⚠':'●'}</span>
+            <span>{attention.kind==='official'?'官方预警 · ':''}{attention.title}</span>
           </div>
         )}
-      </div>
-      </>}
-      {commute && <div className="cw-commute">通勤参考 · {commute}{stale ? '（缓存）' : ''}</div>}
-
-      <div className="cw-bottom">
-        <span>{source} · {stale ? '缓存 · ' : ''}{ageLabel(data?.forecastFetchedAt ?? 0, clock)}</span>
-        <button type="button" onClick={() => { if (config) void retrieve(config.settings, true); }}
-          disabled={busy || !config} aria-label="刷新天气" title="刷新天气"><ReloadOutlined /></button>
-      </div>
-      {issue && !data && <button className="cw-status cw-error" type="button" onClick={openSettings} title={issue}>数据异常 · {issue}</button>}
-      {dataIssues.length>0 && <details className="cw-data-issue"><summary>数据状态 · {dataIssues[0]}{dataIssues.length>1?` 等${dataIssues.length}项`:''}</summary>{dataIssues.map(message=><p key={message}>{message}</p>)}{issue&&<p>{issue}</p>}</details>}
-      {provider === 'qweather' && data?.forecast?.attributions?.length ? <details className="cw-attribution"><summary>数据来源与声明</summary>{[...new Set(data.forecast.attributions)].map(a => <span key={a}>{a}</span>)}</details> : null}
+        {!attention && dataIssues.length>0 && (
+          <div className="cw-glance-status" role="status">数据状态 · {dataIssues[0]}</div>
+        )}
+        {provider==='qweather' && (() => {
+          const air=localAir(data?.extras?.air);
+          const fresh=extraIsFresh(data?.extras?.air,clock,60*60000);
+          return <div className={'cw-glance-air'+(!fresh?' is-stale':'')}>
+            <span className="cw-glance-label">空气质量</span>
+            <strong>{air ? `AQI ${number(air.aqi)} · ${air.category}` : '数据暂缺'}</strong>
+            {air?.primaryPollutant?.name && air.aqi!=null && air.aqi>100 && <span className="cw-glance-pollutant">首要污染物：{air.primaryPollutant.name}</span>}
+            {air && !fresh && <span className="cw-glance-stale">旧数据</span>}
+          </div>;
+        })()}
+        <div className="cw-glance-forecast">
+          <div className="cw-glance-heading"><span>接下来几小时</span><span>{stale?'预报可能已过期':'逐小时预报'}</span></div>
+          <div className="cw-glance-hours">
+            {hours.slice(0,4).map(h=>(
+              <div className="cw-glance-hour" key={h.time}>
+                <span>{timeLabel(h.time)}</span>
+                <WeatherGlyph code={h.code} size={23}/>
+                <strong>{number(h.temp,'°')}</strong>
+                {h.probability!=null && <small>雨 {number(h.probability,'%')}</small>}
+              </div>
+            ))}
+            {!hours.length && <span className="cw-glance-empty">{busy?'正在获取天气…':'暂无逐小时预报'}</span>}
+          </div>
+        </div>
+        <div className="cw-glance-bottom">
+          <span>{source} · {ageLabel(data?.forecastFetchedAt ?? 0,clock)}</span>
+          <button type="button" onClick={()=>{if(config)void retrieve(config.settings,true)}} disabled={busy||!config} aria-label="刷新天气" title="刷新天气"><ReloadOutlined/></button>
+        </div>
+        {issue && !data && <div className="cw-glance-status cw-glance-error" role="status">天气数据不可用</div>}
       </div>
       {editing && draft && (
         <div className="cw-settings-overlay" role="dialog" aria-label="天气设置">
