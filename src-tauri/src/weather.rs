@@ -35,12 +35,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            locations: vec![Location {
-                name: "上海".into(),
-                description: "上海市中心（可在设置修改）".into(),
-                latitude: 31.23,
-                longitude: 121.47,
-            }],
+            locations: default_locations(),
             selected: 0,
             host: String::new(),
             pinned: false,
@@ -49,18 +44,81 @@ impl Default for Settings {
     }
 }
 
+
+fn default_locations() -> Vec<Location> {
+    // District/area reference points, not the user's exact addresses.
+    vec![
+        Location {
+            name: "公司 · 静安".into(),
+            description: "上海静安 · 大宁德必易园附近（参考位置）".into(),
+            latitude: 31.2865,
+            longitude: 121.4490,
+        },
+        Location {
+            name: "宿舍 · 宝山".into(),
+            description: "上海宝山 · 宝安公路站晓寓附近（参考位置）".into(),
+            latitude: 31.3730,
+            longitude: 121.4320,
+        },
+        Location {
+            name: "老家 · 梁园".into(),
+            description: "河南商丘 · 梁园区（区级参考位置）".into(),
+            latitude: 34.4460,
+            longitude: 115.6350,
+        },
+    ]
+}
+
+/// Preserve existing custom coordinates/API credentials. Upgrade old one/two
+/// location files by adding the missing places once, with a backup of the
+/// original settings. The user can still fine-tune all coordinates in-app.
+fn upgrade_locations(mut settings: Settings) -> Settings {
+    if settings.locations.len() >= 3 { return settings; }
+    let defaults = default_locations();
+    if settings.locations.len() == 1 && settings.locations[0].name == "上海"
+        && (settings.locations[0].latitude - 31.23).abs() < 0.05
+        && (settings.locations[0].longitude - 121.47).abs() < 0.05 {
+        settings.locations[0] = defaults[0].clone();
+    }
+    if settings.locations.len() == 1 {
+        settings.locations.push(defaults[1].clone());
+    }
+    if !settings.locations.iter().any(|location|
+        location.name.contains("梁园") ||
+        ((location.latitude - 34.446).abs() < 0.12 && (location.longitude - 115.635).abs() < 0.12)
+    ) {
+        settings.locations.push(defaults[2].clone());
+    }
+    settings
+}
 fn file(app: &AppHandle, name: &str) -> Result<PathBuf, String> {
     let dir = app.path().app_config_dir().map_err(|_| "无法读取天气配置目录")?;
     std::fs::create_dir_all(&dir).map_err(|_| "无法创建天气配置目录")?;
     Ok(dir.join(name))
 }
 fn read_settings(app: &AppHandle) -> Settings {
-    file(app, "weather-v14.json")
-        .ok()
+    let path = file(app, "weather-v14.json").ok();
+    let saved = path
+        .as_ref()
         .and_then(|p| std::fs::read(p).ok())
-        .and_then(|b| serde_json::from_slice(&b).ok())
-        .filter(|s: &Settings| validate(s).is_ok())
-        .unwrap_or_default()
+        .and_then(|b| serde_json::from_slice::<Settings>(&b).ok());
+    if let Some(original) = saved {
+        if validate(&original).is_ok() {
+            let migrated = upgrade_locations(original.clone());
+            if migrated.locations.len() != original.locations.len()
+                || (original.locations.len() == 1 && original.locations[0].name == "上海") {
+                if let Some(path) = path {
+                    let backup = path.with_file_name("weather-v14.before-three-places.json");
+                    if !backup.exists() {
+                        let _ = std::fs::copy(&path, backup);
+                    }
+                }
+                let _ = write_json(app, "weather-v14.json", &migrated);
+            }
+            return migrated;
+        }
+    }
+    Settings::default()
 }
 fn write_json(app: &AppHandle, name: &str, data: &impl Serialize) -> Result<(), String> {
     let bytes = serde_json::to_vec_pretty(data).map_err(|_| "天气配置序列化失败")?;
@@ -70,8 +128,8 @@ fn validate(s: &Settings) -> Result<(), String> {
     if !["qweather", "open-meteo"].contains(&s.provider.as_str()) {
         return Err("请选择有效的天气服务".into());
     }
-    if s.locations.is_empty() || s.locations.len() > 2 || s.selected >= s.locations.len() {
-        return Err("请设置一至两个地点".into());
+    if s.locations.is_empty() || s.locations.len() > 5 || s.selected >= s.locations.len() {
+        return Err("请设置一至五个地点".into());
     }
     for l in &s.locations {
         if l.name.trim().is_empty()
@@ -464,6 +522,21 @@ mod tests {
         ] {
             assert!(!valid_host(host));
         }
+    }
+    #[test]
+    fn upgrade_two_places_preserves_custom_coordinates_and_adds_liangyuan() {
+        let mut saved = Settings::default();
+        saved.locations.truncate(2);
+        saved.locations[0].latitude = 31.2913;
+        saved.selected = 1;
+        saved.host = "test.qweatherapi.com".into();
+        let upgraded = upgrade_locations(saved);
+        assert_eq!(upgraded.locations.len(), 3);
+        assert_eq!(upgraded.locations[0].latitude, 31.2913);
+        assert_eq!(upgraded.selected, 1);
+        assert_eq!(upgraded.host, "test.qweatherapi.com");
+        assert!(upgraded.locations[2].name.contains("梁园"));
+        assert!(validate(&upgraded).is_ok());
     }
     #[test]
     fn invalid_coordinates_and_selection_are_rejected() {
