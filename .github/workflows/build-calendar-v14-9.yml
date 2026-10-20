@@ -45,7 +45,7 @@ jobs:
           Copy-Item 'THIRD_PARTY_WEATHER.md' delivery
           "Commit: ${{ github.sha }}`nRun: ${{ github.run_id }}`nTarget: x86_64-pc-windows-msvc`nInstaller: NSIS" | Set-Content delivery/BUILD.txt
           Get-FileHash delivery/*.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $_.Path -Leaf)" } | Set-Content delivery/SHA256SUMS.txt
-          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path 'delivery/DesktopCalendar-V14.9-Setup-x64.exe'))
+          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path 'delivery/DesktopCalendar-V14.10-Setup-x64.exe'))
           if ($bytes[0] -ne 0x4d -or $bytes[1] -ne 0x5a) { throw 'Installer is not a Windows executable' }
       - uses: actions/upload-artifact@v4
         with:
