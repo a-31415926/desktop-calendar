@@ -24,7 +24,7 @@ test('hourly and five-day forecasts switch within a fixed-height stage', () => {
   assert.match(css, /\.cw-forecast-stage\s*\{[^}]*height:67px/s);
   assert.match(css, /\.cw-hours\s*\{[^}]*grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/s);
   assert.match(css, /\.cw-days\s*\{[^}]*grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/s);
-  assert.match(view, /\.slice\(0, 6\)/);
+  assert.match(view, /selectedHours/);
   assert.match(css, /\.cw-settings-overlay\s*\{[^}]*position:absolute/s);
 });
 
@@ -40,7 +40,7 @@ test('weather ambience differs by condition and respects reduced-motion settings
     'cw-rain-sheet', 'cw-snow-sheet', 'cw-storm-flash',
   ]) assert.match(css, new RegExp(token));
   assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(view, /animated\s+night=/);
+  assert.match(hero, /precipitationMotion/);
 });
 
 test('hourly precipitation probability is labeled, not claimed as rain amount', () => {
@@ -56,8 +56,11 @@ test('V13 date info, auspicious days and Windows taskbar hook stay intact', () =
   assert.match(config, /restore_v13_preferences_once/);
 });
 
-test('selected date controls a dedicated animated weather hero above the calendar', () => {
-  assert.match(calendarView, /<CalendarWeatherHero selectedDate=\{model\.headerProps\.selectedDate\}/);
+test('one weather data owner renders the date-aware panel above the calendar', () => {
+  assert.match(calendarView, /<CalendarWeather selectedDate=\{model\.headerProps\.selectedDate\}/);
+  assert.doesNotMatch(calendarView, /<CalendarWeather\s*\/>/);
+  assert.doesNotMatch(hero, /weather_fetch|weather_settings/);
+  assert.doesNotMatch(view, /className="cw-now"/);
   assert.match(hero, /selectedDate\.format\('YYYY-MM-DD'\)/);
   assert.match(hero, /time\.findIndex/);
   assert.match(hero, /current\.is_day === 0/);
@@ -68,3 +71,4 @@ test('selected date controls a dedicated animated weather hero above the calenda
   assert.match(heroCss, /prefers-reduced-motion: reduce/);
   assert.match(weatherRust, /forecast_days", "7"/);
 });
+

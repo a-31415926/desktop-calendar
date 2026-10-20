@@ -1,15 +1,11 @@
-import { EnvironmentOutlined } from '@ant-design/icons';
-import { invoke, isTauri } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
 import type { Dayjs } from 'dayjs';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import {
-  number, weatherCode, weatherIntensity,
-  type SettingsResponse, type WeatherData,
+  number, weatherCode, weatherIntensity, precipitationMotion,
+  type WeatherData,
 } from '../../../weather/model.ts';
 import './calendarWeatherHero.css';
 
-const call = <T,>(name: string, args?: Record<string, unknown>): Promise<T> => invoke<T>(name, args);
 
 function shanghaiDateKey(date: Date): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -34,47 +30,9 @@ function shanghaiMinutes(date: Date): number {
   return hour * 60 + minute;
 }
 
-interface CalendarWeatherHeroProps { selectedDate: Dayjs; children: ReactNode }
+interface CalendarWeatherHeroProps { selectedDate: Dayjs; children: ReactNode; data: WeatherData | null; clock: number; error: string; actions: ReactNode; stale: boolean }
 
-export default function CalendarWeatherHero({ selectedDate, children }: CalendarWeatherHeroProps) {
-  const [config, setConfig] = useState<SettingsResponse | null>(null);
-  const [data, setData] = useState<WeatherData | null>(null);
-  const [clock, setClock] = useState(Date.now());
-  const [error, setError] = useState('');
-
-  const load = useCallback(async (force = false) => {
-    if (!isTauri()) return;
-    try {
-      const settings = await call<SettingsResponse>('weather_settings');
-      setConfig(settings);
-      const weather = await call<WeatherData>('weather_fetch', { index: settings.settings.selected, force });
-      setData(weather);
-      setError('');
-    } catch (e) {
-      setError(String(e));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isTauri()) return;
-    void load();
-    const timer = window.setInterval(() => {
-      setClock(Date.now());
-      if (!document.hidden) void load();
-    }, 5 * 60 * 1000);
-    const popupListener = listen('calendar-popup-show', () => {
-      setClock(Date.now());
-      void load();
-    }).catch(() => () => {});
-    const onWeatherUpdated = () => { void load(); };
-    window.addEventListener('calendar-weather-updated', onWeatherUpdated);
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener('calendar-weather-updated', onWeatherUpdated);
-      void popupListener.then(stop => stop());
-    };
-  }, [load]);
-
+export default function CalendarWeatherHero({ selectedDate, children, data, clock, error, actions, stale }: CalendarWeatherHeroProps) {
   const selectedKey = selectedDate.format('YYYY-MM-DD');
   const todayKey = shanghaiDateKey(new Date(clock));
   const isToday = selectedKey === todayKey;
@@ -86,19 +44,18 @@ export default function CalendarWeatherHero({ selectedDate, children }: Calendar
   const code = isToday && current ? current.weather_code : hasDayForecast ? (daily?.weather_code[dayIndex] ?? 3) : 3;
   const [condition, scene] = weatherCode(code);
   const intensity = weatherIntensity(code);
-  const place = config?.settings.locations[config.settings.selected];
   const high = hasDayForecast ? daily?.temperature_2m_max[dayIndex] : null;
   const low = hasDayForecast ? daily?.temperature_2m_min[dayIndex] : null;
   const currentTemp = isToday ? (current?.temperature_2m ?? high) : high;
   const isPast = selectedKey < todayKey;
-  const displayCondition = available ? condition : isPast ? '历史天气暂不可用' : '暂无天气预报';
+  const displayCondition = available ? condition : isPast ? '历史天气暂不可用' : '待连接天气';
 
   // Only today's weather uses the real current daylight state.
   // A selected future date represents its daily (daytime) forecast; do not
   // misleadingly render tomorrow as night just because it is night now.
   let night = false;
   if (isToday) {
-    if (current) {
+    if (current && current.is_day >= 0) {
       night = current.is_day === 0;
     } else {
       const nowMinutes = shanghaiMinutes(new Date(clock));
@@ -111,10 +68,8 @@ export default function CalendarWeatherHero({ selectedDate, children }: Calendar
   }
 
   const wet = scene === 'rain' || scene === 'storm';
-  const snowy = scene === 'snow';
-  const particleCount = !available ? 0 : wet
-    ? intensity === 'heavy' ? 24 : intensity === 'moderate' ? 16 : 9
-    : snowy ? intensity === 'heavy' ? 22 : intensity === 'moderate' ? 15 : 8 : 0;
+  const motion = precipitationMotion(code, available);
+  const particleCount = motion.count;
   const particles = Array.from({ length: particleCount }, (_, index) => index);
   const clouded = ['cloud', 'cloud-sun', 'rain', 'storm', 'snow', 'fog'].includes(scene);
   const sunny = scene === 'sun' || scene === 'cloud-sun';
@@ -139,9 +94,7 @@ export default function CalendarWeatherHero({ selectedDate, children }: Calendar
                 style={{
                   left: `${(index * 37 + 7) % 97}%`,
                   animationDelay: `-${((index * 13) % 29) / 10}s`,
-                  animationDuration: wet
-                    ? `${intensity === 'heavy' ? 0.72 : intensity === 'moderate' ? 1.05 : 1.55}s`
-                    : `${intensity === 'heavy' ? 3.4 : intensity === 'moderate' ? 4.7 : 6.2}s`,
+                  animationDuration: `${motion.seconds * (0.85 + (index % 5) * 0.075)}s`,
                 }}
               />
             ))}
@@ -152,8 +105,8 @@ export default function CalendarWeatherHero({ selectedDate, children }: Calendar
       <div className="wh-header-slot">{children}</div>
       <div className="wh-content" key={`${selectedKey}-${scene}-${night}`}>
         <div className="wh-eyebrow">
-          <span>{isToday ? '实时天气' : '所选日期天气'}</span>
-          <span className="wh-place"><EnvironmentOutlined />{place?.name || '上海'}</span>
+          <span>{stale ? '缓存天气 · ' : ''}{isToday ? '当前天气' : `${selectedDate.format('M月D日')}预报`}</span>
+          {actions}
         </div>
         <div className="wh-primary">
           <strong>{displayCondition}</strong>
@@ -171,3 +124,4 @@ export default function CalendarWeatherHero({ selectedDate, children }: Calendar
     </section>
   );
 }
+

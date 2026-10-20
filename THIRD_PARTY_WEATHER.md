@@ -6,8 +6,15 @@ src-tauri/src/data/weather/open_meteo.rs. Its multi-location/cache design was re
 The sidebar, existing-calendar integration and QWeather adapter are implemented for this project.
 No GPL application code is incorporated. This notice does not change the license status of the original calendar.
 
-Weather data: Open-Meteo (CC BY 4.0); optional QWeather minute precipitation subject to QWeather terms.
+Default weather data: QWeather (current weather, hourly and daily forecast via weather/v1;
+optional two-hour precipitation via v7/minutely/5m), subject to QWeather terms and account permissions.
+Users supply their own API Host and API Key in settings. No credentials are distributed.
+Open-Meteo (CC BY 4.0) remains an explicitly selectable alternative; it is never a silent fallback.
 Attribution is also displayed inside the weather panel.
+
+QWeather documentation: https://dev.qweather.com/docs/api/weather/weather-current/
+and https://dev.qweather.com/docs/configuration/authentication/ .
+API Key authentication is supported; QWeather announces daily request restrictions from 2027-01-01.
 
 MIT License
 

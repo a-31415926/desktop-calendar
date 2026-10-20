@@ -135,3 +135,25 @@
 @media (prefers-reduced-motion: reduce) {
   .cw-icon-live *, .calendar-weather::before,.calendar-weather::after,.cw-forecast-stage {animation:none!important;transition:none!important;}
 }
+
+
+/* V14.6: one card, one current reading, one data owner. */
+.calendar-weather.cw-unified {padding:0;margin:7px 0 9px;border-radius:15px;overflow:visible;background:var(--card-bg);}
+.cw-unified::before,.cw-unified::after {display:none;}
+.cw-unified .calendar-weather-hero {border:0;margin:0;border-radius:14px 14px 0 0;box-shadow:none;}
+.cw-details {padding:1px 11px 7px;}
+.cw-unified .cw-actions {color:var(--wh-muted);}
+.cw-unified .cw-location,.cw-unified .cw-settings-trigger {color:inherit!important;}
+.cw-unified .cw-location {max-width:146px;}
+.cw-unified .cw-rain-banner {height:22px;}
+.cw-unified .cw-detail-nav {margin-top:1px;padding-top:4px;}
+.cw-unified .cw-settings-overlay {top:44px;bottom:auto;left:5px;right:5px;max-height:430px;z-index:45;color:var(--text-main);}
+.cw-settings select {padding:5px;background:var(--card-bg);color:var(--text-main);border:1px solid var(--text-sec);border-radius:5px;font:inherit;}
+.cw-clear-key {flex-direction:row!important;align-items:center;}
+.cw-clear-key input {width:auto;}
+.cw-status {display:block;margin:3px 0 0!important;padding:0!important;font-size:10px!important;line-height:15px;max-height:30px;overflow:hidden;text-align:left;white-space:normal;}
+.cw-mini-rain {display:flex;align-items:flex-end;gap:3px;height:20px;margin-top:3px;}
+.cw-mini-rain i {flex:1;background:#71aacd;border-radius:2px;}
+.cw-attribution {margin-top:3px;font-size:9px;color:var(--cw-muted);}
+.cw-attribution summary {cursor:pointer;}
+.cw-attribution span {display:block;overflow-wrap:anywhere;}

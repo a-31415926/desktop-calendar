@@ -1,11 +1,13 @@
 import { EnvironmentOutlined, ReloadOutlined, SettingOutlined, CloseOutlined } from '@ant-design/icons';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import type { Dayjs } from 'dayjs';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type FormEvent } from 'react';
 import {
-  ageLabel, futureRain, hourlyRows, number, rainIsFresh, timeLabel, timestamp, weatherCode,
+  ageLabel, futureRain, hourlyRows, selectedHours, dateKey, number, rainIsFresh, timeLabel, timestamp, weatherCode,
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
+import CalendarWeatherHero from './CalendarWeatherHero.tsx';
 import './calendarWeather.css';
 
 const call = <T,>(name: string, args?: Record<string, unknown>): Promise<T> => invoke<T>(name, args);
@@ -52,7 +54,7 @@ function WeatherGlyph({ code, size = 30, night = false, animated = false }: Weat
   );
 }
 
-export default function CalendarWeather() {
+export default function CalendarWeather({ selectedDate, children }: { selectedDate: Dayjs; children: ReactNode }) {
   const root = useRef<HTMLElement | null>(null);
   const currentSettings = useRef<Settings | null>(null);
   const lastRequest = useRef(0);
@@ -63,6 +65,7 @@ export default function CalendarWeather() {
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Settings | null>(null);
+  const [clearKey, setClearKey] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [detailView, setDetailView] = useState<'hours' | 'days'>('hours');
 
@@ -125,12 +128,11 @@ export default function CalendarWeather() {
   const save = async (settings: Settings, key?: string) => {
     setBusy(true);
     try {
-      const result = await call<SettingsResponse>('weather_save_settings', { settings, apiKey: key || undefined });
+      const result = await call<SettingsResponse>('weather_save_settings', { settings, apiKey: key ?? null });
       currentSettings.current = result.settings;
       setConfig(result);
-      window.dispatchEvent(new Event('calendar-weather-updated'));
       setDraft(result.settings);
-      setApiKey('');
+      setApiKey(''); setClearKey(false);
       setEditing(false);
       setData(null);
       await retrieve(result.settings, true);
@@ -145,21 +147,20 @@ export default function CalendarWeather() {
     if (!config) return;
     setDraft(structuredClone(config.settings));
     setApiKey('');
+    setClearKey(false);
     setError('');
     setEditing(true);
   };
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (draft) void save(draft, apiKey.trim());
+    if (draft) void save(draft, clearKey ? '' : apiKey.trim() || undefined);
   };
 
   const place = config?.settings.locations[config.settings.selected];
-  const current = data?.forecast?.current;
-  const condition = current ? weatherCode(current.weather_code) : null;
-  const weatherType = condition?.[1] || 'cloud';
-  const hours = hourlyRows(data?.forecast ?? null, clock)
-    .filter(h => timestamp(h.time) >= clock - 60 * 60000).slice(0, 6);
-  const nowcast = rainIsFresh(data, clock);
+  const selectedKey = selectedDate.format('YYYY-MM-DD');
+  const isToday = selectedKey === dateKey(clock);
+  const hours = selectedHours(data?.forecast ?? null, selectedKey, clock);
+  const nowcast = isToday && rainIsFresh(data, clock);
   const rainPoints = futureRain(data?.minutely ?? null, clock);
   const nextTwoHours = hourlyRows(data?.forecast ?? null, clock).filter(h => {
     const t = timestamp(h.time);
@@ -175,8 +176,13 @@ export default function CalendarWeather() {
     low: data?.forecast?.daily.temperature_2m_min[index],
     probability: data?.forecast?.daily.precipitation_probability_max[index],
   }));
-  const stale = !!data && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
-  const summary = nowcast
+  const stale = !!data?.forecast && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
+  const selectedIndex = data?.forecast?.daily.time.indexOf(selectedKey) ?? -1;
+  const selectedChance = selectedIndex >= 0 ? data?.forecast?.daily.precipitation_probability_max[selectedIndex] : null;
+  const provider = data?.provider ?? config?.settings.provider ?? 'qweather';
+  const source = provider === 'qweather' ? '和风天气' : 'Open-Meteo · CC BY 4.0';
+  const issue = error || data?.forecastError || data?.saveError;
+  const summary = !isToday ? selectedChance != null ? `所选日期降水概率 ${number(selectedChance, '%')}` : '所选日期暂无降水概率数据' : nowcast
     ? data?.minutely?.summary ||
       (rainPoints.some(p => Number(p.precip) > 0) ? '未来两小时可能有降雨' : '未来两小时暂无明显降雨')
     : maxChance != null
@@ -184,31 +190,25 @@ export default function CalendarWeather() {
       : '暂无短时降雨参考数据';
 
   return (
-    <section className={'calendar-weather cw-scene-' + weatherType + (detailView === 'days' ? ' cw-detail-days' : '')} ref={root} data-weather-card data-weather-panel aria-label="公司与宿舍天气">
-      <div className="cw-main">
-        <div className="cw-now">
-          <WeatherGlyph code={current?.weather_code ?? 3} size={42} animated night={current?.is_day === 0}/>
-          <div className="cw-current">
-            <strong>{current ? number(current.temperature_2m, '°') : '—°'}</strong>
-            <span>{busy && !current ? '更新中' : condition?.[0] || '天气'}</span>
-          </div>
-        </div>
+    <section className={'calendar-weather cw-unified' + (detailView === 'days' ? ' cw-detail-days' : '')} ref={root} data-weather-card data-weather-panel aria-label="公司与宿舍天气">
+      <CalendarWeatherHero selectedDate={selectedDate} data={data} clock={clock} error={issue || ''} stale={stale} actions={
         <div className="cw-actions">
           <button type="button" className="cw-location" onClick={switchPlace}
             disabled={!config || config.settings.locations.length < 2}
             aria-label="切换公司与宿舍" title={place?.description || '切换天气地点'}>
-            <EnvironmentOutlined /><span>{place?.name || '上海'}</span>
+            <EnvironmentOutlined /><span>{place?.name || '地点'}</span>
             {(config?.settings.locations.length || 0) > 1 && <span className="cw-arrows">⇄</span>}
           </button>
           <button type="button" className="cw-settings-trigger" onClick={openSettings}
             title="天气设置" aria-label="天气设置"><SettingOutlined /></button>
         </div>
-      </div>
-      <div className="cw-rain-banner" title={nowcast ? '和风天气分钟级降雨' : 'Open-Meteo 逐小时降雨概率参考，非分钟级临近预报'}>
+      }>{children}</CalendarWeatherHero>
+      <div className="cw-details">
+      <div className="cw-rain-banner" title={nowcast ? '和风天气每五分钟降雨临近预报' : '降水概率参考，不代表一定降雨'}>
         <span className="cw-umbrella">☂</span><span>{stale ? '上次预报 · ' : ''}{summary}</span>
       </div>
       <div className="cw-detail-nav">
-        <div className="cw-hourly-label"><span>{detailView === 'hours' ? '接下来几小时' : '未来五天'}</span><span>{detailView === 'hours' ? '降雨概率' : '高 / 低 · 雨概率'}</span></div>
+        <div className="cw-hourly-label"><span>{detailView === 'hours' ? isToday ? '接下来六小时' : `${selectedDate.format('M月D日')}逐小时` : '未来五天'}</span><span>{detailView === 'hours' ? '降雨概率' : '高 / 低 · 雨概率'}</span></div>
         <button type="button" className="cw-detail-toggle" onClick={() => setDetailView(v => v === 'hours' ? 'days' : 'hours')} aria-label={detailView === 'hours' ? '查看未来五天天气' : '返回逐小时天气'} title={detailView === 'hours' ? '查看未来五天天气' : '返回逐小时天气'}>
           {detailView === 'hours' ? '未来几天 ›' : '‹ 逐小时'}
         </button>
@@ -216,14 +216,14 @@ export default function CalendarWeather() {
       <div className="cw-forecast-stage" key={detailView}>
         {detailView === 'hours' ? (
           <div className="cw-hours" role="list" aria-label="逐小时天气与降雨概率">
-            {hours.length ? hours.map((h, index) => (
+            {hours.length ? hours.map(h => (
               <div className="cw-hour" role="listitem" key={h.time}>
-                <span className="cw-time">{index === 0 ? '现在' : timeLabel(h.time)}</span>
+                <span className="cw-time">{timeLabel(h.time)}</span>
                 <WeatherGlyph code={h.code} size={25} />
                 <strong>{number(h.temp, '°')}</strong>
                 <span className="cw-prob">{number(h.probability, '%')}</span>
               </div>
-            )) : <div className="cw-hour-empty">天气数据加载中{error ? ' · 请检查网络' : '…'}</div>}
+            )) : <div className="cw-hour-empty">{busy ? '正在获取天气…' : '该日期暂无逐小时预报'}</div>}
           </div>
         ) : (
           <div className="cw-days" role="list" aria-label="未来五天天气">
@@ -240,9 +240,14 @@ export default function CalendarWeather() {
         )}
       </div>
       <div className="cw-bottom">
-        <span>{nowcast ? '和风降雨 / ' : ''}Open-Meteo · {ageLabel(data?.forecastFetchedAt ?? 0, clock)}</span>
+        <span>{source} · {stale ? '缓存 · ' : ''}{ageLabel(data?.forecastFetchedAt ?? 0, clock)}</span>
         <button type="button" onClick={() => { if (config) void retrieve(config.settings, true); }}
           disabled={busy || !config} aria-label="刷新天气" title="刷新天气"><ReloadOutlined /></button>
+      </div>
+      {issue && <button className="cw-status cw-error" type="button" onClick={openSettings} title={issue}>{issue}</button>}
+      {isToday && data?.rainError && !issue && <p className="cw-status" title={data.rainError}>{data.rainError}</p>}
+      {nowcast && <div className="cw-mini-rain" aria-label="未来两小时每五分钟累计降水量">{rainPoints.map(p => <i key={p.fxTime} title={timeLabel(p.fxTime) + ' · ' + p.precip + '毫米/5分钟'} style={{height: Math.min(18, 2 + Number(p.precip) * 12) + 'px'}}/>)}</div>}
+      {provider === 'qweather' && data?.forecast?.attributions?.length ? <details className="cw-attribution"><summary>数据来源与声明</summary>{[...new Set(data.forecast.attributions)].map(a => <span key={a}>{a}</span>)}</details> : null}
       </div>
       {editing && draft && (
         <div className="cw-settings-overlay" role="dialog" aria-label="天气设置">
@@ -259,11 +264,15 @@ export default function CalendarWeather() {
                 <label>纬度<input required type="number" step="any" min="-90" max="90" value={l.latitude} onChange={e => setDraft({ ...draft, locations: draft.locations.map((v, n) => n === i ? { ...v, latitude: e.target.valueAsNumber } : v) })}/></label>
               </div>
             ))}
-            <p className="cw-helper">分钟级降雨需单独接入和风天气。基础天气无需账号。</p>
+            {draft.locations.length < 2 && <button type="button" className="cw-add-place" onClick={() => setDraft({ ...draft, locations: [...draft.locations, { name: '地点二', description: '', latitude: 31.23, longitude: 121.47 }] })}>＋ 添加地点</button>}
+            <label>天气服务<select value={draft.provider} onChange={e => setDraft({ ...draft, provider: e.target.value as Settings['provider'] })}><option value="qweather">和风天气（中国服务商，默认）</option><option value="open-meteo">Open-Meteo（可选）</option></select></label>
+            <p className="cw-helper">和风天气用于当前、逐小时、多日及短时降雨。请填写自己账户的 Host 和 API Key，接口权限、费用和额度以账户为准。</p>
             <label>和风 API Host<input placeholder="xxx.qweatherapi.com" value={draft.host} onChange={e => setDraft({ ...draft, host: e.target.value })}/></label>
             <label>API Key<input type="password" autoComplete="new-password"
-              placeholder={config?.hasKey ? '已加密保存，留空不修改' : '可选'}
-              value={apiKey} onChange={e => setApiKey(e.target.value)}/></label>
+              placeholder={config?.hasKey ? '已加密保存，留空不修改' : '填写你的真实 API Key'}
+              value={apiKey} onChange={e => { setApiKey(e.target.value); setClearKey(false); }}/></label>
+            {config?.hasKey && <label className="cw-clear-key"><input type="checkbox" checked={clearKey} onChange={e => setClearKey(e.target.checked)}/>清除已保存凭证</label>}
+            <p className="cw-helper">凭证仅用当前 Windows 账户加密保存在本机。留空保留原凭证。API Key 自 2027 年起可能受每日调用限制。</p>
             {error && <p className="cw-error">{error}</p>}
             <button className="cw-save" type="submit" disabled={busy}>保存并刷新</button>
           </form>
@@ -272,3 +281,4 @@ export default function CalendarWeather() {
     </section>
   );
 }
+

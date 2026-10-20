@@ -1,4 +1,5 @@
 //! Independent weather flyout. Credentials never enter URLs, cache, logs or frontend reads.
+mod qweather;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
@@ -28,17 +29,21 @@ pub struct Settings {
     pub selected: usize,
     pub host: String,
     pub pinned: bool,
+    pub provider: String,
 }
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            locations: vec![
-                Location { name: "公司 · 静安".into(), description: "大宁德必易园附近（参考坐标）".into(), latitude: 31.2872, longitude: 121.4468 },
-                Location { name: "宿舍 · 宝山".into(), description: "宝安公路站附近（参考坐标）".into(), latitude: 31.3714, longitude: 121.4263 },
-            ],
+            locations: vec![Location {
+                name: "上海".into(),
+                description: "上海市中心（可在设置修改）".into(),
+                latitude: 31.23,
+                longitude: 121.47,
+            }],
             selected: 0,
             host: String::new(),
             pinned: false,
+            provider: "qweather".into(),
         }
     }
 }
@@ -61,6 +66,9 @@ fn write_json(app: &AppHandle, name: &str, data: &impl Serialize) -> Result<(), 
     std::fs::write(file(app, name)?, bytes).map_err(|_| "保存天气配置失败".into())
 }
 fn validate(s: &Settings) -> Result<(), String> {
+    if !["qweather", "open-meteo"].contains(&s.provider.as_str()) {
+        return Err("请选择有效的天气服务".into());
+    }
     if s.locations.is_empty() || s.locations.len() > 2 || s.selected >= s.locations.len() {
         return Err("请设置一至两个地点".into());
     }
@@ -154,6 +162,7 @@ pub async fn weather_save_settings(
     settings.host =
         settings.host.trim().trim_start_matches("https://").trim_end_matches('/').to_lowercase();
     validate(&settings)?;
+    let reset_cache = api_key.is_some();
     if let Some(key) = api_key {
         let key = key.trim();
         if key.len() > 512 || !key.bytes().all(|c| c.is_ascii_graphic()) {
@@ -170,6 +179,10 @@ pub async fn weather_save_settings(
         }
     }
     write_json(&app, "weather-v14.json", &settings)?;
+    // A credential or provider change must not reuse failed-attempt throttling.
+    if reset_cache {
+        write_json(&app, "weather-v14-cache.json", &Vec::<Cache>::new())?;
+    }
     PINNED.store(settings.pinned, Ordering::Relaxed);
     if let Some(w) = app.get_webview_window("weather") {
         let _ = w.set_always_on_top(!settings.pinned);
@@ -207,6 +220,8 @@ async fn get_json(request: reqwest::RequestBuilder) -> Result<Value, String> {
     if !status.is_success() {
         return Err(match status.as_u16() {
             401 | 403 => "凭证或接口权限不可用，请检查和风设置".into(),
+            400 => "天气请求参数无效，请检查地点及接口设置".into(),
+            404 => "天气接口或位置不可用，请检查和风 Host 和接口权限".into(),
             429 => "请求达到限额，请稍后刷新".into(),
             _ => format!("天气服务暂不可用（{}）", status.as_u16()),
         });
@@ -237,7 +252,14 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
     let _guard = FETCH_LOCK.lock().await;
     let settings = read_settings(&app);
     let location = settings.locations.get(index).ok_or("地点不存在")?;
-    let key = cache_key(location, &settings.host);
+    let key = format!("v14.6|{}|{}", settings.provider, cache_key(location, &settings.host));
+    let secret = read_key(&app);
+    let configured = !settings.host.is_empty() && secret.as_ref().is_ok_and(|s| !s.is_empty());
+    if settings.provider == "qweather" && !configured {
+        return Ok(
+            json!({"location": location, "forecast": null, "forecastFetchedAt": 0, "minutely": null, "minutelyFetchedAt": 0, "forecastError": secret.err().unwrap_or_else(|| "请在天气设置中填写和风 API Host 和 API Key".into()), "rainError": null, "saveError": null, "qweatherConfigured": false, "provider": "qweather"}),
+        );
+    }
     let mut caches: Vec<Cache> = file(&app, "weather-v14-cache.json")
         .ok()
         .and_then(|p| std::fs::read(p).ok())
@@ -251,7 +273,7 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(12))
         .redirect(reqwest::redirect::Policy::none())
-        .user_agent("DesktopCalendar/1.1.0")
+        .user_agent("DesktopCalendar/1.1.7")
         .build()
         .map_err(|_| "无法初始化天气连接")?;
     // V14.5 requests seven days. The shared V14 cache may still contain the
@@ -265,13 +287,23 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
         && (force || old_short_forecast || !fresh(cache.forecast_fetched_at, 1800))
     {
         cache.forecast_attempt = now();
-        let result = get_json(client.get("https://api.open-meteo.com/v1/forecast").query(&[
+        let result = if settings.provider == "qweather" {
+            qweather::fetch(
+                &client,
+                &settings,
+                location,
+                secret.as_ref().map(String::as_str).unwrap_or(""),
+            )
+            .await
+        } else {
+            get_json(client.get("https://api.open-meteo.com/v1/forecast").query(&[
             ("latitude", location.latitude.to_string()), ("longitude", location.longitude.to_string()),
             ("current", "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day".into()),
             ("hourly", "temperature_2m,precipitation_probability,precipitation,weather_code".into()),
             ("daily", "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset".into()),
             ("timezone", "Asia/Shanghai".into()), ("forecast_days", "7".into())
-        ])).await;
+        ])).await
+        };
         match result {
             Ok(v) if valid_forecast(&v) => {
                 cache.forecast = Some(v);
@@ -282,8 +314,6 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
             Err(e) => cache.forecast_error = Some(e),
         }
     }
-    let secret = read_key(&app);
-    let configured = !settings.host.is_empty() && secret.as_ref().is_ok_and(|s| !s.is_empty());
     if configured
         && !fresh(cache.rain_attempt, 60)
         && (force || !fresh(cache.minutely_fetched_at, 600))
@@ -305,8 +335,11 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
                 cache.minutely_fetched_at = now();
                 cache.rain_error = None;
             }
-            Ok(_) => {
-                cache.rain_error = Some("和风未返回降雨预报，请检查接口权限、额度及位置".into())
+            Ok(v) => {
+                cache.rain_error = Some(format!(
+                    "短时降雨暂不可用（{}），请检查分钟级权限、额度及位置",
+                    v["code"].as_str().unwrap_or("数据不完整")
+                ))
             }
             Err(e) => cache.rain_error = Some(e),
         }
@@ -317,11 +350,14 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
         cache.rain_error = secret.err();
     }
     caches.retain(|c| {
-        c.key != key && settings.locations.iter().any(|l| cache_key(l, &settings.host) == c.key)
+        c.key != key
+            && settings.locations.iter().any(|l| {
+                format!("v14.6|{}|{}", settings.provider, cache_key(l, &settings.host)) == c.key
+            })
     });
     caches.push(cache.clone());
     let save_error = write_json(&app, "weather-v14-cache.json", &caches).err();
-    let result = json!({"location": location, "forecast": cache.forecast, "forecastFetchedAt": cache.forecast_fetched_at, "minutely": cache.minutely, "minutelyFetchedAt": cache.minutely_fetched_at, "forecastError": cache.forecast_error, "rainError": cache.rain_error, "saveError": save_error, "qweatherConfigured": configured});
+    let result = json!({"location": location, "forecast": cache.forecast, "forecastFetchedAt": cache.forecast_fetched_at, "minutely": cache.minutely, "minutelyFetchedAt": cache.minutely_fetched_at, "forecastError": cache.forecast_error, "rainError": cache.rain_error, "saveError": save_error, "qweatherConfigured": configured, "provider": settings.provider});
     let _ = app.emit("weather-data-changed", ());
     Ok(result)
 }

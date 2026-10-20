@@ -4,7 +4,6 @@ import { CalendarViewProvider } from '../../hooks/calender/CalendarViewContext.t
 import { useCalendarViewModel } from '../../hooks/calender/useCalendarViewModel.ts';
 import CalendarFooter from './subs/CalendarFooter.tsx';
 import CalendarWeather from './subs/CalendarWeather.tsx';
-import CalendarWeatherHero from './subs/CalendarWeatherHero.tsx';
 import CalendarHeader from './subs/CalendarHeader.tsx';
 import CalendarMonthGrid from './subs/CalendarMonthGrid.tsx';
 import CalendarMonthNav from './subs/CalendarMonthNav.tsx';
@@ -65,12 +64,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   return (
     <CalendarViewProvider value={model}>
       <div {...model.rootProps}>
-        <CalendarWeatherHero selectedDate={model.headerProps.selectedDate}>
+        <CalendarWeather selectedDate={model.headerProps.selectedDate}>
           <CalendarHeader />
-        </CalendarWeatherHero>
+        </CalendarWeather>
         <CalendarMonthNav />
         <CalendarMonthGrid />
-        <CalendarWeather />
         <CalendarFooter />
       </div>
     </CalendarViewProvider>
@@ -78,3 +76,4 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 };
 
 export default CalendarView;
+

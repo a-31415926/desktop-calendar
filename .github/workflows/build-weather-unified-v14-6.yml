@@ -1,0 +1,62 @@
+name: Build desktop calendar V14.6 unified weather
+on:
+  push:
+    branches: [feature/weather-unified-v14-6]
+  workflow_dispatch:
+concurrency:
+  group: weather-v14-6-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: write
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: pnpm install --frozen-lockfile
+      - name: Weather dates, freshness, intensity and calendar regressions
+        run: node --experimental-strip-types --test tests/weather.test.mjs tests/weather-layout.test.mjs
+      - name: Frontend type check and build
+        run: pnpm build
+      - name: Windows weather adapter and credential tests
+        run: cargo test --release --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --lib weather::
+      - name: Build Windows x64 NSIS installer
+        run: pnpm tauri build --bundles nsis --target x86_64-pc-windows-msvc
+      - name: Verify and package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force delivery | Out-Null
+          $original = Get-ChildItem 'src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe' | Select-Object -First 1
+          if (-not $original -or $original.Length -lt 1000000) { throw 'NSIS installer missing or unexpectedly small' }
+          Copy-Item $original.FullName 'delivery/DesktopCalendar-V14.6-Setup-x64.exe'
+          Copy-Item 'THIRD_PARTY_WEATHER.md' delivery
+          "Commit: ${{ github.sha }}`nRun: ${{ github.run_id }}`nTarget: x86_64-pc-windows-msvc`nInstaller: NSIS" | Set-Content delivery/BUILD.txt
+          Get-FileHash delivery/*.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $_.Path -Leaf)" } | Set-Content delivery/SHA256SUMS.txt
+          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path 'delivery/DesktopCalendar-V14.6-Setup-x64.exe'))
+          if ($bytes[0] -ne 0x4d -or $bytes[1] -ne 0x5a) { throw 'Installer is not a Windows executable' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-calendar-v14-6-windows-x64
+          path: delivery/
+          retention-days: 90
+          if-no-files-found: error
+      - name: Publish directly downloadable preview installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = 'preview-v14.6-${{ github.run_id }}'
+          $notes = "一体式天气面板；选中日期联动；更鲜明的雨雪强度；默认和风天气（在软件设置中填写个人 Host/Key）。Windows x64 NSIS 安装包。保留融合预览独立应用身份。`n`n源码提交：${{ github.sha }}。附 SHA-256 校验文件。"
+          $notes | Set-Content release-notes.txt
+          gh release create $tag delivery/* --repo '${{ github.repository }}' --target '${{ github.sha }}' --prerelease --title '桌面日历 V14.6 天气融合预览' --notes-file release-notes.txt
