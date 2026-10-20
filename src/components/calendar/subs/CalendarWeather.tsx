@@ -174,7 +174,7 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
   const issue = error || data?.forecastError || data?.saveError;
 
   return (
-    <section className={'calendar-weather cw-unified' + (view === 'days' ? ' cw-detail-days' : '')} ref={root} data-weather-card data-weather-panel aria-label="公司、宿舍和老家天气">
+    <section className="calendar-weather cw-unified" ref={root} data-weather-card data-weather-panel aria-label="公司、宿舍和老家天气">
       <CalendarWeatherHero selectedDate={selectedDate} data={data} clock={clock} error={issue || ''} stale={stale} actions={
         <div className="cw-actions">
           <button type="button" className="cw-location" onClick={switchPlace}
