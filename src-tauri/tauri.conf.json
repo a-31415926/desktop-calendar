@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "桌面日历融合预览",
   "mainBinaryName": "DesktopCalendarFusion",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "identifier": "pro.softsoft.li-calendar.weather-fusion-preview",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -37,8 +37,8 @@
     "createUpdaterArtifacts": false,
     "publisher": "softsoft.pro",
     "category": "Utility",
-    "shortDescription": "桌面日历天气头图 V14.5 预览",
-    "longDescription": "桌面日历 V14.5：日期联动动态天气头图、昼夜场景、六小时预报与七天天气数据",
+    "shortDescription": "桌面日历 V14.8 横向双栏预览",
+    "longDescription": "桌面日历 V14.8：左侧三地点天气与右侧六行月历、宜忌的一体化横版布局",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -48,4 +48,3 @@
     ]
   }
 }
-
