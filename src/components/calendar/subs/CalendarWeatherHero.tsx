@@ -38,7 +38,8 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
   const isToday = selectedKey === todayKey;
   const daily = data?.forecast?.daily;
   const dayIndex = daily?.time.findIndex(value => value === selectedKey) ?? -1;
-  const hasDayForecast = dayIndex >= 0;
+  const isPast = selectedKey < todayKey;
+  const hasDayForecast = dayIndex >= 0 && !isPast;
   const current = data?.forecast?.current;
   const available = isToday ? !!current : hasDayForecast;
   const code = isToday && current ? current.weather_code : hasDayForecast ? (daily?.weather_code[dayIndex] ?? 3) : 3;
@@ -47,7 +48,6 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
   const high = hasDayForecast ? daily?.temperature_2m_max[dayIndex] : null;
   const low = hasDayForecast ? daily?.temperature_2m_min[dayIndex] : null;
   const currentTemp = isToday ? (current?.temperature_2m ?? null) : high;
-  const isPast = selectedKey < todayKey;
   const displayCondition = available ? condition : isPast ? '历史天气暂不可用' : data?.forecast ? '暂无天气预报' : '待连接天气';
 
   // Only today's weather uses the real current daylight state.
@@ -105,7 +105,7 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
       <div className="wh-header-slot">{children}</div>
       <div className="wh-content" key={`${selectedKey}-${scene}-${night}`}>
         <div className="wh-eyebrow">
-          <span>{stale ? '缓存天气 · ' : ''}{isToday ? '当前天气' : `${selectedDate.format('M月D日')}预报`}</span>
+          <span>{stale ? '缓存天气 · ' : ''}{isToday ? '当前天气' : isPast ? `${selectedDate.format('M月D日')} · 历史日期` : `${selectedDate.format('M月D日')}预报`}</span>
           {actions}
         </div>
         <div className="wh-primary">

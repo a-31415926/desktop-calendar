@@ -4,11 +4,12 @@ import { listen } from '@tauri-apps/api/event';
 import type { Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type FormEvent } from 'react';
 import {
-  ageLabel, hourlyRows, number, timeLabel, weatherCode,
+  ageLabel, number, timeLabel, weatherCode,
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
 import { localAir, extraIsFresh } from '../../../weather/extras.ts';
 import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeather.ts';
+import {selectedForecast} from '../../../weather/selectedForecast.ts';
 import CalendarWeatherHero from './CalendarWeatherHero.tsx';
 import './calendarWeather.css';
 
@@ -56,7 +57,7 @@ function WeatherGlyph({ code, size = 30, night = false, animated = false }: Weat
   );
 }
 
-export default function CalendarWeather({ selectedDate, children, onData }: { selectedDate: Dayjs; children: ReactNode; onData?:(data:WeatherData|null)=>void }) {
+export default function CalendarWeather({ selectedDate, children, onData, onReturnToday }: { selectedDate: Dayjs; children: ReactNode; onData?:(data:WeatherData|null)=>void; onReturnToday?:()=>void }) {
   const root = useRef<HTMLElement | null>(null);
   const currentSettings = useRef<Settings | null>(null);
   const lastRequest = useRef(0);
@@ -141,11 +142,6 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
     } catch (e) { setError(String(e)); }
     finally { setBusy(false); }
   };
-  const switchPlace = () => {
-    if (!config || config.settings.locations.length < 2) return;
-    setData(null);
-    void save({ ...config.settings, selected: (config.settings.selected + 1) % config.settings.locations.length });
-  };
   const openSettings = () => {
     if (!config) return;
     setDraft(structuredClone(config.settings));
@@ -164,8 +160,8 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
     if (draft) void save(draft, clearKey ? '' : apiKey.trim() || undefined);
   };
 
-  const place = config?.settings.locations[config.settings.selected];
-  const hours = hourlyRows(data?.forecast ?? null, clock).slice(0,4);
+  const selected=selectedForecast(data,selectedDate.format('YYYY-MM-DD'),clock);
+  const hours=selected.hours;
   const stale = !!data?.forecast && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
   const provider = data?.provider ?? config?.settings.provider ?? 'qweather';
   const source = provider === 'qweather' ? '和风天气' : 'Open-Meteo · CC BY 4.0';
@@ -177,36 +173,33 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
     <section className="calendar-weather cw-unified" ref={root} data-weather-card data-weather-panel aria-label="公司、宿舍和老家天气">
       <CalendarWeatherHero selectedDate={selectedDate} data={data} clock={clock} error={issue || ''} stale={stale} actions={
         <div className="cw-actions">
-          <button type="button" className="cw-location" onClick={switchPlace}
-            disabled={!config || config.settings.locations.length < 2}
-            aria-label="切换公司、宿舍和老家地点" title={place?.description || '点击切换天气地点'}>
-            <EnvironmentOutlined /><span>{place?.name || '地点'}</span>
-            {(config?.settings.locations.length || 0) > 1 && <span className="cw-arrows">⇄</span>}
-          </button>
+          <label className="cw-place-picker"><EnvironmentOutlined/><select aria-label="天气地点" value={config?.settings.selected??0} disabled={!config||busy} onChange={event=>{if(config){setData(null);void save({...config.settings,selected:Number(event.target.value)});}}}>
+            {config?config.settings.locations.map((place,index)=><option key={index} value={index}>{place.name}</option>):<option>地点</option>}
+          </select></label>
         </div>
       }>{children}</CalendarWeatherHero>
       <div className="cw-glance">
         {attention && (
           <div className={'cw-glance-alert cw-glance-alert-'+attention.kind} role="status">
             <span className="cw-glance-alert-mark">{attention.kind==='official'?'⚠':'●'}</span>
-            <span>{attention.kind==='official'?'官方预警 · ':''}{attention.title}</span>
+            <span>{attention.kind==='official'?'当前官方预警 · ':!selected.isToday?'今日提醒 · ':''}{attention.title}</span>
           </div>
         )}
-        {!attention && dataIssues.length>0 && (
+        {dataIssues.length>0 && (
           <div className="cw-glance-status" role="status">数据状态 · {dataIssues[0]}</div>
         )}
         {provider==='qweather' && (() => {
           const air=localAir(data?.extras?.air);
           const fresh=extraIsFresh(data?.extras?.air,clock,60*60000);
           return <div className={'cw-glance-air'+(!fresh?' is-stale':'')}>
-            <span className="cw-glance-label">空气质量</span>
+            <span className="cw-glance-label">当前空气质量</span>
             <strong>{air ? `AQI ${number(air.aqi)} · ${air.category}` : '数据暂缺'}</strong>
             {air?.primaryPollutant?.name && air.aqi!=null && air.aqi>100 && <span className="cw-glance-pollutant">首要污染物：{air.primaryPollutant.name}</span>}
             {air && !fresh && <span className="cw-glance-stale">旧数据</span>}
           </div>;
         })()}
         <div className="cw-glance-forecast">
-          <div className="cw-glance-heading"><span>接下来几小时</span><span>{stale?'预报可能已过期':'逐小时预报'}</span></div>
+          <div className="cw-glance-heading"><span>{selected.isToday?'接下来几小时':hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span>{stale?'预报可能已过期':'逐小时预报'}</span>}</div>
           <div className="cw-glance-hours">
             {hours.slice(0,4).map(h=>(
               <div className="cw-glance-hour" key={h.time}>
@@ -216,7 +209,10 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
                 {h.probability!=null && <small>雨 {number(h.probability,'%')}</small>}
               </div>
             ))}
-            {!hours.length && <span className="cw-glance-empty">{busy?'正在获取天气…':'暂无逐小时预报'}</span>}
+            {!hours.length && <div className="cw-selected-summary">
+              {!selected.isPast&&selected.available&&<><p>最高 {number(selected.high,'°')} / 最低 {number(selected.low,'°')}</p><p>当日降雨概率 {number(selected.probability,'%')}</p>{selected.wind!=null&&<p>最大风速 {number(selected.wind,' km/h')}</p>}{selected.uv!=null&&<p>紫外线指数 {number(selected.uv)}</p>}</>}
+              <p className="cw-glance-empty">{!data&&busy?'正在获取天气…':selected.empty}</p>
+            </div>}
           </div>
         </div>
         <div className="cw-glance-bottom">

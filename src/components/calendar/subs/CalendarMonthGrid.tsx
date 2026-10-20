@@ -61,6 +61,10 @@ function CalendarMonthGrid(): ReactElement {
           <Tooltip key={cell.dateKey} title={cell.tooltipTitle} mouseEnterDelay={0.5}>
             <button
               type="button" data-day-cell
+              aria-current={cell.isToday?'date':undefined}
+              aria-pressed={cell.isSelected}
+              data-selected={cell.isSelected?'true':undefined}
+              data-date={cell.dateKey}
               title={dayWeather?`${cell.tooltipTitle??cell.date.format("M月D日")} · ${dayWeather.label} ${number(dayWeather.high)} / ${number(dayWeather.low)}°`:cell.tooltipTitle}
               className={classNames(styles.cell, {
                 [styles.taggedCell]: Boolean(cell.badgeText),

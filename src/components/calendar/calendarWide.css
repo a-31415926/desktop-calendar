@@ -606,3 +606,21 @@
     backdrop-filter:none;
   }
 }
+/* V14.11: semantic date states must survive atmosphere/card style overrides. */
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {background:transparent;border-color:transparent;backdrop-filter:none;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell][aria-current="date"] {background:#176fb8!important;border:1px solid #176fb8!important;color:#fff!important;box-shadow:0 2px 7px #176fb830;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [aria-current="date"] [data-date-number],
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [aria-current="date"] [data-lunar-day],
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [aria-current="date"] .calendar-cell-weather {color:#fff!important;opacity:1;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell][data-selected="true"]:not([aria-current="date"]) {background:#e7f1fc!important;border:2px solid #176fb8!important;box-shadow:none;color:#164b76!important;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-selected="true"]:not([aria-current="date"]) [data-lunar-day] {color:#315d7f!important;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-cell]:focus-visible {outline:2px solid #176fb8;outline-offset:2px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-return-today {font-size:12px;font-weight:600;color:#176fb8;background:#dceafb;padding:3px 7px;border-radius:6px;cursor:pointer;white-space:nowrap;}
+.cw-selected-summary {grid-column:1/-1;font-size:13px;line-height:1.65;text-align:left;}
+.cw-selected-summary p {margin:3px 0;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-selected-summary .cw-glance-empty {display:block;font-size:12px;color:var(--text-sec);line-height:1.6;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour {font-size:12px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour small {font-size:11px;}
+.cw-place-picker {display:flex;align-items:center;gap:3px;color:var(--cw-muted);font-size:12px;min-width:0;}
+.cw-place-picker select {max-width:135px;min-width:0;border:0;border-radius:5px;background:transparent;color:inherit;font:inherit;padding:4px 0;cursor:pointer;}
+.cw-place-picker select option {color:#263746;background:#fff;}

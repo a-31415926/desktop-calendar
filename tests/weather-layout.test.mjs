@@ -54,7 +54,7 @@ test('V13 date info, auspicious days and Windows taskbar hook stay intact', () =
 });
 
 test('one weather data owner shares current weather with the date-aware calendar', () => {
-  assert.match(calendarView, /<CalendarWeather selectedDate=\{dayjs\(\)\}/);
+  assert.match(calendarView, /<CalendarWeather selectedDate=\{model\.headerProps\.selectedDate\}/);
   assert.doesNotMatch(calendarView, /<CalendarWeather\s*\/>/);
   assert.doesNotMatch(hero, /weather_fetch|weather_settings/);
   assert.doesNotMatch(view, /className="cw-now"/);

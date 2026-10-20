@@ -61,7 +61,7 @@ test('V14.10 keeps the wide calendar and adds a full-window weather atmosphere',
   assert.match(css, /\.cw-glance-hours/);
   assert.doesNotMatch(weather, /<CalendarWeatherExtras/);
   assert.doesNotMatch(weather, /cw-forecast-toggle/);
-  assert.match(weather, /切换公司、宿舍和老家地点/);
+  assert.match(weather, /天气地点/);
   assert.match(backend, /老家 · 梁园/);
   assert.match(backend, /weather-v14\.before-three-places\.json/);
   assert.match(backend, /s\.locations\.len\(\) > 5/);
