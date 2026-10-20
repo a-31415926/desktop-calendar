@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync as requireFs} from 'node:fs';
 import {calendarLimits,popupPosition} from '../src/hooks/calender/calendarBounds.ts';
 import {activeAlerts,extraIsFresh,localAir,commuteSummary} from '../src/weather/extras.ts';
 const now=Date.parse('2026-10-20T16:30:00+08:00');
@@ -38,4 +39,25 @@ test('commute reference uses real matching hours and does not fabricate missing 
   assert.equal(commuteSummary(f,Date.parse('2026-10-20T22:00+08:00')),null);
   assert.equal(commuteSummary(null,now),null);
   assert.match(commuteSummary({hourly:{...f.hourly,precipitation_probability:[null,null,null,null]}},now),/降雨概率暂无/);
+});
+
+test('V14.8 is a fixed-size two-column calendar without default scrolling', () => {
+  const fs = requireFs();
+  const view = fs.readFileSync('src/components/calendar/CalendarView.tsx','utf8');
+  const css = fs.readFileSync('src/components/calendar/calendarWide.css','utf8');
+  const weather = fs.readFileSync('src/components/calendar/subs/CalendarWeather.tsx','utf8');
+  const backend = fs.readFileSync('src-tauri/src/weather.rs','utf8');
+  assert.match(view, /data-calendar-layout="wide"/);
+  assert.match(view, /className="calendar-wide-header"/);
+  assert.match(view, /className="calendar-wide-weather"/);
+  assert.match(view, /className="calendar-wide-calendar"/);
+  assert.match(css, /grid-template-columns:252px minmax\(0,1fr\)/);
+  assert.match(css, /height: min\(596px/);
+  assert.match(css, /grid-template-rows:31px repeat\(6,43px\)/);
+  assert.match(css, /overflow:hidden/);
+  assert.match(weather, /forecastChoice \?\? true/);
+  assert.match(weather, /切换公司、宿舍和老家地点/);
+  assert.match(backend, /老家 · 梁园/);
+  assert.match(backend, /weather-v14\.before-three-places\.json/);
+  assert.match(backend, /settings\.locations\.len\(\) > 5/);
 });
