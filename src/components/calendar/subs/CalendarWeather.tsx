@@ -201,7 +201,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           </div>;
         })()}
         {facts&&<div className={"cw-day-facts"+(facts.today?"":" cw-day-facts-future")} aria-label={`${selectedDate.format('M月D日')}天气要点`}>
-          <div><span>紫外线等级</span><strong>{facts.uvCategory??'暂无'}{facts.uv!=null?` · ${number(facts.uv)}`:''}{facts.uvCached?'（缓存）':''}</strong></div>
+          <div title={`${facts.uvCategory?`和风等级：${facts.uvCategory}${facts.uvCached?'（缓存）':''}。`:''}${facts.uvProtection.tip}`}><span>紫外线指数</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${number(facts.uv)} · ${facts.uvProtection.label}`:facts.uvProtection.label}</strong></div>
           <div><span>{facts.today?'当前风速':'最大风速'}</span><strong>{number(facts.wind,' km/h')}</strong></div>
           {facts.today&&<div><span>空气湿度</span><strong>{number(facts.humidity,'%')}</strong></div>}
         </div>}

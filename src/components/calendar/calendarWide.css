@@ -641,3 +641,25 @@
 [data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="festival"][data-selected="true"]:not([aria-current="date"]) {background:#ffead8!important;}
 [data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="work"]:not([aria-current="date"]):not([data-selected="true"]) {background:#edf3f9;border-color:#d6e0ec;}
 [data-calendar-shell][data-calendar-layout="wide"] [data-holiday-badge] {min-width:15px;height:15px;font-size:10px;line-height:15px;border-radius:5px;}
+/* V14.13: readable forecast labels and explicit UV protection cues. */
+[data-calendar-layout="wide"] [data-month-grid] {grid-template-rows:23px repeat(6,55px);}
+[data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {height:55px;min-height:55px;}
+[data-calendar-layout="wide"] .calendar-cell-weather {height:18px;line-height:18px;font-size:13px;font-weight:600;gap:2px;opacity:1;}
+[data-calendar-layout="wide"] .calendar-cell-weather svg {width:16px;height:16px;}
+.cw-day-facts .cw-uv-protection {align-self:flex-start;border-radius:4px;padding:1px 3px;font-size:12px;white-space:nowrap;}
+.cw-day-facts [data-uv-risk="low"] {color:#236b45;background:#dcf2e4;}
+.cw-day-facts [data-uv-risk="moderate"] {color:#795000;background:#ffe6a3;}
+.cw-day-facts [data-uv-risk="high"] {color:#8a3b07;background:#ffdbb9;}
+.cw-day-facts [data-uv-risk="very-high"] {color:#a42626;background:#ffe0df;}
+.cw-day-facts [data-uv-risk="extreme"] {color:#71377e;background:#efdcf5;}
+.cw-day-facts [data-uv-risk="unknown"] {color:var(--text-sec);background:transparent;}
+@media (max-height:560px) and (min-width:691px) {
+ [data-calendar-layout="wide"] [data-month-grid] {grid-template-rows:21px repeat(6,46px);}
+ [data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {height:46px;min-height:46px;}
+ [data-calendar-layout="wide"] .calendar-cell-weather {font-size:12px;height:15px;line-height:15px;}
+ [data-calendar-layout="wide"] .calendar-cell-weather svg {width:14px;height:14px;}
+}
+@media (max-width:690px) {
+ [data-calendar-layout="wide"] .calendar-cell-weather {font-size:11px;gap:0;}
+ [data-calendar-layout="wide"] .calendar-cell-weather svg {width:13px;height:13px;}
+}

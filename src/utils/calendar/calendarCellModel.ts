@@ -74,7 +74,8 @@ export function getCalendarCellViewModel(
     : null;
   // 只有法定休假且当天本身存在主要节日名称时才做完整杏橘底色。
   // 国庆/春节等连休的其它日期仅保留「休」角标，避免一大片同色方块压住月历。
-  const isFestivalHoliday = Boolean(isHoliday && allFestivals.length > 0);
+  const publicFestivals = new Set(['元旦节', '春节', '除夕', '劳动节', '端午节', '中秋节', '国庆节']);
+  const isFestivalHoliday = Boolean(isHoliday && (jieQi === '清明' || allFestivals.some(name => publicFestivals.has(name))));
 
   const cellFestivals = [...allFestivals];
   if (jieQi) cellFestivals.unshift(jieQi);
