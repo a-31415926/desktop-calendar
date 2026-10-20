@@ -96,6 +96,13 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
       void retrieve(result.settings);
     }).catch(e => { if (alive) setError(String(e)); });
 
+    const settingsListening = listen('weather-settings-changed', () => {
+      void call<SettingsResponse>('weather_settings').then(result => {
+        if (!alive) return;
+        currentSettings.current = result.settings; setConfig(result); setData(null);
+        void retrieve(result.settings, true);
+      }).catch(e => {if(alive)setError(String(e));});
+    });
     const timer = window.setInterval(() => {
       setClock(Date.now());
       if (!document.hidden && currentSettings.current) void retrieve(currentSettings.current);
@@ -110,6 +117,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
       lastRequest.current++;
       window.clearInterval(timer);
       void listening.then(stop => stop());
+      void settingsListening.then(stop => stop());
     };
   }, [retrieve]);
 

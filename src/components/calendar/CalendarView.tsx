@@ -8,6 +8,9 @@ import { useCalendarViewModel } from '../../hooks/calender/useCalendarViewModel.
 import { useCalendarAppearance } from '../../hooks/calender/useCalendarAppearance.ts';
 import './calendarUsability.css';
 import './calendarWide.css';
+import './calendarV15.css';
+import { useConfigSync } from '../../sync/configStore.ts';
+import WeatherAtmosphere from './subs/WeatherAtmosphere.tsx';
 import CalendarFooter from './subs/CalendarFooter.tsx';
 import CalendarWeather from './subs/CalendarWeather.tsx';
 import CalendarHeader from './subs/CalendarHeader.tsx';
@@ -55,6 +58,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 }) => {
   /** 聚合后的日历视图模型，供上下文与各子组件共享。 */
   const size = useCalendarAppearance();
+  const appearance = useConfigSync(s => s.data);
+  const scale = Math.min(110, Math.max(55, appearance.calendarScale)) / 100;
   const [weather,setWeather]=useState<WeatherData|null>(null);
   const model = useCalendarViewModel({
     enableDrag,
@@ -73,12 +78,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   return (
     <CalendarViewProvider value={model}>
       <CalendarWeatherContext.Provider value={weather}>
-      <div {...model.rootProps} data-calendar-shell data-calendar-size={size} data-calendar-layout="wide" data-weather-scene={weatherScene}>
-        <div className="calendar-weather-atmosphere" aria-hidden="true">
-          <div className="weather-atmosphere-layer weather-atmosphere-layer-a" />
-          <div className="weather-atmosphere-layer weather-atmosphere-layer-b" />
-          <div className="weather-atmosphere-layer weather-atmosphere-layer-c" />
-        </div>
+      <div {...model.rootProps} data-calendar-shell data-calendar-size={size} data-calendar-layout="wide" data-weather-scene={weatherScene} data-theme={appearance.theme}
+        data-motion={appearance.weatherAnimation ? 'on' : 'off'}
+        data-atmosphere={appearance.weatherAtmosphere}
+        data-lunar-visible={appearance.lunarVisible} data-weather-visible={appearance.calendarWeatherVisible}
+        style={{...model.rootProps.style, zoom: scale, '--calendar-scale': scale,
+          '--calendar-text-scale': Math.min(115, Math.max(90, appearance.calendarTextScale)) / 100,
+          '--calendar-surface-opacity': appearance.calendarSurfaceOpacity / 100} as CSSProperties}>
+        <WeatherAtmosphere scene={weatherScene} />
         <header className="calendar-wide-header"><CalendarHeader /></header>
         <div className="calendar-wide-columns">
           <aside className="calendar-wide-weather" aria-label="天气与出行参考">

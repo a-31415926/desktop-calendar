@@ -1,0 +1,11 @@
+.calendar-settings {background:linear-gradient(135deg,#f4f8fc,#fff);color:#253344;font-size:14px;}
+.calendar-settings h2 {font-size:22px;margin:4px 0 12px;letter-spacing:.02em;}
+.calendar-settings h3 {margin:24px 0 12px;font-size:16px;}
+.calendar-settings .ant-menu {background:transparent;padding:16px 8px;}
+.calendar-settings .ant-menu-item {border-radius:10px;margin-bottom:6px;}
+.calendar-settings .ant-form-item {margin-bottom:20px;}
+.settings-description {color:#68798c;line-height:1.7;margin-bottom:24px;}
+.settings-inline-hint {color:#68798c;font-size:12px;}
+.settings-place {padding:14px 16px;margin:12px 0;border:1px solid #dce5ef;border-radius:12px;background:#fff9;}
+.settings-place-heading {display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.calendar-settings .ant-form-item-label {white-space:normal;}

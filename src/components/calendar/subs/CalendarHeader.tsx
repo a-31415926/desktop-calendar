@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import { Dropdown, Tooltip, type MenuProps } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
+import { emit } from '@tauri-apps/api/event';
 import { useCalendarAppearance, setCalendarSize, type CalendarSize } from '../../../hooks/calender/useCalendarAppearance.ts';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Lunar } from 'lunar-typescript';
@@ -79,18 +80,22 @@ function CalendarHeader(): ReactElement {
   const size = useCalendarAppearance();
   const menu: MenuProps = {
     items: [
-      {key:'weather',label:'天气与地点设置',icon:<SettingOutlined/>},
-      {key:'size',label:'字号与尺寸',children:[
-        {key:'compact',label:(size==='compact'?'✓ ':'')+'小'},
-        {key:'standard',label:(size==='standard'?'✓ ':'')+'标准'},
-        {key:'large',label:(size==='large'?'✓ ':'')+'大（推荐）'},
+      {key:'weather',label:'天气与动画设置',icon:<SettingOutlined/>},
+      {key:'size',label:'整体大小',children:[
+        {key:'compact',label:(size==='compact'?'✓ ':'')+'紧凑 · 65%'},
+        {key:'standard',label:(size==='standard'?'✓ ':'')+'舒适 · 75%'},
+        {key:'large',label:(size==='large'?'✓ ':'')+'原始 · 100%'},
       ]},
       ...(showThemeButton ? [{key:'theme',label:theme==='light'?'切换深色外观':'切换浅色外观',icon:theme==='light'?<MoonOutlined/>:<SunOutlined/>}] : []),
       ...(showPinButton ? [{key:'pin',label:isPinned?'取消固定窗口':'固定窗口',icon:isPinned?<PushpinFilled/>:<PushpinOutlined/>}] : []),
-      ...(showSettingsButton ? [{key:'settings',label:'更多设置',icon:<SettingOutlined/>}] : []),
+      ...(showSettingsButton ? [{key:'settings',label:'全部设置',icon:<SettingOutlined/>}] : []),
     ],
     onClick: ({key}) => {
-      if (key==='weather') window.dispatchEvent(new Event('calendar-open-weather-settings'));
+      if (key==='weather') {
+        localStorage.setItem('calendar-settings-tab', 'weather');
+        onOpenMainWindow();
+        void emit('calendar-settings-tab', 'weather');
+      }
       else if (key==='theme') onToggleTheme();
       else if (key==='pin') onTogglePin();
       else if (key==='settings') onOpenMainWindow();

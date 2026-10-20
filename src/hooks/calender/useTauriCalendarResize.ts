@@ -1,3 +1,4 @@
+import { useConfigSync } from '../../sync/configStore.ts';
 import { LogicalSize, PhysicalPosition } from '@tauri-apps/api/dpi';
 import { listen } from '@tauri-apps/api/event';
 import { currentMonitor, getCurrentWindow } from '@tauri-apps/api/window';
@@ -32,6 +33,7 @@ export function useTauriCalendarResize(
   autoResizeWindow: boolean,
 ): RefObject<HTMLDivElement | null> {
   /** 挂载在日历最外层 div，供 ResizeObserver 测量。 */
+  const scale = useConfigSync(s => s.data.calendarScale);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const repositionTaskbarPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -97,8 +99,9 @@ export function useTauriCalendarResize(
       const monitor = await currentMonitor();
       if (cancelled) return;
       const limits = monitor ? calendarLimits(monitor.workArea.size, monitor.scaleFactor) : {width:window.screen.availWidth - 24,height:window.screen.availHeight - 24};
-      el.style.setProperty('--calendar-max-width', limits.width + 'px');
-      el.style.setProperty('--calendar-max-height', limits.height + 'px');
+      const zoom = Number(getComputedStyle(el).zoom) || 1;
+      el.style.setProperty('--calendar-max-width', (limits.width / zoom) + 'px');
+      el.style.setProperty('--calendar-max-height', (limits.height / zoom) + 'px');
       const measured = measureContentLogicalSize();
       const desired = {width:Math.min(measured.width,limits.width),height:Math.min(measured.height,limits.height)};
       if (desired.width <= 0 || desired.height <= 100) {
@@ -211,7 +214,7 @@ export function useTauriCalendarResize(
         repositionTaskbarPopupTimerRef.current = null;
       }
     };
-  }, [autoResizeWindow]);
+  }, [autoResizeWindow, scale]);
 
   return containerRef;
 }

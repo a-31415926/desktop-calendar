@@ -48,7 +48,8 @@ test('V14.10 keeps the wide calendar and adds a full-window weather atmosphere',
   const backend = fs.readFileSync('src-tauri/src/weather.rs','utf8');
   assert.match(view, /data-calendar-layout="wide"/);
   assert.match(view, /data-weather-scene=\{weatherScene\}/);
-  assert.match(view, /className="calendar-weather-atmosphere"/);
+  assert.match(view, /<WeatherAtmosphere scene=\{weatherScene\}/);
+  assert.match(fs.readFileSync('src/components/calendar/subs/WeatherAtmosphere.tsx','utf8'), /calendar-weather-atmosphere/);
   assert.match(view, /className="calendar-wide-header"/);
   assert.match(view, /className="calendar-wide-weather"/);
   assert.match(view, /className="calendar-wide-calendar"/);

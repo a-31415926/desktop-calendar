@@ -317,26 +317,7 @@
 
 /* On truly small usable screens, fall back to a scrollable single column.
    Normal 1080p/125% and 2K/125% always use the fixed 776x596 layout. */
-@media (max-width:690px), (max-height:560px) {
-  [data-calendar-shell][data-calendar-layout="wide"] {
-    height:min(720px,var(--calendar-max-height,calc(100dvh - 24px)))!important;
-    overflow-y:auto;
-  }
-  [data-calendar-layout="wide"] .calendar-wide-columns {
-    display:flex;
-    flex-direction:column;
-    overflow:visible;
-  }
-  [data-calendar-layout="wide"] .calendar-wide-weather {
-    flex:0 0 auto;
-    height:335px;
-    border-right:none;
-    border-bottom:1px solid color-mix(in srgb,var(--text-sec) 18%,transparent);
-  }
-  [data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {height:100px;min-height:100px;flex-basis:100px;}
-  [data-calendar-layout="wide"] .calendar-wide-calendar {flex:0 0 auto;}
-  [data-calendar-layout="wide"] .calendar-wide-calendar [data-month-grid] [data-day-cell] {width:100%;}
-}
+
 
 /* V14.9: keep the six-row calendar and the daily summary visible together. */
 [data-calendar-shell][data-calendar-layout="wide"] {height:min(596px,var(--calendar-max-height,calc(100dvh - 24px)))!important;overflow:hidden;}
@@ -385,17 +366,8 @@
 .cw-data-issue[open] {position:absolute;inset:8px;z-index:55;overflow:auto;background:var(--card-bg);padding:12px;border-radius:8px;}
 [data-calendar-layout="wide"] .cw-life-panel {bottom:26px;max-height:calc(100% - 38px);}
 [data-calendar-layout="wide"] .cw-status {margin:0;line-height:15px;max-height:30px;}
-@media (max-height:560px) and (min-width:691px) {
- [data-calendar-layout="wide"] [data-month-grid] {grid-template-rows:21px repeat(6,46px);}
- [data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {height:46px;min-height:46px;}
- [data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {height:110px;min-height:110px;flex-basis:110px;}
- [data-calendar-layout="wide"] .cw-primary-pollutant {display:none;}
-}
-@media (max-width:690px) {
- [data-calendar-layout="wide"] .calendar-wide-columns {grid-template-columns:minmax(190px,34%) minmax(0,1fr);}
- [data-calendar-layout="wide"] .calendar-cell-weather {font-size:9px;gap:0;}
- [data-calendar-layout="wide"] .calendar-wide-calendar {padding-left:5px;padding-right:3px;}
-}
+
+
 .cw-alert-impact {display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;font-weight:400;line-height:15px;}
 .cw-attention[open] .cw-alert-impact {display:none;}
 [data-calendar-layout="wide"] .calendar-cell-weather {font-size:11px;}
@@ -653,16 +625,8 @@
 .cw-day-facts [data-uv-risk="very-high"] {color:#a42626;background:#ffe0df;}
 .cw-day-facts [data-uv-risk="extreme"] {color:#71377e;background:#efdcf5;}
 .cw-day-facts [data-uv-risk="unknown"] {color:var(--text-sec);background:transparent;}
-@media (max-height:560px) and (min-width:691px) {
- [data-calendar-layout="wide"] [data-month-grid] {grid-template-rows:21px repeat(6,46px);}
- [data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {height:46px;min-height:46px;}
- [data-calendar-layout="wide"] .calendar-cell-weather {font-size:12px;height:15px;line-height:15px;}
- [data-calendar-layout="wide"] .calendar-cell-weather svg {width:14px;height:14px;}
-}
-@media (max-width:690px) {
- [data-calendar-layout="wide"] .calendar-cell-weather {font-size:11px;gap:0;}
- [data-calendar-layout="wide"] .calendar-cell-weather svg {width:13px;height:13px;}
-}
+
+
 /* V14.14: readable night hero on the shared window surface. */
 [data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {--wh-ink:var(--text-main)!important;--wh-muted:var(--text-sec)!important;color:var(--text-main);}
 [data-calendar-shell][data-calendar-layout="wide"] .calendar-weather-hero.wh-night .wh-moon {background:transparent;box-shadow:inset -8px -3px 0 #d5b66a;}

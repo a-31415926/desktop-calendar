@@ -1,3 +1,7 @@
+import { listen } from '@tauri-apps/api/event';
+import AppearanceForm from './forms/AppearanceForm.tsx';
+import WeatherPreferencesForm from './forms/WeatherPreferencesForm.tsx';
+import './settings.css';
 import { Button, Col, Menu, type MenuProps, Result, Row } from 'antd';
 import React, { type ReactElement, useEffect, useState } from 'react';
 import { isDesktop, isMacos, isWindows } from '../../utils/platform.ts';
@@ -6,11 +10,11 @@ import About from '../About.tsx';
 import AutostartForm from './forms/AutostartForm.tsx';
 import CalendarForm from './forms/CalendarForm.tsx';
 import MacosTrayTitleSettings from './forms/MacosTrayTitleSettings.tsx';
-import TransparentEffectForm from './forms/TransparentEffectForm.tsx';
+
 import WidgetShowForm from './forms/WidgetShowForm.tsx';
 import WindowsTrayForm from './forms/WindowsTrayForm.tsx';
 
-type SettingsTab = 'general' | 'calendar' | 'trayClock' | 'trayTitle' | 'about';
+type SettingsTab = 'appearance' | 'weather' | 'general' | 'calendar' | 'trayClock' | 'trayTitle' | 'about';
 
 interface SettingsPageProps {
   /** 移动端精简模式下，只保留“日历内容”配置。 */
@@ -20,7 +24,7 @@ interface SettingsPageProps {
 const Settings: React.FC<SettingsPageProps> = ({ mobileCalendarOnly = false }) => {
   /** 当前左侧菜单选中的设置页签。 */
   const [activeTab, setActiveTab] = useState<SettingsTab>(
-    mobileCalendarOnly ? 'calendar' : 'general',
+    mobileCalendarOnly ? 'calendar' : (localStorage.getItem('calendar-settings-tab') === 'weather' ? 'weather' : 'appearance'),
   );
   useEffect(() => {
     if (mobileCalendarOnly) {
@@ -28,10 +32,18 @@ const Settings: React.FC<SettingsPageProps> = ({ mobileCalendarOnly = false }) =
     }
   }, [mobileCalendarOnly]);
 
+  useEffect(() => {
+    localStorage.removeItem('calendar-settings-tab');
+    const pending = listen<string>('calendar-settings-tab', e => {if(e.payload === 'weather')setActiveTab('weather');});
+    return () => {void pending.then(stop => stop());};
+  }, []);
+
   /** 左侧菜单项；移动端精简模式下只保留“日历内容”。 */
   const menuItems: MenuProps['items'] = mobileCalendarOnly
     ? [{ key: 'calendar', label: '日历内容' }]
     : [
+        { key: 'appearance', label: '外观与大小' },
+        { key: 'weather', label: '天气与动画' },
         { key: 'general', label: '通用设置' },
         { key: 'calendar', label: '日历内容' },
         ...(isWindows ? [{ key: 'trayClock', label: '任务栏时钟' }] : []),
@@ -42,12 +54,14 @@ const Settings: React.FC<SettingsPageProps> = ({ mobileCalendarOnly = false }) =
   /** 按当前页签渲染对应设置内容。 */
   const renderContent = (): ReactElement => {
     switch (activeTab) {
+      case 'appearance': return <AppearanceForm />;
+      case 'weather': return <WeatherPreferencesForm />;
       case 'general':
         return (
           <div>
             {isDesktop && <AutostartForm />}
             {isDesktop && <WidgetShowForm />}
-            <TransparentEffectForm />
+
           </div>
         );
       case 'calendar':
@@ -86,7 +100,7 @@ const Settings: React.FC<SettingsPageProps> = ({ mobileCalendarOnly = false }) =
   }
 
   return (
-    <Row style={{ width: '100%', height: '100%' }} wrap={false}>
+    <Row className="calendar-settings" style={{ width: '100%', height: '100%' }} wrap={false}>
       <Col flex="180px">
         <Menu
           mode="vertical"

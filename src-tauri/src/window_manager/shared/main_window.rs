@@ -28,7 +28,7 @@ pub fn show_or_create_main_window(app_handle: &AppHandle) {
         // 设置加载的入口 URL
         tauri::WebviewUrl::App("index.html".into()),
     )
-    .title("松鼠日历") // 设置窗口标题
+    .title("桌面日历天气 · 设置") // 设置窗口标题
     .inner_size(800.0, 600.0) // 设置窗口内部大小
     .center() // 窗口居中
     .resizable(true) // 允许调整大小

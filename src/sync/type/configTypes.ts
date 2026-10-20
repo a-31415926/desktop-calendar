@@ -36,6 +36,13 @@ export interface ConfigItem
 export interface SystemConfig {
   // 开机自启动
   autostart: boolean;
+  calendarScale: number;
+  calendarTextScale: number;
+  weatherAnimation: boolean;
+  weatherAtmosphere: 'soft' | 'vivid';
+  calendarSurfaceOpacity: number;
+  lunarVisible: boolean;
+  calendarWeatherVisible: boolean;
   theme: CalendarTheme;
   /** 日历小窗是否固定在最前（与顶栏图钉一致，持久化） */
   calendarPinned: boolean;

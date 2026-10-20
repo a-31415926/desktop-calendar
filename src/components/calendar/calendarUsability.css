@@ -53,4 +53,4 @@
 .cw-warning p {margin:5px 0;}
 .cw-warning small {display:block;}
 .cw-menu-button {font-size:20px;line-height:1;}
-@media (max-height:540px) { [data-calendar-shell] .cw-commute{display:none;} }
+
