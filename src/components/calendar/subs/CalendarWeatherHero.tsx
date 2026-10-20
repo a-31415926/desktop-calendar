@@ -1,7 +1,7 @@
 import { EnvironmentOutlined } from '@ant-design/icons';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import dayjs, { type Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
   number, weatherCode, weatherIntensity,
@@ -21,7 +21,7 @@ function shanghaiDateKey(date: Date): string {
 
 function localMinutes(value?: string): number | null {
   if (!value) return null;
-  const match = value.match(/T(\\d{2}):(\\d{2})/);
+  const match = value.match(/T(\d{2}):(\d{2})/);
   return match ? Number(match[1]) * 60 + Number(match[2]) : null;
 }
 
