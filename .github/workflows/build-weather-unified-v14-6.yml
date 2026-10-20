@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 concurrency:
   group: weather-v14-6-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:

@@ -48,7 +48,7 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
   const low = hasDayForecast ? daily?.temperature_2m_min[dayIndex] : null;
   const currentTemp = isToday ? (current?.temperature_2m ?? high) : high;
   const isPast = selectedKey < todayKey;
-  const displayCondition = available ? condition : isPast ? '历史天气暂不可用' : '待连接天气';
+  const displayCondition = available ? condition : isPast ? '历史天气暂不可用' : data?.forecast ? '暂无天气预报' : '待连接天气';
 
   // Only today's weather uses the real current daylight state.
   // A selected future date represents its daily (daytime) forecast; do not
@@ -118,7 +118,7 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
             ? isToday
               ? `体感 ${number(current?.apparent_temperature, '°')} · 最高 ${number(high, '°')} / 最低 ${number(low, '°')}`
               : `最高 ${number(high, '°')} · 最低 ${number(low, '°')} · ${night ? '夜间' : '白天'}预报`
-            : error ? '天气数据暂不可用，请检查连接' : isPast ? '当前数据源未提供所选日期的历史天气' : '所选日期超出当前预报范围'}
+            : error ? '请查看面板提示或打开天气设置' : isPast ? '当前数据源未提供所选日期的历史天气' : data?.forecast ? '所选日期超出当前预报范围' : '等待连接天气服务'}
         </div>
       </div>
     </section>

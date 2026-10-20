@@ -206,6 +206,7 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
       <div className="cw-details">
       <div className="cw-rain-banner" title={nowcast ? '和风天气每五分钟降雨临近预报' : '降水概率参考，不代表一定降雨'}>
         <span className="cw-umbrella">☂</span><span>{stale ? '上次预报 · ' : ''}{summary}</span>
+        {nowcast && <div className="cw-mini-rain" aria-label="未来两小时每五分钟累计降水量">{rainPoints.map(p => <i key={p.fxTime} title={timeLabel(p.fxTime) + ' · ' + p.precip + '毫米/5分钟'} style={{height: Math.min(18, 2 + Number(p.precip) * 12) + 'px'}}/>)}</div>}
       </div>
       <div className="cw-detail-nav">
         <div className="cw-hourly-label"><span>{detailView === 'hours' ? isToday ? '接下来六小时' : `${selectedDate.format('M月D日')}逐小时` : '未来五天'}</span><span>{detailView === 'hours' ? '降雨概率' : '高 / 低 · 雨概率'}</span></div>
@@ -246,7 +247,6 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
       </div>
       {issue && <button className="cw-status cw-error" type="button" onClick={openSettings} title={issue}>{issue}</button>}
       {isToday && data?.rainError && !issue && <p className="cw-status" title={data.rainError}>{data.rainError}</p>}
-      {nowcast && <div className="cw-mini-rain" aria-label="未来两小时每五分钟累计降水量">{rainPoints.map(p => <i key={p.fxTime} title={timeLabel(p.fxTime) + ' · ' + p.precip + '毫米/5分钟'} style={{height: Math.min(18, 2 + Number(p.precip) * 12) + 'px'}}/>)}</div>}
       {provider === 'qweather' && data?.forecast?.attributions?.length ? <details className="cw-attribution"><summary>数据来源与声明</summary>{[...new Set(data.forecast.attributions)].map(a => <span key={a}>{a}</span>)}</details> : null}
       </div>
       {editing && draft && (

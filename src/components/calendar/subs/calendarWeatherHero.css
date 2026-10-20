@@ -138,8 +138,9 @@
 .wh-intensity-moderate .wh-snow-particles .wh-particle {width:4px;height:4px;opacity:.85;}
 .wh-intensity-heavy .wh-snow-particles .wh-particle {width:6px;height:6px;opacity:1;}
 .wh-snow-particles .wh-particle:nth-child(3n) {border-radius:0;clip-path:polygon(40% 0,60% 0,60% 40%,100% 40%,100% 60%,60% 60%,60% 100%,40% 100%,40% 60%,0 60%,0 40%,40% 40%);transform:rotate(20deg);}
-.wh-content {height:64px;gap:3px;padding-bottom:7px;}
-.calendar-weather-hero {height:108px;min-height:108px;}
+.wh-content {height:80px;gap:3px;padding-bottom:7px;}
+.wh-content>* {flex-shrink:0;}
+.calendar-weather-hero {height:124px;min-height:124px;}
 .wh-eyebrow .cw-actions {margin-top:-3px;margin-bottom:-3px;}
 .wh-rain-particles {left:48%;opacity:.9;}
 .wh-snow-particles {left:42%;}

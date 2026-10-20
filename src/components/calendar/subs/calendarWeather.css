@@ -152,8 +152,14 @@
 .cw-clear-key {flex-direction:row!important;align-items:center;}
 .cw-clear-key input {width:auto;}
 .cw-status {display:block;margin:3px 0 0!important;padding:0!important;font-size:10px!important;line-height:15px;max-height:30px;overflow:hidden;text-align:left;white-space:normal;}
-.cw-mini-rain {display:flex;align-items:flex-end;gap:3px;height:20px;margin-top:3px;}
+.cw-mini-rain {display:flex;align-items:flex-end;gap:2px;height:18px;width:80px;flex-shrink:0;margin-left:auto;}
+.cw-rain-banner>span:nth-child(2) {overflow:hidden;text-overflow:ellipsis;}
 .cw-mini-rain i {flex:1;background:#71aacd;border-radius:2px;}
 .cw-attribution {margin-top:3px;font-size:9px;color:var(--cw-muted);}
 .cw-attribution summary {cursor:pointer;}
 .cw-attribution span {display:block;overflow-wrap:anywhere;}
+.cw-unified .cw-hour {height:67px;min-height:0;gap:2px;}
+.cw-unified .cw-hour .cw-time {line-height:12px;}
+.cw-unified .cw-hour strong {line-height:14px;}
+.cw-unified .cw-hour .cw-prob {line-height:10px;}
+.cw-unified .cw-day>* {line-height:1;}
