@@ -4,12 +4,11 @@ import { listen } from '@tauri-apps/api/event';
 import type { Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type FormEvent } from 'react';
 import {
-  ageLabel, futureRain, hourlyRows, selectedHours, dateKey, number, rainIsFresh, timeLabel, timestamp, weatherCode,
+  ageLabel, hourlyRows, dateKey, number, timeLabel, weatherCode,
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
-import { commuteSummary, localAir, activeAlerts, extraIsFresh } from '../../../weather/extras.ts';
+import { localAir, extraIsFresh } from '../../../weather/extras.ts';
 import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeather.ts';
-import CalendarWeatherExtras from './CalendarWeatherExtras.tsx';
 import CalendarWeatherHero from './CalendarWeatherHero.tsx';
 import './calendarWeather.css';
 
@@ -71,11 +70,6 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
   const [draft, setDraft] = useState<Settings | null>(null);
   const [clearKey, setClearKey] = useState(false);
   const [apiKey, setApiKey] = useState('');
-  const [detailView, setDetailView] = useState<'hours' | 'days'>('hours');
-  // The horizontal preview always shows its six-hour forecast without extra clicks.
-  // Keep optional collapsing for smaller screens without changing the first view.
-  const [forecastChoice, setForecastChoice] = useState<boolean | null>(null);
-  const forecastExpanded = forecastChoice ?? true;
 
   const retrieve = useCallback(async (settings: Settings, force = false) => {
     const request = ++lastRequest.current;
@@ -173,39 +167,13 @@ export default function CalendarWeather({ selectedDate, children, onData }: { se
   const place = config?.settings.locations[config.settings.selected];
   const selectedKey = selectedDate.format('YYYY-MM-DD');
   const isToday = selectedKey === dateKey(clock);
-  const hours = selectedHours(data?.forecast ?? null, selectedKey, clock);
-  const view = detailView === 'hours' && !hours.length ? 'summary' : detailView;
-  const commute = isToday ? commuteSummary(data?.forecast ?? null, clock) : null;
-  const nowcast = isToday && rainIsFresh(data, clock);
-  const rainPoints = futureRain(data?.minutely ?? null, clock);
-  const nextTwoHours = hourlyRows(data?.forecast ?? null, clock).filter(h => {
-    const t = timestamp(h.time);
-    return t >= clock - 60 * 60000 && t <= clock + 2 * 3600000;
-  });
-  const probabilities = nextTwoHours.map(h => h.probability)
-    .filter((p): p is number => p != null && Number.isFinite(p));
-  const maxChance = probabilities.length ? Math.max(...probabilities) : null;
-  const daily = (data?.forecast?.daily.time ?? []).slice(0, 5).map((day, index) => ({
-    time: day,
-    code: data?.forecast?.daily.weather_code[index] ?? 3,
-    high: data?.forecast?.daily.temperature_2m_max[index],
-    low: data?.forecast?.daily.temperature_2m_min[index],
-    probability: data?.forecast?.daily.precipitation_probability_max[index],
-  }));
+  const hours = hourlyRows(data?.forecast ?? null, clock).slice(0,4);
   const stale = !!data?.forecast && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
-  const selectedIndex = data?.forecast?.daily.time.indexOf(selectedKey) ?? -1;
-  const selectedChance = selectedIndex >= 0 ? data?.forecast?.daily.precipitation_probability_max[selectedIndex] : null;
   const provider = data?.provider ?? config?.settings.provider ?? 'qweather';
   const source = provider === 'qweather' ? '和风天气' : 'Open-Meteo · CC BY 4.0';
   const attention=weatherAttention(data,clock);
   const dataIssues=weatherDataIssues(data,clock);
   const issue = error || data?.forecastError || data?.saveError;
-  const summary = !isToday ? selectedChance != null ? `所选日期降水概率 ${number(selectedChance, '%')}` : '所选日期暂无降水概率数据' : nowcast
-    ? data?.minutely?.summary ||
-      (rainPoints.some(p => Number(p.precip) > 0) ? '未来两小时可能有降雨' : '未来两小时暂无明显降雨')
-    : maxChance != null
-      ? '近两小时降雨概率最高 ' + Math.round(maxChance) + '%'
-      : '暂无短时降雨参考数据';
 
   return (
     <section className={'calendar-weather cw-unified' + (view === 'days' ? ' cw-detail-days' : '')} ref={root} data-weather-card data-weather-panel aria-label="公司、宿舍和老家天气">
