@@ -6,7 +6,7 @@
 [data-calendar-shell][data-calendar-size="standard"] {--calendar-preferred-width:380px;--calendar-body-font:14px;--calendar-day-font:19px;--calendar-lunar-font:12px;--calendar-cell-height:47px;--calendar-cell-width:44px;}
 [data-calendar-shell][data-calendar-size="compact"] {--calendar-preferred-width:356px;--calendar-body-font:13px;--calendar-day-font:16px;--calendar-lunar-font:11px;--calendar-cell-height:44px;--calendar-cell-width:41px;}
 [data-calendar-shell]>.calendar-weather {flex:0 0 auto;margin-top:0;}
-.calendar-scroll-body {flex:1 1 auto;min-height:70px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#9dabbc transparent;}
+.calendar-scroll-body {flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#9dabbc transparent;}
 .calendar-scroll-body [data-month-nav] {position:sticky;top:0;z-index:5;background:var(--calendar-sticky-bg);padding-top:6px;margin-top:0;}
 [data-month-grid] [data-day-cell] {width:min(var(--calendar-cell-width),100%);height:var(--calendar-cell-height);touch-action:pan-y;}
 [data-month-grid] [data-date-number] {font-size:var(--calendar-day-font);}
