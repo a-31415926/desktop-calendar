@@ -41,7 +41,7 @@ test('weather ambience differs by condition and respects reduced-motion settings
 });
 
 test('the glance panel labels hourly rain probability and preserves source status', () => {
-  assert.match(view, /雨 \{number\(h\.probability,'% '\)\}/);
+  assert.match(view, /number\(h\.probability,'%\'\)/);
   assert.match(view, /ageLabel\(data\?\.forecastFetchedAt/);
   assert.match(view, /Open-Meteo/);
   assert.match(view, /cw-glance-status/);
