@@ -1,58 +1,105 @@
-/* One logical canvas; CSS zoom changes its actual footprint and native window size. */
+/* V16: stable surfaces, one left-column sky, and readable intermediate sizes. */
 [data-calendar-shell][data-calendar-layout="wide"] {
-  width:min(776px,var(--calendar-max-width,776px))!important;
-  height:min(596px,var(--calendar-max-height,596px))!important;
-  max-height:var(--calendar-max-height,596px);
+ --weather-left:#e6edf3;--weather-right:#f5f7fa;--surface-ink:#202c39;--surface-muted:#526478;
+ width:min(744px,var(--calendar-max-width,744px))!important;
+ height:min(580px,var(--calendar-max-height,580px))!important;
+ max-height:var(--calendar-max-height,580px);
+ background:color-mix(in srgb,var(--weather-right) calc(var(--calendar-surface-opacity,1)*100%),transparent)!important;
+ backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+ transition:background-color 650ms ease;
+ --text-main:var(--surface-ink);--text-sec:var(--surface-muted);
 }
-[data-calendar-shell][data-calendar-layout="wide"]>.v15-atmosphere {
-  background:transparent!important;opacity:var(--calendar-surface-opacity,1);
+[data-calendar-shell][data-weather-scene="sun"] {--weather-left:#f8dc9e;--weather-right:#faf7ee;}
+[data-calendar-shell][data-weather-scene="cloud-sun"] {--weather-left:#c7dfed;--weather-right:#f2f7f9;}
+[data-calendar-shell][data-weather-scene="cloud"] {--weather-left:#b4c5d7;--weather-right:#eef2f6;}
+[data-calendar-shell][data-weather-scene="rain"] {--weather-left:#9cc6e3;--weather-right:#edf5fa;}
+[data-calendar-shell][data-weather-scene="storm"] {--weather-left:#acb2cf;--weather-right:#f0f1f8;}
+[data-calendar-shell][data-weather-scene="snow"] {--weather-left:#c1e6ec;--weather-right:#f1f9fa;}
+[data-calendar-shell][data-weather-scene="fog"] {--weather-left:#d0d5d6;--weather-right:#f3f4f2;}
+[data-calendar-shell][data-theme="dark"] {--weather-left:#273d52;--weather-right:#202933;--surface-ink:#edf4fb;--surface-muted:#b4c5d5;}
+[data-calendar-shell][data-theme="dark"][data-weather-scene="sun"] {--weather-left:#514732;--weather-right:#2c2b29;}
+[data-calendar-shell][data-theme="dark"][data-weather-scene="rain"] {--weather-left:#234761;--weather-right:#202d39;}
+[data-calendar-shell][data-theme="dark"][data-weather-scene="fog"] {--weather-left:#414d51;--weather-right:#293135;}
+[data-calendar-shell][data-theme="dark"][data-weather-scene="snow"] {--weather-left:#34545f;--weather-right:#24353b;}
+[data-calendar-layout="wide"] .calendar-wide-columns {grid-template-columns:244px minmax(0,1fr);}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather {
+ background:color-mix(in srgb,var(--weather-left) calc(var(--calendar-surface-opacity,1)*100%),transparent)!important;
+ transition:background-color 650ms ease;
 }
-.v15-scene {position:absolute;inset:0;opacity:0;transition:opacity 1000ms cubic-bezier(.22,.61,.36,1);overflow:hidden;}
-.v15-scene[data-active="true"] {opacity:1;}
-.v15-neutral {background:linear-gradient(130deg,#edf2f6,#fafbfd);}
-.v15-sun {background:linear-gradient(125deg,#ffe0a0 0%,#fff0cf 33%,#fffbef 70%,#f5e5bf);}
-.v15-cloud-sun {background:linear-gradient(135deg,#bcdcf1,#e7eff3 42%,#fff0cf);}
-.v15-cloud {background:linear-gradient(135deg,#9eb3ca,#cbd7e2 40%,#e7edf3);}
-.v15-rain {background:linear-gradient(135deg,#88b4d7,#bed6e9 37%,#e1edf6 75%);}
-.v15-storm {background:linear-gradient(135deg,#969cbe,#bdc7df 38%,#e2e6f2 80%);}
-.v15-snow {background:linear-gradient(135deg,#afdce7,#e5f6fa 40%,#f5fbff);}
-.v15-fog {background:linear-gradient(125deg,#b6bfc5,#dfe3e5 48%,#f0f0ec);}
-.v15-glow {position:absolute;width:320px;height:320px;left:-100px;top:-130px;border-radius:50%;opacity:0;}
-.v15-sun .v15-glow,.v15-cloud-sun .v15-glow {opacity:.85;background:radial-gradient(circle,#fff9dc 0 22%,#ffd16b80 45%,transparent 70%);animation:v15-breathe 12s ease-in-out infinite alternate;}
-.v15-clouds {position:absolute;inset:-15%;opacity:.55;background:radial-gradient(ellipse at 12% 22%,#ffffffd9,transparent 32%),radial-gradient(ellipse at 72% 68%,#ffffff90,transparent 35%);animation:v15-cloud 28s ease-in-out infinite alternate;}
-.v15-cloud .v15-clouds,.v15-storm .v15-clouds {background:radial-gradient(ellipse at 8% 4%,#596b9180,transparent 48%),radial-gradient(ellipse at 70% 70%,#fff9,transparent 38%);}
-.v15-fog .v15-clouds {opacity:.9;background:repeating-linear-gradient(167deg,transparent 0 65px,#fff9 100px,transparent 155px);filter:blur(16px);animation-duration:22s;}
-.v15-particles {position:absolute;inset:0 60% 0 0;overflow:hidden;mask-image:linear-gradient(90deg,#000 55%,transparent);}
-.v15-particles i {display:none;position:absolute;}
-.v15-rain i,.v15-storm i {display:block;width:1px;height:24px;background:linear-gradient(transparent,#3a749c99);animation:v15-rain 3s linear infinite;}
-.v15-snow i {display:block;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 4px #fff;animation:v15-snow 12s linear infinite;}
-.v15-neutral .v15-clouds,.v15-neutral .v15-glow {display:none;}
-[data-atmosphere="soft"] .v15-scene {filter:saturate(.65);}
-[data-atmosphere="soft"]>.v15-atmosphere::after {content:'';position:absolute;inset:0;background:#ffffff75;pointer-events:none;}
-[data-theme="dark"] .v15-scene {filter:brightness(.27) saturate(.8);}
-[data-theme="dark"][data-atmosphere="soft"]>.v15-atmosphere::after {background:#17223166;}
-[data-calendar-layout="wide"] .calendar-wide-calendar {background:linear-gradient(90deg,#ffffff14,#ffffff30);}
-[data-theme="dark"] .calendar-wide-calendar {background:#14202e33;}
-[data-calendar-shell][data-motion="off"] *,[data-calendar-shell][data-motion="off"] *::before,[data-calendar-shell][data-motion="off"] *::after {animation:none!important;}
-[data-calendar-shell][data-motion="off"] .v15-scene {transition:none;}
-[data-calendar-shell][data-lunar-visible="false"] [data-lunar-day] {visibility:hidden;}
-[data-calendar-shell][data-weather-visible="false"] .calendar-cell-weather {visibility:hidden;}
-[data-calendar-layout="wide"] [data-month-grid] [data-date-number] {font-size:calc(19px * var(--calendar-text-scale,1));}
-[data-calendar-layout="wide"] [data-month-grid] [data-lunar-day] {font-size:calc(12px * var(--calendar-text-scale,1));}
-[data-calendar-layout="wide"] [data-month-grid] [data-weekday] {font-size:calc(14px * var(--calendar-text-scale,1));}
-[data-calendar-layout="wide"] .calendar-cell-weather {font-size:calc(12px * var(--calendar-text-scale,1));}
-[data-calendar-layout="wide"] .cw-glance-hour {font-size:calc(12px * var(--calendar-text-scale,1));}
-[data-calendar-layout="wide"] .cw-glance-hour strong,[data-calendar-layout="wide"] .cw-glance-air strong {font-size:calc(15px * var(--calendar-text-scale,1));}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-calendar {background:transparent!important;padding:10px 10px 6px 12px;}
+[data-calendar-layout="wide"] .calendar-wide-header {height:48px;min-height:48px;padding-top:0;}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather>.v16-atmosphere {position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;border-radius:0;background:transparent!important;opacity:1;}
+[data-calendar-layout="wide"] .calendar-wide-weather>.calendar-weather {position:relative;z-index:1;}
+.v16-scene {position:absolute;inset:0;opacity:0;transition:opacity 650ms ease;pointer-events:none;overflow:hidden;}
+.v16-scene[data-active="true"] {opacity:1;}
+.v16-scene:not([data-active="true"]) * {animation-play-state:paused;}
+.v16-sun-disc,.v16-moon {position:absolute;right:20px;top:20px;width:52px;height:52px;border-radius:50%;}
+.v16-sun-disc {background:#fff0b6;box-shadow:0 0 35px 15px #fff1af90;animation:v16-sun-drift 16s ease-in-out infinite alternate;}
+.v16-moon {background:transparent;box-shadow:inset -13px -5px #edf2d5;filter:drop-shadow(0 0 12px #f1f4ce60);animation:v16-sun-drift 18s ease-in-out infinite alternate;}
+.v16-cloud {position:absolute;right:-30px;top:70px;width:145px;height:35px;border-radius:50%;background:#ffffff9c;filter:blur(5px);animation:v16-cloud-drift 25s ease-in-out infinite alternate;}
+.v16-cloud::before {content:'';position:absolute;inset:-24px 25px 3px 34px;border-radius:50%;background:inherit;}
+.v16-cloud-b {top:210px;right:70px;opacity:.5;transform:scale(1.5);animation-duration:34s;}
+.v16-cloud .v16-cloud-a,.v16-storm .v16-cloud-a {background:#67809a60;}
+.v16-fog-ribbon {position:absolute;inset:-20%;background:repeating-linear-gradient(165deg,transparent 0 70px,#ffffff9c 100px,transparent 150px);filter:blur(13px);animation:v16-cloud-drift 25s ease-in-out infinite alternate;}
+.v16-particles {position:absolute;inset:0;mask-image:linear-gradient(#000 5%,#0008 35%,#0003 90%);}
+.v16-particles i {display:none;position:absolute;}
+.v16-rain i,.v16-storm i {display:block;width:1px;height:21px;background:linear-gradient(transparent,#31658da6);animation:v16-rain 3s linear infinite;}
+.v16-snow i {display:block;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 4px #fff;animation:v16-snow 12s linear infinite;}
+[data-atmosphere="soft"] .v16-scene {filter:saturate(.7);}
+[data-atmosphere="soft"] .v16-scene[data-active="true"] {opacity:.55;}
+[data-theme="dark"] .v16-cloud {background:#d0e1eb45;}
+/* Remove the old separate hero card and its keyed intro animations. */
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero,
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .wh-content {background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;border:0;animation:none!important;}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-weather-hero::before,
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-weather-hero::after,
+[data-calendar-layout="wide"] .wh-atmosphere {display:none!important;}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {height:116px;min-height:116px;flex-basis:116px;}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-content {padding:13px 12px;gap:9px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance {gap:6px;padding:8px 10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#738ca559 transparent;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance>* {flex-shrink:0;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-status {white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:5px 7px;font-size:11px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air {padding:6px 9px;background:color-mix(in srgb,var(--aqi-bg,#fff) 75%,#fff)!important;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-day-facts {padding-top:5px;padding-bottom:4px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-forecast {padding-top:7px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-heading {margin-bottom:5px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour {padding:5px 0;border-radius:7px;background:#ffffff45;gap:3px;}
+[data-theme="dark"] .cw-glance-hour {background:#182d4680!important;}
+[data-calendar-layout="wide"] .cw-density-toggle {border:1px solid #7492aa45;border-radius:7px;background:#ffffff60;color:var(--text-main);font:inherit;font-size:12px;font-weight:600;min-height:27px;cursor:pointer;}
+[data-theme="dark"] .cw-density-toggle {background:#1d314c80;}
+[data-calendar-layout="wide"] .cw-density-toggle:focus-visible {outline:2px solid #176fb8;outline-offset:2px;}
+[data-calendar-shell][data-calendar-layout="wide"][data-compact="true"] {height:min(514px,var(--calendar-max-height,514px))!important;}
+[data-compact="true"] .cw-glance-air,[data-compact="true"] .cw-day-facts,[data-compact="true"] .cw-glance-forecast {display:none!important;}
+[data-compact="true"] .cw-glance-bottom {margin-top:auto;}
+[data-calendar-layout="wide"] [data-month-grid] {grid-template-rows:22px repeat(6,52px);row-gap:1px;}
+[data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {height:52px;min-height:52px;}
+[data-calendar-layout="wide"] [data-month-grid] [data-date-number] {font-size:calc(19px * var(--calendar-text-scale,1));line-height:22px;}
+[data-calendar-layout="wide"] [data-month-grid] [data-lunar-day] {font-size:calc(12px * var(--calendar-text-scale,1));line-height:14px;}
+[data-calendar-layout="wide"] .calendar-cell-weather {font-size:calc(11px * var(--calendar-text-scale,1));height:15px;line-height:15px;}
+[data-calendar-layout="wide"] [data-month-grid] [data-weekday] {font-size:calc(13px * var(--calendar-text-scale,1));}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour {font-size:calc(12px * var(--calendar-text-scale,1));}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour strong,[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air strong {font-size:calc(15px * var(--calendar-text-scale,1));}
 [data-calendar-layout="wide"] .cw-day-facts span,[data-calendar-layout="wide"] .cw-day-facts strong {font-size:calc(11px * var(--calendar-text-scale,1));}
-[data-calendar-layout="wide"] [data-calendar-footer] [class*="yiJiText"],[data-calendar-layout="wide"] [data-calendar-footer] [class*="yiJiItem"] {font-size:calc(12px * var(--calendar-text-scale,1));}
-@keyframes v15-breathe {to{transform:translate(22px,15px) scale(1.13);opacity:.6;}}
-@keyframes v15-cloud {from{transform:translate(-3%,-1%);}to{transform:translate(4%,2%);}}
-@keyframes v15-rain {from{transform:translate(10px,-120px);opacity:0;}15%{opacity:.7;}85%{opacity:.7;}to{transform:translate(-24px,160px);opacity:0;}}
-@keyframes v15-snow {from{transform:translate(0,-80px);opacity:0;}20%{opacity:.95;}80%{opacity:.95;}to{transform:translate(30px,150px);opacity:0;}}
-@media(prefers-reduced-motion:reduce) {.v15-scene{transition:none!important;}.v15-scene *{animation:none!important;}}
-
-.v15-scene:not([data-active="true"]) * {animation-play-state:paused;}
 [data-calendar-layout="wide"] .calendar-wide-header>div>div:first-child>div:first-child {font-size:calc(18px * var(--calendar-text-scale,1));}
 [data-calendar-layout="wide"] .calendar-wide-header>div>div:first-child>div:nth-child(2) {font-size:calc(12px * var(--calendar-text-scale,1));}
 [data-calendar-layout="wide"] .calendar-wide-weather .wh-primary strong {font-size:calc(20px * var(--calendar-text-scale,1));}
-[data-calendar-layout="wide"] .calendar-wide-weather .wh-meta {font-size:calc(12px * var(--calendar-text-scale,1));}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-temperature {font-size:36px;}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-meta {font-size:calc(11px * var(--calendar-text-scale,1));line-height:17px;}
+[data-calendar-layout="wide"] [data-calendar-footer] [class*="yiJiText"],[data-calendar-layout="wide"] [data-calendar-footer] [class*="yiJiItem"] {font-size:calc(12px * var(--calendar-text-scale,1));}
+[data-calendar-shell][data-motion="off"] *,[data-calendar-shell][data-motion="off"] *::before,[data-calendar-shell][data-motion="off"] *::after {animation:none!important;transition:none!important;}
+[data-calendar-shell][data-motion="off"],[data-calendar-shell][data-motion="off"] .calendar-wide-weather {transition:none;}
+[data-calendar-shell][data-lunar-visible="false"] [data-lunar-day] {visibility:hidden;}
+[data-calendar-shell][data-weather-visible="false"] .calendar-cell-weather {visibility:hidden;}
+@keyframes v16-sun-drift {to{transform:translate(-5px,4px);}}
+@keyframes v16-cloud-drift {from{translate:-8px 0;}to{translate:20px 3px;}}
+@keyframes v16-rain {from{transform:translate(12px,-90px);opacity:0;}15%{opacity:.75;}85%{opacity:.75;}to{transform:translate(-20px,150px);opacity:0;}}
+@keyframes v16-snow {from{transform:translate(0,-70px);opacity:0;}20%{opacity:1;}80%{opacity:1;}to{transform:translate(25px,150px);opacity:0;}}
+@media(prefers-reduced-motion:reduce) {[data-calendar-shell],.calendar-wide-weather,.v16-scene,.v16-scene *{animation:none!important;transition:none!important;}}
+
+[data-calendar-shell][data-theme="dark"] .cw-glance-air {--text-main:#202c39;--text-sec:#526478;color:#202c39;}
+
+[data-calendar-shell][data-calendar-layout="wide"][data-compact="true"] {height:min(526px,var(--calendar-max-height,526px))!important;}
+[data-compact="true"] [data-month-grid] {grid-template-rows:22px repeat(6,50px);}
+[data-compact="true"] [data-month-grid] [data-day-cell] {height:50px;min-height:50px;}
+[data-compact="true"] [data-month-grid] [data-lunar-day] {line-height:13px;}
+[data-compact="true"] .calendar-cell-weather {height:14px;line-height:14px;}

@@ -73,6 +73,10 @@ export function createSync<V extends object>(key: string, initialValues: V) {
       const initPromise = (async function initFromFile() {
         const obj = await getLocal(key);
         if (obj) {
+          if (key === 'liConfig' && Number(obj.calendarAppearanceVersion ?? 0) < 16) {
+            Object.assign(obj, {calendarScale:85,calendarTextScale:110,calendarSurfaceOpacity:100,calendarAppearanceVersion:16});
+            await saveLocal(key, true, {data:{...initialValues,...obj}});
+          }
           store.setState({ data: { ...initialValues, ...obj } as V, initialized: true });
         } else {
           store.setState({ initialized: true });

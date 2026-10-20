@@ -83,7 +83,7 @@ function CalendarHeader(): ReactElement {
       {key:'weather',label:'天气与动画设置',icon:<SettingOutlined/>},
       {key:'size',label:'整体大小',children:[
         {key:'compact',label:(size==='compact'?'✓ ':'')+'紧凑 · 65%'},
-        {key:'standard',label:(size==='standard'?'✓ ':'')+'舒适 · 75%'},
+        {key:'standard',label:(size==='standard'?'✓ ':'')+'舒适 · 85%'},
         {key:'large',label:(size==='large'?'✓ ':'')+'原始 · 100%'},
       ]},
       ...(showThemeButton ? [{key:'theme',label:theme==='light'?'切换深色外观':'切换浅色外观',icon:theme==='light'?<MoonOutlined/>:<SunOutlined/>}] : []),

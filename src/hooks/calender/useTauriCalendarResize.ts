@@ -34,6 +34,7 @@ export function useTauriCalendarResize(
 ): RefObject<HTMLDivElement | null> {
   /** 挂载在日历最外层 div，供 ResizeObserver 测量。 */
   const scale = useConfigSync(s => s.data.calendarScale);
+  const compact = useConfigSync(s => s.data.calendarCompact);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const repositionTaskbarPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -214,7 +215,7 @@ export function useTauriCalendarResize(
         repositionTaskbarPopupTimerRef.current = null;
       }
     };
-  }, [autoResizeWindow, scale]);
+  }, [autoResizeWindow, scale, compact]);
 
   return containerRef;
 }

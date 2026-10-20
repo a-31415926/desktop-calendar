@@ -16,7 +16,7 @@ export default function WeatherPreferencesForm() {
   catch(e){setError(String(e));}finally{setBusy(false);}
  };
  return <Form layout="vertical" style={{maxWidth:570}} onFinish={()=>void save()}>
-  <h2>天气与动画</h2><p className="settings-description">选择日期后，整个面板随当天的预报变化；超出预报范围时恢复中性背景。</p>
+  <h2>天气与动画</h2><p className="settings-description">天气动画融入整个左栏，右侧月历只轻微变色。切换日期时底面保持稳定，不整体淡出。</p>
   <Form.Item label="天气氛围"><Segmented value={c.weatherAtmosphere} options={[{label:'鲜明',value:'vivid'},{label:'柔和',value:'soft'}]} onChange={v=>void sync('weatherAtmosphere',v)} /></Form.Item>
   <Form.Item label="优雅动态效果"><Switch checked={c.weatherAnimation} onChange={v=>void sync('weatherAnimation',v)} /><span className="settings-inline-hint"> 缓慢云层、细雨与雪花，切换时柔和渐变</span></Form.Item>
   <h3>天气连接</h3><p className="settings-description">API 凭证只保存在这台电脑，更换电脑后需要重新填写。</p>

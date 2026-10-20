@@ -79,16 +79,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     <CalendarViewProvider value={model}>
       <CalendarWeatherContext.Provider value={weather}>
       <div {...model.rootProps} data-calendar-shell data-calendar-size={size} data-calendar-layout="wide" data-weather-scene={weatherScene} data-theme={appearance.theme}
+        data-compact={appearance.calendarCompact}
         data-motion={appearance.weatherAnimation ? 'on' : 'off'}
         data-atmosphere={appearance.weatherAtmosphere}
         data-lunar-visible={appearance.lunarVisible} data-weather-visible={appearance.calendarWeatherVisible}
         style={{...model.rootProps.style, zoom: scale, '--calendar-scale': scale,
           '--calendar-text-scale': Math.min(115, Math.max(90, appearance.calendarTextScale)) / 100,
           '--calendar-surface-opacity': appearance.calendarSurfaceOpacity / 100} as CSSProperties}>
-        <WeatherAtmosphere scene={weatherScene} />
         <header className="calendar-wide-header"><CalendarHeader /></header>
         <div className="calendar-wide-columns">
           <aside className="calendar-wide-weather" aria-label="天气与出行参考">
+            <WeatherAtmosphere scene={weatherScene} night={weatherScene !== 'neutral' && model.headerProps.selectedDate.isSame(new Date(), 'day') && weather?.forecast?.current.is_day === 0} />
             <CalendarWeather selectedDate={model.headerProps.selectedDate} onReturnToday={model.navProps.onGoToToday} onData={setWeather}>{null}</CalendarWeather>
           </aside>
           <main className="calendar-wide-calendar" aria-label="月历和今日宜忌">

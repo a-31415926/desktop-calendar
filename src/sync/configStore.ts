@@ -11,8 +11,10 @@ import type {
 /** `satisfies`：字面量须符合对应类型，写错字符串会在编译期报错，无需 `as` 断言 */
 const systemConfigDefaults = {
   autostart: false,
-  calendarScale: 75,
-  calendarTextScale: 100,
+  calendarScale: 85,
+  calendarTextScale: 110,
+  calendarCompact: false,
+  calendarAppearanceVersion: 16,
   weatherAnimation: true,
   weatherAtmosphere: 'vivid',
   calendarSurfaceOpacity: 100,

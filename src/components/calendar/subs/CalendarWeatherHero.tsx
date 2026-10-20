@@ -103,7 +103,7 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
         {scene === 'storm' && available && <div className="wh-lightning" />}
       </div>
       <div className="wh-header-slot">{children}</div>
-      <div className="wh-content" key={`${selectedKey}-${scene}-${night}`}>
+      <div className="wh-content">
         <div className="wh-eyebrow">
           <span>{stale ? '缓存天气 · ' : ''}{isToday ? '当前天气' : isPast ? `${selectedDate.format('M月D日')} · 历史日期` : `${selectedDate.format('M月D日')}预报`}</span>
           {actions}

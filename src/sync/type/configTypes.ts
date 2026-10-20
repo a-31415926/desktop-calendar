@@ -37,6 +37,8 @@ export interface SystemConfig {
   // 开机自启动
   autostart: boolean;
   calendarScale: number;
+  calendarCompact: boolean;
+  calendarAppearanceVersion: number;
   calendarTextScale: number;
   weatherAnimation: boolean;
   weatherAtmosphere: 'soft' | 'vivid';

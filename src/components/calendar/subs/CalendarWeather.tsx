@@ -1,3 +1,4 @@
+import { useConfigSync } from '../../../sync/configStore.ts';
 import { EnvironmentOutlined, ReloadOutlined, CloseOutlined } from '@ant-design/icons';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -59,6 +60,7 @@ function WeatherGlyph({ code, size = 30, night = false, animated = false }: Weat
 }
 
 export default function CalendarWeather({ selectedDate, children, onData, onReturnToday }: { selectedDate: Dayjs; children: ReactNode; onData?:(data:WeatherData|null)=>void; onReturnToday?:()=>void }) {
+  const {data:appearance,sync:syncAppearance}=useConfigSync();
   const root = useRef<HTMLElement | null>(null);
   const currentSettings = useRef<Settings | null>(null);
   const lastRequest = useRef(0);
@@ -196,7 +198,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           </div>
         )}
         {dataIssues.length>0 && (
-          <div className="cw-glance-status" role="status">数据状态 · {dataIssues[0]}</div>
+          <div className="cw-glance-status" role="status" title={dataIssues.join("；")}>数据状态 · {dataIssues[0]}</div>
         )}
         {provider==='qweather' && (() => {
           const air=localAir(data?.extras?.air);
@@ -232,6 +234,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
             </div>}
           </div>
         </div>
+        <button type="button" className="cw-density-toggle" aria-expanded={!appearance.calendarCompact} onClick={()=>void syncAppearance('calendarCompact', !appearance.calendarCompact)}>{appearance.calendarCompact ? '展开天气详情 ↓' : '收起天气详情 ↑'}</button>
         <div className="cw-glance-bottom">
           <span>{source} · {ageLabel(data?.forecastFetchedAt ?? 0,clock)}</span>
           <button type="button" onClick={()=>{if(config)void retrieve(config.settings,true)}} disabled={busy||!config} aria-label="刷新天气" title="刷新天气"><ReloadOutlined/></button>
