@@ -61,6 +61,7 @@ function CalendarMonthGrid(): ReactElement {
           <Tooltip key={cell.dateKey} title={cell.tooltipTitle} mouseEnterDelay={0.5}>
             <button
               type="button" data-day-cell
+              data-day-kind={cell.isFestivalHoliday?'festival':cell.badgeVariant??undefined}
               aria-current={cell.isToday?'date':undefined}
               aria-pressed={cell.isSelected}
               data-selected={cell.isSelected?'true':undefined}
@@ -77,7 +78,7 @@ function CalendarMonthGrid(): ReactElement {
               onClick={() => onSelectDate(cell.date)}
             >
               {cell.badgeText && (
-                <span className={classNames(styles.tag, badgeClass)}>{cell.badgeText}</span>
+                <span data-holiday-badge className={classNames(styles.tag, badgeClass)}>{cell.badgeText}</span>
               )}
               <span data-date-number className={styles.dateText}>{cell.date.date()}</span>
               <span data-lunar-day className={classNames(styles.lunar, { [styles.term]: cell.hasJieQi })}>

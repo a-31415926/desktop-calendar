@@ -624,3 +624,20 @@
 .cw-place-picker {display:flex;align-items:center;gap:3px;color:var(--cw-muted);font-size:12px;min-width:0;}
 .cw-place-picker select {max-width:135px;min-width:0;border:0;border-radius:5px;background:transparent;color:inherit;font:inherit;padding:4px 0;cursor:pointer;}
 .cw-place-picker select option {color:#263746;background:#fff;}
+/* V14.12: concise weather facts and unmistakable public holidays. */
+[data-calendar-shell][data-calendar-layout="wide"] .cw-day-facts {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:6px 0;border-top:1px solid #71879d25;flex:0 0 auto;}
+.cw-day-facts>div {min-width:0;display:flex;flex-direction:column;gap:4px;}
+.cw-day-facts span {font-size:11px;color:var(--text-sec);}
+.cw-day-facts strong {font-size:12px;font-weight:650;color:var(--text-main);line-height:17px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-day-facts-future {grid-template-columns:repeat(2,minmax(0,1fr));}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance {gap:7px;padding-top:9px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air {padding:8px 10px;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="rest"]:not([aria-current="date"]):not([data-selected="true"]) {background:#fff1e5;border-color:#efc6a9;color:#9b482b;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="festival"]:not([aria-current="date"]):not([data-selected="true"]) {background:#ffe3cb;border-color:#e9af87;color:#963d1c;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="rest"] [data-lunar-day],
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="festival"] [data-lunar-day] {color:#95502f;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="festival"] [data-date-number] {font-weight:700;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="rest"][data-selected="true"]:not([aria-current="date"]),
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="festival"][data-selected="true"]:not([aria-current="date"]) {background:#ffead8!important;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-month-grid] [data-day-kind="work"]:not([aria-current="date"]):not([data-selected="true"]) {background:#edf3f9;border-color:#d6e0ec;}
+[data-calendar-shell][data-calendar-layout="wide"] [data-holiday-badge] {min-width:15px;height:15px;font-size:10px;line-height:15px;border-radius:5px;}

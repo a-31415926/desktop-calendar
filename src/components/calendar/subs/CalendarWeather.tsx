@@ -10,6 +10,7 @@ import {
 import { localAir, extraIsFresh } from '../../../weather/extras.ts';
 import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeather.ts';
 import {selectedForecast} from '../../../weather/selectedForecast.ts';
+import {dayWeatherFacts} from '../../../weather/dayWeatherFacts.ts';
 import CalendarWeatherHero from './CalendarWeatherHero.tsx';
 import './calendarWeather.css';
 
@@ -162,6 +163,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
 
   const selected=selectedForecast(data,selectedDate.format('YYYY-MM-DD'),clock);
   const hours=selected.hours;
+  const facts=dayWeatherFacts(data,selectedDate.format('YYYY-MM-DD'),clock);
   const stale = !!data?.forecast && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
   const provider = data?.provider ?? config?.settings.provider ?? 'qweather';
   const source = provider === 'qweather' ? '和风天气' : 'Open-Meteo · CC BY 4.0';
@@ -198,6 +200,11 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
             {air && !fresh && <span className="cw-glance-stale">旧数据</span>}
           </div>;
         })()}
+        {facts&&<div className={"cw-day-facts"+(facts.today?"":" cw-day-facts-future")} aria-label={`${selectedDate.format('M月D日')}天气要点`}>
+          <div><span>紫外线等级</span><strong>{facts.uvCategory??'暂无'}{facts.uv!=null?` · ${number(facts.uv)}`:''}{facts.uvCached?'（缓存）':''}</strong></div>
+          <div><span>{facts.today?'当前风速':'最大风速'}</span><strong>{number(facts.wind,' km/h')}</strong></div>
+          {facts.today&&<div><span>空气湿度</span><strong>{number(facts.humidity,'%')}</strong></div>}
+        </div>}
         <div className="cw-glance-forecast">
           <div className="cw-glance-heading"><span>{selected.isToday?'接下来几小时':hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span>{stale?'预报可能已过期':'逐小时预报'}</span>}</div>
           <div className="cw-glance-hours">
@@ -210,7 +217,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
               </div>
             ))}
             {!hours.length && <div className="cw-selected-summary">
-              {!selected.isPast&&selected.available&&<><p>最高 {number(selected.high,'°')} / 最低 {number(selected.low,'°')}</p><p>当日降雨概率 {number(selected.probability,'%')}</p>{selected.wind!=null&&<p>最大风速 {number(selected.wind,' km/h')}</p>}{selected.uv!=null&&<p>紫外线指数 {number(selected.uv)}</p>}</>}
+              {!selected.isPast&&selected.available&&<><p>最高 {number(selected.high,'°')} / 最低 {number(selected.low,'°')}</p><p>当日降雨概率 {number(selected.probability,'%')}</p></>}
               <p className="cw-glance-empty">{!data&&busy?'正在获取天气…':selected.empty}</p>
             </div>}
           </div>
