@@ -70,21 +70,10 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
   const [clearKey, setClearKey] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [detailView, setDetailView] = useState<'hours' | 'days'>('hours');
-  const [shortScreen, setShortScreen] = useState(false);
+  // The horizontal preview always shows its six-hour forecast without extra clicks.
+  // Keep optional collapsing for smaller screens without changing the first view.
   const [forecastChoice, setForecastChoice] = useState<boolean | null>(null);
-  const forecastExpanded = forecastChoice ?? !shortScreen;
-  useEffect(() => {
-    const shell = root.current?.closest('[data-calendar-shell]');
-    const check = () => {
-      const limit = shell ? Number.parseFloat(getComputedStyle(shell).getPropertyValue('--calendar-max-height')) : NaN;
-      setShortScreen((Number.isFinite(limit) ? limit : window.screen.availHeight) < 760);
-    };
-    check();
-    const observer = new ResizeObserver(check);
-    if (shell) observer.observe(shell);
-    window.addEventListener('resize', check);
-    return () => { observer.disconnect(); window.removeEventListener('resize', check); };
-  }, []);
+  const forecastExpanded = forecastChoice ?? true;
 
   const retrieve = useCallback(async (settings: Settings, force = false) => {
     const request = ++lastRequest.current;
@@ -214,12 +203,12 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
       : '暂无短时降雨参考数据';
 
   return (
-    <section className={'calendar-weather cw-unified' + (view === 'days' ? ' cw-detail-days' : '')} ref={root} data-weather-card data-weather-panel aria-label="公司与宿舍天气">
+    <section className={'calendar-weather cw-unified' + (view === 'days' ? ' cw-detail-days' : '')} ref={root} data-weather-card data-weather-panel aria-label="公司、宿舍和老家天气">
       <CalendarWeatherHero selectedDate={selectedDate} data={data} clock={clock} error={issue || ''} stale={stale} actions={
         <div className="cw-actions">
           <button type="button" className="cw-location" onClick={switchPlace}
             disabled={!config || config.settings.locations.length < 2}
-            aria-label="切换公司与宿舍" title={place?.description || '切换天气地点'}>
+            aria-label="切换公司、宿舍和老家地点" title={place?.description || '点击切换天气地点'}>
             <EnvironmentOutlined /><span>{place?.name || '地点'}</span>
             {(config?.settings.locations.length || 0) > 1 && <span className="cw-arrows">⇄</span>}
           </button>
@@ -290,9 +279,10 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
                 <label>地点<input required maxLength={16} value={l.name} onChange={e => setDraft({ ...draft, locations: draft.locations.map((v, n) => n === i ? { ...v, name: e.target.value } : v) })}/></label>
                 <label>经度<input required type="number" step="any" min="-180" max="180" value={l.longitude} onChange={e => setDraft({ ...draft, locations: draft.locations.map((v, n) => n === i ? { ...v, longitude: e.target.valueAsNumber } : v) })}/></label>
                 <label>纬度<input required type="number" step="any" min="-90" max="90" value={l.latitude} onChange={e => setDraft({ ...draft, locations: draft.locations.map((v, n) => n === i ? { ...v, latitude: e.target.valueAsNumber } : v) })}/></label>
+                <label>说明<input maxLength={80} value={l.description} onChange={e => setDraft({ ...draft, locations: draft.locations.map((v,n) => n === i ? { ...v, description: e.target.value } : v) })}/></label>
               </div>
             ))}
-            {draft.locations.length < 2 && <button type="button" className="cw-add-place" onClick={() => setDraft({ ...draft, locations: [...draft.locations, { name: '地点二', description: '', latitude: 31.23, longitude: 121.47 }] })}>＋ 添加地点</button>}
+            {draft.locations.length < 5 && <button type="button" className="cw-add-place" onClick={() => setDraft({ ...draft, locations: [...draft.locations, { name: '其他地点', description: '可自行修改坐标', latitude: 31.23, longitude: 121.47 }] })}>＋ 添加地点</button>}
             <label>天气服务<select value={draft.provider} onChange={e => setDraft({ ...draft, provider: e.target.value as Settings['provider'] })}><option value="qweather">和风天气（中国服务商，默认）</option><option value="open-meteo">Open-Meteo（可选）</option></select></label>
             <p className="cw-helper">和风天气用于当前、逐小时、多日及短时降雨。请填写自己账户的 Host 和 API Key，接口权限、费用和额度以账户为准。</p>
             <label>和风 API Host<input placeholder="xxx.qweatherapi.com" value={draft.host} onChange={e => setDraft({ ...draft, host: e.target.value })}/></label>
