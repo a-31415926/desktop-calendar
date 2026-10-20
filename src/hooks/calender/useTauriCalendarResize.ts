@@ -33,8 +33,6 @@ export function useTauriCalendarResize(
   autoResizeWindow: boolean,
 ): RefObject<HTMLDivElement | null> {
   /** 挂载在日历最外层 div，供 ResizeObserver 测量。 */
-  const scale = useConfigSync(s => s.data.calendarScale);
-  const compact = useConfigSync(s => s.data.calendarCompact);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const repositionTaskbarPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -109,6 +107,12 @@ export function useTauriCalendarResize(
         return;
       }
 
+      // Detail toggles and font-ready events must not reissue identical native resizes.
+      if (Math.abs(window.innerWidth - desired.width) <= VIEWPORT_SIZE_TOLERANCE_PX &&
+          Math.abs(window.innerHeight - desired.height) <= VIEWPORT_SIZE_TOLERANCE_PX) {
+        scheduleRepositionTaskbarPopup();
+        return;
+      }
       let targetWidth = desired.width;
       let targetHeight = desired.height;
 
@@ -161,6 +165,10 @@ export function useTauriCalendarResize(
       scheduleResize();
     });
 
+    // Keep one serialized resize queue alive across appearance changes.
+    const unsubscribeAppearance = useConfigSync.subscribe((state, previous) => {
+      if (state.data.calendarScale !== previous.data.calendarScale) scheduleResize();
+    });
     observer.observe(el);
     scheduleResize();
 
@@ -204,6 +212,7 @@ export function useTauriCalendarResize(
     return () => {
       cancelled = true;
       observer.disconnect();
+      unsubscribeAppearance();
       unlistenScaleChanged?.();
       unlistenPopupShow?.();
       if (resizeFrame !== null) {
@@ -215,7 +224,7 @@ export function useTauriCalendarResize(
         repositionTaskbarPopupTimerRef.current = null;
       }
     };
-  }, [autoResizeWindow, scale, compact]);
+  }, [autoResizeWindow]);
 
   return containerRef;
 }

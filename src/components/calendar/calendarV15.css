@@ -68,7 +68,6 @@
 [data-calendar-layout="wide"] .cw-density-toggle {border:1px solid #7492aa45;border-radius:7px;background:#ffffff60;color:var(--text-main);font:inherit;font-size:12px;font-weight:600;min-height:27px;cursor:pointer;}
 [data-theme="dark"] .cw-density-toggle {background:#1d314c80;}
 [data-calendar-layout="wide"] .cw-density-toggle:focus-visible {outline:2px solid #176fb8;outline-offset:2px;}
-[data-calendar-shell][data-calendar-layout="wide"][data-compact="true"] {height:min(514px,var(--calendar-max-height,514px))!important;}
 [data-compact="true"] .cw-glance-air,[data-compact="true"] .cw-day-facts,[data-compact="true"] .cw-glance-forecast {display:none!important;}
 [data-compact="true"] .cw-glance-bottom {margin-top:auto;}
 [data-calendar-layout="wide"] [data-month-grid] {grid-template-rows:22px repeat(6,52px);row-gap:1px;}
@@ -98,11 +97,6 @@
 
 [data-calendar-shell][data-theme="dark"] .cw-glance-air {--text-main:#202c39;--text-sec:#526478;color:#202c39;}
 
-[data-calendar-shell][data-calendar-layout="wide"][data-compact="true"] {height:min(526px,var(--calendar-max-height,526px))!important;}
-[data-compact="true"] [data-month-grid] {grid-template-rows:22px repeat(6,50px);}
-[data-compact="true"] [data-month-grid] [data-day-cell] {height:50px;min-height:50px;}
-[data-compact="true"] [data-month-grid] [data-lunar-day] {line-height:13px;}
-[data-compact="true"] .calendar-cell-weather {height:14px;line-height:14px;}
 
 /* Rain study: a shared surface with a soft boundary and two depths of precipitation. */
 [data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-columns {position:relative;isolation:isolate;}
