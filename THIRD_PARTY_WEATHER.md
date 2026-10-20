@@ -9,6 +9,9 @@ No GPL application code is incorporated. This notice does not change the license
 Default weather data: QWeather (current weather, hourly and daily forecast via weather/v1;
 optional two-hour precipitation via v7/minutely/5m), subject to QWeather terms and account permissions.
 Users supply their own API Host and API Key in settings. No credentials are distributed.
+V14.7 also offers optional QWeather current alerts, local-standard air quality and
+today's clothing/exercise/UV indices. These services have separate cache ages and
+failure states. Alerts can be delayed; the issuing authority's latest information prevails.
 Open-Meteo (CC BY 4.0) remains an explicitly selectable alternative; it is never a silent fallback.
 Attribution is also displayed inside the weather panel.
 

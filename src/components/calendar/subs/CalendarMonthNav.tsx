@@ -41,7 +41,11 @@ function CalendarMonthNav(): ReactElement {
   useEffect(() => {
     const handleWheel = (event: WheelEvent): void => {
       // 天气详情里的鼠标滚轮不能触发换月。
-      if (event.target instanceof Element && event.target.closest('[data-weather-panel]')) return;
+      if (event.target instanceof Element) {
+        if (event.target.closest('[data-weather-panel], [data-no-month-scroll], .ant-dropdown')) return;
+        const scroll = event.target.closest('[data-calendar-scroll]');
+        if (scroll && scroll.scrollHeight > scroll.clientHeight + 1 && !event.target.closest('[data-month-nav]') && !event.shiftKey) return;
+      }
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY) || Math.abs(event.deltaY) < 1) {
         return;
       }
@@ -79,7 +83,7 @@ function CalendarMonthNav(): ReactElement {
   }, [onNextMonth, onPrevMonth]);
 
   return (
-    <div className={styles.calendarNav}>
+    <div className={styles.calendarNav} data-month-nav title="在月份标题上滚轮换月">
       <div className={styles.navTitle}>
         {panelMonth.year()}年{panelMonth.month() + 1}月
       </div>

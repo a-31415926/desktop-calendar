@@ -1,0 +1,56 @@
+[data-calendar-shell] {
+  --calendar-preferred-width:420px;--calendar-body-font:15px;--calendar-day-font:21px;--calendar-lunar-font:13px;--calendar-cell-height:50px;--calendar-cell-width:48px;
+  width:min(var(--calendar-preferred-width),var(--calendar-max-width,calc(100dvw - 24px)))!important;
+  max-height:var(--calendar-max-height,calc(100dvh - 24px));box-sizing:border-box;display:flex;flex-direction:column;gap:0;font-size:var(--calendar-body-font);padding:12px!important;
+}
+[data-calendar-shell][data-calendar-size="standard"] {--calendar-preferred-width:380px;--calendar-body-font:14px;--calendar-day-font:19px;--calendar-lunar-font:12px;--calendar-cell-height:47px;--calendar-cell-width:44px;}
+[data-calendar-shell][data-calendar-size="compact"] {--calendar-preferred-width:356px;--calendar-body-font:13px;--calendar-day-font:16px;--calendar-lunar-font:11px;--calendar-cell-height:44px;--calendar-cell-width:41px;}
+[data-calendar-shell]>.calendar-weather {flex:0 0 auto;margin-top:0;}
+.calendar-scroll-body {flex:1 1 auto;min-height:70px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#9dabbc transparent;}
+.calendar-scroll-body [data-month-nav] {position:sticky;top:0;z-index:5;background:var(--calendar-sticky-bg);padding-top:6px;margin-top:0;}
+[data-month-grid] [data-day-cell] {width:min(var(--calendar-cell-width),100%);height:var(--calendar-cell-height);touch-action:pan-y;}
+[data-month-grid] [data-date-number] {font-size:var(--calendar-day-font);}
+[data-month-grid] [data-lunar-day] {font-size:var(--calendar-lunar-font);line-height:1.15;}
+[data-month-grid] [data-weekday] {font-size:var(--calendar-body-font);}
+[data-calendar-footer] {font-size:var(--calendar-body-font);}
+[data-calendar-footer] span,[data-calendar-footer] button {font-size:inherit;}
+[data-calendar-shell] .wh-header-slot {height:52px;padding-top:3px;}
+[data-calendar-shell] .wh-header-slot>div {height:48px!important;}
+[data-calendar-shell] .wh-header-slot>div>div:first-child>div:first-child {font-size:calc(var(--calendar-body-font) + 4px);}
+[data-calendar-shell] .wh-header-slot>div>div:first-child>div:nth-child(2) {font-size:calc(var(--calendar-body-font) - 2px);}
+[data-calendar-shell] .calendar-weather-hero {height:132px;min-height:132px;}
+[data-calendar-shell] .wh-header-slot button {width:30px;height:30px;}
+.cw-details .cw-hourly-label,.cw-details .cw-detail-toggle {font-size:12px!important;}
+.cw-details .cw-rain-banner {font-size:12px;height:auto;min-height:25px;}
+.cw-details .cw-time,.cw-details .cw-prob,.cw-details .cw-day-low {font-size:11px;}
+.cw-details .cw-hour strong {font-size:15px;}
+.cw-details .cw-hours,.cw-details .cw-days,.cw-details .cw-forecast-stage {height:78px;min-height:78px;}
+.cw-details .cw-hour {height:78px!important;}
+.cw-details .cw-hour .cw-time,.cw-details .cw-hour .cw-prob {line-height:13px!important;}
+.cw-unified .cw-detail-nav {height:23px;}
+.cw-unified .cw-bottom {font-size:11px;min-height:20px;}
+.cw-unified .cw-forecast-summary {font-size:13px;line-height:1.5;padding:6px 0;color:var(--cw-muted);}
+.cw-unified .cw-status {max-height:none;font-size:12px!important;}
+.cw-unified .cw-settings-overlay {max-height:min(500px,calc(var(--calendar-max-height,100dvh) - 75px));}
+.cw-unified .cw-settings label,.cw-unified .cw-settings input,.cw-unified .cw-settings select {font-size:13px;}
+.cw-unified .cw-helper {font-size:12px;}
+.cw-unified .cw-location {font-size:12px!important;max-width:170px;}
+.cw-unified .cw-life-toggle {display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:4px 0;font-size:12px;color:var(--cw-muted);text-align:left;}
+.cw-life-panel {border-top:1px solid #8c9dad30;padding-top:5px;font-size:12px;line-height:1.5;}
+.cw-details {max-height:max(140px,calc(var(--calendar-max-height,100dvh) - 230px));overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;}
+.cw-forecast-toggle {display:block;width:100%;padding:4px 0!important;text-align:left;font-size:12px!important;color:var(--cw-accent)!important;}
+.cw-life-panel {max-height:240px;overflow-y:auto;overscroll-behavior:contain;}
+.cw-life-panel p {margin:4px 0;}
+.cw-life-panel details {margin:4px 0;}
+.cw-life-panel summary {cursor:pointer;padding:3px 0;}
+.cw-unified .wh-eyebrow {font-size:12px;}
+.cw-unified .wh-meta {font-size:12px;line-height:16px;}
+.cw-unified .cw-life-panel {font-size:13px;}
+.cw-life-panel .cw-error {color:#b34a3a;}
+.cw-commute {font-size:12px;color:var(--cw-muted);line-height:1.4;padding:3px 0;}
+.cw-warning {padding:6px 8px;border-radius:8px;background:#fff1cf;color:#765000;font-size:12px;line-height:1.4;}
+.cw-warning summary {cursor:pointer;}
+.cw-warning p {margin:5px 0;}
+.cw-warning small {display:block;}
+.cw-menu-button {font-size:20px;line-height:1;}
+@media (max-height:540px) { [data-calendar-shell] .cw-commute{display:none;} }

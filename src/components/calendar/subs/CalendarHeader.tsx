@@ -5,7 +5,9 @@ import {
   SettingOutlined,
   SunOutlined,
 } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+import { Dropdown, Tooltip, type MenuProps } from 'antd';
+import { EllipsisOutlined } from '@ant-design/icons';
+import { useCalendarAppearance, setCalendarSize, type CalendarSize } from '../../../hooks/calender/useCalendarAppearance.ts';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Lunar } from 'lunar-typescript';
 import { type ReactElement, useEffect, useState } from 'react';
@@ -74,6 +76,28 @@ function CalendarHeader(): ReactElement {
     const timer = window.setInterval(() => setClockNow(dayjs()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+  const size = useCalendarAppearance();
+  const menu: MenuProps = {
+    items: [
+      {key:'weather',label:'天气与地点设置',icon:<SettingOutlined/>},
+      {key:'size',label:'字号与尺寸',children:[
+        {key:'compact',label:(size==='compact'?'✓ ':'')+'小'},
+        {key:'standard',label:(size==='standard'?'✓ ':'')+'标准'},
+        {key:'large',label:(size==='large'?'✓ ':'')+'大（推荐）'},
+      ]},
+      ...(showThemeButton ? [{key:'theme',label:theme==='light'?'切换深色外观':'切换浅色外观',icon:theme==='light'?<MoonOutlined/>:<SunOutlined/>}] : []),
+      ...(showPinButton ? [{key:'pin',label:isPinned?'取消固定窗口':'固定窗口',icon:isPinned?<PushpinFilled/>:<PushpinOutlined/>}] : []),
+      ...(showSettingsButton ? [{key:'settings',label:'更多设置',icon:<SettingOutlined/>}] : []),
+    ],
+    onClick: ({key}) => {
+      if (key==='weather') window.dispatchEvent(new Event('calendar-open-weather-settings'));
+      else if (key==='theme') onToggleTheme();
+      else if (key==='pin') onTogglePin();
+      else if (key==='settings') onOpenMainWindow();
+      else if (['compact','standard','large'].includes(key)) setCalendarSize(key as CalendarSize);
+    },
+  };
+
 
   return (
     <div className={styles.header}>
@@ -100,38 +124,9 @@ function CalendarHeader(): ReactElement {
       {/* 右侧操作区按按钮粒度控制，便于移动端与桌面端复用同一个头部组件。 */}
       {(showThemeButton || showPinButton || showSettingsButton || showCloseButton) && (
         <div className={styles.headerActions}>
-          {showThemeButton && (
-            <Tooltip title={theme === 'light' ? '切换到暗色模式' : '切换到浅色模式'}>
-              <button
-                className={styles.headerBtn}
-                type="button"
-                onClick={onToggleTheme}
-                aria-label="切换主题"
-              >
-                {theme === 'light' ? <MoonOutlined /> : <SunOutlined />}
-              </button>
-            </Tooltip>
-          )}
-          {showPinButton && (
-            <Tooltip title={isPinned ? '取消固定' : '固定窗口'}>
-              <button
-                className={styles.headerBtn}
-                type="button"
-                onClick={onTogglePin}
-                aria-label="固定窗口"
-                style={isPinned ? { color: 'var(--accent)' } : undefined}
-              >
-                {isPinned ? <PushpinFilled /> : <PushpinOutlined />}
-              </button>
-            </Tooltip>
-          )}
-          {showSettingsButton && (
-            <Tooltip title="设置">
-              <button className={styles.headerBtn} type="button" onClick={onOpenMainWindow}>
-                <SettingOutlined />
-              </button>
-            </Tooltip>
-          )}
+          <Dropdown menu={menu} trigger={['click']} placement="bottomRight">
+            <button type="button" className={styles.headerBtn} aria-label="日历菜单" title="菜单：字号、天气、固定与设置"><EllipsisOutlined/></button>
+          </Dropdown>
           {showCloseButton && (
             <Tooltip title="收起">
               <button

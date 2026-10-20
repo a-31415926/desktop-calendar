@@ -19,7 +19,7 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
       min-width: 0;
     `,
     footerSectionTitle: css`
-      font-size: 14px;
+      font-size: var(--calendar-body-font, 14px);
       line-height: 1.2;
       font-weight: 650;
       color: var(--text-main);
@@ -37,16 +37,16 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
       gap: 2px;
     `,
     lunarDay: css`
-      font-size: 15px;
+      font-size: calc(var(--calendar-body-font, 14px) + 1px);
       font-weight: 500;
       color: var(--text-main);
     `,
     lunarYear: css`
-      font-size: 11px;
+      font-size: calc(var(--calendar-body-font, 14px) - 2px);
       color: var(--text-sec);
     `,
     festivalList: css`
-      font-size: 12px;
+      font-size: calc(var(--calendar-body-font, 14px) - 1px);
       color: var(--text-main);
       font-weight: 500;
       display: flex;
@@ -82,7 +82,7 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
       flex-shrink: 0;
     `,
     festivalEmpty: css`
-      font-size: 12px;
+      font-size: calc(var(--calendar-body-font, 14px) - 1px);
       color: var(--text-sec);
     `,
     yiJiContainer: css`
@@ -96,7 +96,7 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
       display: flex;
       align-items: flex-start;
       gap: 7px;
-      font-size: 13px;
+      font-size: var(--calendar-body-font, 14px);
       min-width: 0;
     `,
     yiJiBadge: css`
@@ -105,7 +105,7 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: calc(var(--calendar-body-font, 14px) - 2px);
       font-weight: 700;
       flex-shrink: 0;
       margin-top: 1px;
@@ -137,7 +137,7 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 12px;
+      font-size: calc(var(--calendar-body-font, 14px) - 1px);
       color: var(--text-sec);
       line-height: 1.4;
 
@@ -151,7 +151,7 @@ export function createCalendarFooterStyles(ctx: CalendarViewStyleContext) {
       }
     `,
     countdownIcon: css`
-      font-size: 14px;
+      font-size: var(--calendar-body-font, 14px);
       opacity: 0.85;
     `,
   };

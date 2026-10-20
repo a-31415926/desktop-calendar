@@ -26,9 +26,9 @@ function CalendarMonthGrid(): ReactElement {
   const visibleCells = cellModels;
 
   return (
-    <div className={styles.calendarGrid}>
+    <div className={styles.calendarGrid} data-month-grid>
       {weekdays.map((day) => (
-        <div className={styles.weekday} key={day}>
+        <div data-weekday className={styles.weekday} key={day}>
           {day}
         </div>
       ))}
@@ -44,7 +44,7 @@ function CalendarMonthGrid(): ReactElement {
         return (
           <Tooltip key={cell.dateKey} title={cell.tooltipTitle} mouseEnterDelay={0.5}>
             <button
-              type="button"
+              type="button" data-day-cell
               className={classNames(styles.cell, {
                 [styles.taggedCell]: Boolean(cell.badgeText),
                 [styles.otherMonth]: cell.isOtherMonth,
@@ -58,8 +58,8 @@ function CalendarMonthGrid(): ReactElement {
               {cell.badgeText && (
                 <span className={classNames(styles.tag, badgeClass)}>{cell.badgeText}</span>
               )}
-              <span className={styles.dateText}>{cell.date.date()}</span>
-              <span className={classNames(styles.lunar, { [styles.term]: cell.hasJieQi })}>
+              <span data-date-number className={styles.dateText}>{cell.date.date()}</span>
+              <span data-lunar-day className={classNames(styles.lunar, { [styles.term]: cell.hasJieQi })}>
                 {cell.displayText}
               </span>
             </button>

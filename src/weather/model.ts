@@ -1,3 +1,4 @@
+import type { WeatherExtras } from './extras.ts';
 export interface Place { name: string; description: string; latitude: number; longitude: number }
 export interface Settings { locations: Place[]; selected: number; host: string; pinned: boolean; provider: 'qweather' | 'open-meteo' }
 export interface SettingsResponse { settings: Settings; hasKey: boolean }
@@ -5,10 +6,10 @@ export interface Forecast {
   attributions?: string[];
   current: { time: string; temperature_2m: number | null; apparent_temperature: number | null; relative_humidity_2m: number | null; weather_code: number; wind_speed_10m: number | null; is_day: number };
   hourly: { time: string[]; temperature_2m: (number | null)[]; precipitation_probability: (number | null)[]; precipitation: (number | null)[]; weather_code: number[] };
-  daily: { time: string[]; weather_code: number[]; temperature_2m_max: (number | null)[]; temperature_2m_min: (number | null)[]; precipitation_probability_max: (number | null)[]; sunrise: string[]; sunset: string[] };
+  daily: { wind_speed_10m_max?: (number | null)[]; uv_index_max?: (number | null)[]; time: string[]; weather_code: number[]; temperature_2m_max: (number | null)[]; temperature_2m_min: (number | null)[]; precipitation_probability_max: (number | null)[]; sunrise: string[]; sunset: string[] };
 }
 export interface Rain { updateTime: string; summary: string; minutely: { fxTime: string; precip: string; type: string }[] }
-export interface WeatherData { provider?: 'qweather' | 'open-meteo'; location: Place; forecast: Forecast | null; forecastFetchedAt: number; minutely: Rain | null; minutelyFetchedAt: number; forecastError: string | null; rainError: string | null; saveError: string | null; qweatherConfigured: boolean }
+export interface WeatherData { extras?: WeatherExtras; provider?: 'qweather' | 'open-meteo'; location: Place; forecast: Forecast | null; forecastFetchedAt: number; minutely: Rain | null; minutelyFetchedAt: number; forecastError: string | null; rainError: string | null; saveError: string | null; qweatherConfigured: boolean }
 
 // Adapted from LuckyIsland's MIT-licensed map_wmo_code. Full notice: THIRD_PARTY_WEATHER.md.
 export function weatherCode(code: number): [string, string] {

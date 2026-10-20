@@ -1,4 +1,5 @@
 //! Independent weather flyout. Credentials never enter URLs, cache, logs or frontend reads.
+mod extras;
 mod qweather;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -195,6 +196,8 @@ pub async fn weather_save_settings(
 #[serde(rename_all = "camelCase")]
 struct Cache {
     key: String,
+    #[serde(default)]
+    extras: extras::Extras,
     forecast: Option<Value>,
     forecast_fetched_at: u64,
     minutely: Option<Value>,
@@ -273,7 +276,7 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(12))
         .redirect(reqwest::redirect::Policy::none())
-        .user_agent("DesktopCalendar/1.1.7")
+        .user_agent("DesktopCalendar/1.1.8")
         .build()
         .map_err(|_| "无法初始化天气连接")?;
     // V14.5 requests seven days. The shared V14 cache may still contain the
@@ -347,7 +350,19 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
     if !configured {
         cache.minutely = None;
         cache.minutely_fetched_at = 0;
-        cache.rain_error = secret.err();
+        cache.rain_error = secret.as_ref().err().cloned();
+    }
+    if configured && settings.provider == "qweather" {
+        cache
+            .extras
+            .refresh(
+                &client,
+                &settings,
+                location,
+                secret.as_ref().map(String::as_str).unwrap_or(""),
+                force,
+            )
+            .await;
     }
     caches.retain(|c| {
         c.key != key
@@ -357,7 +372,7 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
     });
     caches.push(cache.clone());
     let save_error = write_json(&app, "weather-v14-cache.json", &caches).err();
-    let result = json!({"location": location, "forecast": cache.forecast, "forecastFetchedAt": cache.forecast_fetched_at, "minutely": cache.minutely, "minutelyFetchedAt": cache.minutely_fetched_at, "forecastError": cache.forecast_error, "rainError": cache.rain_error, "saveError": save_error, "qweatherConfigured": configured, "provider": settings.provider});
+    let result = json!({"location": location, "forecast": cache.forecast, "forecastFetchedAt": cache.forecast_fetched_at, "minutely": cache.minutely, "minutelyFetchedAt": cache.minutely_fetched_at, "forecastError": cache.forecast_error, "rainError": cache.rain_error, "saveError": save_error, "qweatherConfigured": configured, "provider": settings.provider, "extras": cache.extras});
     let _ = app.emit("weather-data-changed", ());
     Ok(result)
 }

@@ -16,6 +16,7 @@ export function createCalendarShellStyles(ctx: CalendarViewStyleContext) {
     micaContainer: css`
       --mica-bg: ${containerBackground};
       --card-bg: ${isDark ? 'rgba(45,45,45,.55)' : '#fcfcfd'};
+      --calendar-sticky-bg: ${isDark ? '#252b34' : '#f6f8fb'};
       --accent: ${isDark ? '#60cdff' : '#1677d2'};
       --text-main: ${isDark ? '#ffffff' : '#1f2328'};
       --text-sec: ${isDark ? '#cccccc' : '#66707c'};

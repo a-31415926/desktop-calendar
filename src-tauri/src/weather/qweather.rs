@@ -82,6 +82,11 @@ pub(super) fn normalize(current: &Value, hourly: &Value, daily: &Value) -> Resul
             "weather_code": column(hours, |h| json!(code(&h["condition"]["code"])))
         },
         "daily": {
+            "wind_speed_10m_max": column(days, |d| {
+                let wind = |period: &str| numeric(&d[period]["wind"]["speed"]["value"]).map(|v| v * if d[period]["wind"]["speed"]["unit"] == "m/s" {3.6} else {1.0});
+                match (wind("daytime"), wind("nighttime")) { (Some(a),Some(b)) => json!(a.max(b)), _ => Value::Null }
+            }),
+            "uv_index_max": column(days, |d| scaled(&d["uvIndexMax"],1.0)),
             "time": column(days, |d| json!(date(d))),
             "weather_code": column(days, |d| json!(code(&d["daytime"]["condition"]["code"]))),
             "temperature_2m_max": column(days, |d| scaled(&d["temperatureMax"]["value"], 1.0)),

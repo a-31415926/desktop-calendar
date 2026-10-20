@@ -2,6 +2,8 @@ import React, { type CSSProperties } from 'react';
 import '../../utils/calendar/setupDayjsCalendar.ts';
 import { CalendarViewProvider } from '../../hooks/calender/CalendarViewContext.tsx';
 import { useCalendarViewModel } from '../../hooks/calender/useCalendarViewModel.ts';
+import { useCalendarAppearance } from '../../hooks/calender/useCalendarAppearance.ts';
+import './calendarUsability.css';
 import CalendarFooter from './subs/CalendarFooter.tsx';
 import CalendarWeather from './subs/CalendarWeather.tsx';
 import CalendarHeader from './subs/CalendarHeader.tsx';
@@ -48,6 +50,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   style,
 }) => {
   /** 聚合后的日历视图模型，供上下文与各子组件共享。 */
+  const size = useCalendarAppearance();
   const model = useCalendarViewModel({
     enableDrag,
     dragRegion,
@@ -63,13 +66,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   return (
     <CalendarViewProvider value={model}>
-      <div {...model.rootProps}>
+      <div {...model.rootProps} data-calendar-shell data-calendar-size={size}>
         <CalendarWeather selectedDate={model.headerProps.selectedDate}>
           <CalendarHeader />
         </CalendarWeather>
-        <CalendarMonthNav />
-        <CalendarMonthGrid />
-        <CalendarFooter />
+        <div className="calendar-scroll-body" data-calendar-scroll>
+          <CalendarMonthNav />
+          <CalendarMonthGrid />
+          <div data-calendar-footer data-no-month-scroll><CalendarFooter /></div>
+        </div>
       </div>
     </CalendarViewProvider>
   );

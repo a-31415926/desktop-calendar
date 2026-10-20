@@ -11,9 +11,7 @@ use tauri::{Emitter, Manager, WebviewWindow, WindowEvent};
 use windows::Win32::{
     Foundation::RECT,
     UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO},
-    UI::WindowsAndMessaging::{
-        GetAncestor, GetForegroundWindow, GetSystemMetrics, GA_ROOT, SM_CXSCREEN, SM_CYSCREEN,
-    },
+    UI::WindowsAndMessaging::{GetAncestor, GetForegroundWindow, GA_ROOT},
 };
 
 /// 表示“在系统时钟附近展示”的挂起坐标哨兵值。
@@ -178,6 +176,27 @@ impl CalendarWindowManager {
             popup_window.set_position(tauri::Position::Physical(position))?;
         } else {
             popup_window.center()?;
+        }
+        // Clamp both size and position before showing: moving an oversized window
+        // upward alone still leaves its bottom behind the taskbar.
+        if let Ok(Some(monitor)) = popup_window.current_monitor() {
+            if let Ok(size) = popup_window.outer_size() {
+                let area = monitor.work_area();
+                let gap = (12.0 * monitor.scale_factor()).round() as i32;
+                let (x, y, width, height) = fit_popup(
+                    area.position.x,
+                    area.position.y,
+                    area.size.width,
+                    area.size.height,
+                    size.width,
+                    size.height,
+                    gap,
+                );
+                if width != size.width || height != size.height {
+                    let _ = popup_window.set_size(tauri::PhysicalSize::new(width, height));
+                }
+                let _ = popup_window.set_position(tauri::PhysicalPosition::new(x, y));
+            }
         }
         if let Some(last_input_tick) = Self::current_last_input_tick() {
             self.popup_last_show_input_tick.store(last_input_tick, Ordering::SeqCst);
@@ -382,107 +401,68 @@ impl CalendarWindowManager {
         }
     }
 
-    /// 按点击点与屏幕边界规则计算安全弹窗位置。
-    fn calculate_safe_position(&self, click_x: i32, click_y: i32) -> (i32, i32) {
-        let (window_width, window_height) = self.calendar_physical_size();
-        println!("📐 窗口物理尺寸: {}x{}", window_width, window_height);
-
-        let margin = 8;
-        let edge_margin = 32;
-
-        unsafe {
-            let screen_width = GetSystemMetrics(SM_CXSCREEN);
-            let screen_height = GetSystemMetrics(SM_CYSCREEN);
-
-            println!("🖥️ 屏幕尺寸: {}x{}", screen_width, screen_height);
-            println!("🖱️ 点击位置: ({}, {})", click_x, click_y);
-
-            let (taskbar_info, is_horizontal) =
-                if let Some((taskbar_rect, is_horizontal)) = get_taskbar_info() {
-                    println!(
-                        "🔍 检测到任务栏: 位置({}, {}, {}, {}), 水平: {}",
-                        taskbar_rect.left,
-                        taskbar_rect.top,
-                        taskbar_rect.right,
-                        taskbar_rect.bottom,
-                        is_horizontal
-                    );
-                    (Some(taskbar_rect), is_horizontal)
-                } else {
-                    println!("❌ 无法检测到任务栏");
-                    (None, true)
-                };
-
-            let mut x = click_x - window_width / 2;
-            let mut y = if click_y > screen_height / 2 {
-                if let Some(rect) = taskbar_info {
-                    if is_horizontal && rect.top > screen_height / 2 {
-                        rect.top - window_height - margin
-                    } else {
-                        click_y - window_height - margin
-                    }
-                } else {
-                    click_y - window_height - margin
-                }
-            } else if let Some(rect) = taskbar_info {
-                if is_horizontal && rect.bottom < screen_height / 2 {
-                    rect.bottom + margin
-                } else {
-                    click_y + margin
-                }
-            } else {
-                click_y + margin
-            };
-
-            if x < edge_margin {
-                x = edge_margin;
-            } else if x + window_width > screen_width - edge_margin {
-                x = screen_width - window_width - edge_margin;
-            }
-
-            if y < margin {
-                y = margin;
-            } else if y + window_height > screen_height - margin {
-                y = screen_height - window_height - margin;
-            }
-
-            println!("🎯 计算窗口位置: ({}, {})", x, y);
+    fn calculate_safe_position(&self, _click_x: i32, _click_y: i32) -> (i32, i32) {
+        let (width, height) = self.calendar_physical_size();
+        let monitor = self
+            .taskbar_popup_window
+            .as_ref()
+            .and_then(|w| w.current_monitor().ok().flatten())
+            .or_else(|| self.app_handle.primary_monitor().ok().flatten());
+        if let Some(m) = monitor {
+            let area = m.work_area();
+            let (x, y, _, _) = fit_popup(
+                area.position.x,
+                area.position.y,
+                area.size.width,
+                area.size.height,
+                width.max(1) as u32,
+                height.max(1) as u32,
+                (12.0 * m.scale_factor()).round() as i32,
+            );
             (x, y)
+        } else {
+            (12, 12)
         }
     }
+    fn calculate_window_position(&self, _taskbar_rect: &RECT, _is_horizontal: bool) -> (i32, i32) {
+        self.calculate_safe_position(0, 0)
+    }
+}
 
-    /// 按任务栏位置计算默认弹出位置，用于贴近系统时钟展示。
-    fn calculate_window_position(&self, taskbar_rect: &RECT, is_horizontal: bool) -> (i32, i32) {
-        let (window_width, window_height) = self.calendar_physical_size();
-        let margin = 12;
-        let edge_margin = 24;
-
-        unsafe {
-            let screen_width = GetSystemMetrics(SM_CXSCREEN);
-            let screen_height = GetSystemMetrics(SM_CYSCREEN);
-
-            if is_horizontal {
-                if taskbar_rect.top < screen_height / 2 {
-                    let x = screen_width - window_width - edge_margin;
-                    let y = taskbar_rect.bottom + margin;
-                    (x.clamp(edge_margin, screen_width - window_width - edge_margin), y)
-                } else {
-                    let x = screen_width - window_width - edge_margin;
-                    let y = taskbar_rect.top - window_height - margin;
-                    (x.clamp(edge_margin, screen_width - window_width - edge_margin), y.max(0))
-                }
-            } else if taskbar_rect.left < screen_width / 2 {
-                let x = taskbar_rect.right + margin;
-                let y = taskbar_rect.bottom - window_height - margin;
-                (x, y.max(0))
-            } else {
-                let x = screen_width
-                    - (taskbar_rect.right - taskbar_rect.left)
-                    - window_width
-                    - edge_margin;
-                let y = taskbar_rect.bottom - window_height - margin;
-                (x.max(0), y.max(0))
-            }
+fn fit_popup(
+    left: i32,
+    top: i32,
+    area_width: u32,
+    area_height: u32,
+    width: u32,
+    height: u32,
+    gap: i32,
+) -> (i32, i32, u32, u32) {
+    let gap = gap.max(0).min((area_width.min(area_height) / 4) as i32);
+    let width = width.min(area_width.saturating_sub(2 * gap as u32)).max(1);
+    let height = height.min(area_height.saturating_sub(2 * gap as u32)).max(1);
+    (
+        left + area_width as i32 - width as i32 - gap,
+        top + area_height as i32 - height as i32 - gap,
+        width,
+        height,
+    )
+}
+#[cfg(test)]
+mod tests {
+    use super::fit_popup;
+    #[test]
+    fn taskbar_work_area_caps_oversized_popup_on_scaled_and_negative_monitors() {
+        for (left, top, w, h, gap) in [
+            (0, 0, 1920, 1032, 12),
+            (0, 0, 1366, 720, 15),
+            (-1920, -200, 1920, 1032, 18),
+            (60, 40, 1200, 680, 24),
+        ] {
+            let (x, y, pw, ph) = fit_popup(left, top, w, h, 900, 1600, gap);
+            assert!(x >= left + gap && y >= top + gap);
+            assert!(x + pw as i32 <= left + w as i32 - gap);
+            assert!(y + ph as i32 <= top + h as i32 - gap);
         }
     }
 }

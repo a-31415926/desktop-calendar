@@ -1,6 +1,7 @@
 import { LogicalSize, PhysicalPosition } from '@tauri-apps/api/dpi';
 import { listen } from '@tauri-apps/api/event';
 import { currentMonitor, getCurrentWindow } from '@tauri-apps/api/window';
+import { calendarLimits, popupPosition } from './calendarBounds.ts';
 import { type RefObject, useLayoutEffect, useRef } from 'react';
 
 /** 内容变化后重新贴近任务栏的轻量防抖。 */
@@ -10,7 +11,7 @@ const VIEWPORT_SIZE_TOLERANCE_PX = 1;
 /** 高 DPI 下最多做三轮真实 viewport 校正，避免异步 resize 尚未落地时读到旧尺寸。 */
 const MAX_RESIZE_CORRECTIONS = 3;
 /** 距 Windows 可用工作区边缘的逻辑像素间距。 */
-const POPUP_EDGE_MARGIN_LOGICAL_PX = 10;
+
 
 /** 等待 Windows / WebView2 真正提交一次窗口尺寸变化。 */
 function waitForViewportCommit(): Promise<void> {
@@ -44,6 +45,8 @@ export function useTauriCalendarResize(
     const appWindow = getCurrentWindow();
     let cancelled = false;
     let resizeFrame: number | null = null;
+    let resizing = false;
+    let pendingResize = false;
     let unlistenScaleChanged: (() => void) | undefined;
     let unlistenPopupShow: (() => void) | undefined;
 
@@ -61,21 +64,7 @@ export function useTauriCalendarResize(
         if (!monitor || cancelled) return;
 
         const outerSize = await appWindow.outerSize();
-        const margin = Math.max(
-          8,
-          Math.round(POPUP_EDGE_MARGIN_LOGICAL_PX * monitor.scaleFactor),
-        );
-        const left = monitor.workArea.position.x;
-        const top = monitor.workArea.position.y;
-        const right = left + monitor.workArea.size.width;
-        const bottom = top + monitor.workArea.size.height;
-
-        // Win11 任务栏时钟位于右下，弹窗底边固定在任务栏上方、右边留轻微呼吸空间。
-        const maxX = Math.max(left + margin, right - outerSize.width - margin);
-        const maxY = Math.max(top + margin, bottom - outerSize.height - margin);
-        const x = Math.min(Math.max(right - outerSize.width - margin, left + margin), maxX);
-        const y = Math.min(Math.max(bottom - outerSize.height - margin, top + margin), maxY);
-
+        const { x, y } = popupPosition(monitor.workArea, outerSize, monitor.scaleFactor);
         await appWindow.setPosition(new PhysicalPosition(Math.round(x), Math.round(y)));
       } catch {
         // 定位失败不阻断日历本身，保留后端初始位置作为兜底。
@@ -97,15 +86,21 @@ export function useTauriCalendarResize(
 
     const measureContentLogicalSize = (): { width: number; height: number } => {
       const rect = el.getBoundingClientRect();
-      const width = Math.ceil(Math.max(el.offsetWidth, el.scrollWidth, rect.width));
-      const height = Math.ceil(Math.max(el.offsetHeight, el.scrollHeight, rect.height));
+      const width = Math.ceil(rect.width);
+      const height = Math.ceil(rect.height);
       return { width, height };
     };
 
     const resizeWindow = async (): Promise<void> => {
       if (cancelled) return;
 
-      const desired = measureContentLogicalSize();
+      const monitor = await currentMonitor();
+      if (cancelled) return;
+      const limits = monitor ? calendarLimits(monitor.workArea.size, monitor.scaleFactor) : {width:window.screen.availWidth - 24,height:window.screen.availHeight - 24};
+      el.style.setProperty('--calendar-max-width', limits.width + 'px');
+      el.style.setProperty('--calendar-max-height', limits.height + 'px');
+      const measured = measureContentLogicalSize();
+      const desired = {width:Math.min(measured.width,limits.width),height:Math.min(measured.height,limits.height)};
       if (desired.width <= 0 || desired.height <= 100) {
         return;
       }
@@ -135,8 +130,8 @@ export function useTauriCalendarResize(
           break;
         }
 
-        targetWidth = Math.ceil(targetWidth + widthDeficit + 1);
-        targetHeight = Math.ceil(targetHeight + heightDeficit + 1);
+        targetWidth = Math.min(limits.width, Math.ceil(targetWidth + widthDeficit + 1));
+        targetHeight = Math.min(limits.height, Math.ceil(targetHeight + heightDeficit + 1));
       }
 
       scheduleRepositionTaskbarPopup();
@@ -149,7 +144,12 @@ export function useTauriCalendarResize(
       }
       resizeFrame = requestAnimationFrame(() => {
         resizeFrame = null;
-        void resizeWindow().catch(() => {});
+        if (resizing) { pendingResize = true; return; }
+        resizing = true;
+        void resizeWindow().catch(() => {}).finally(() => {
+          resizing = false;
+          if (pendingResize && !cancelled) {pendingResize=false;scheduleResize();}
+        });
       });
     };
 
@@ -185,7 +185,7 @@ export function useTauriCalendarResize(
     // 再夹一次，修正高 DPI 环境里可能出现的右侧/底部越界，且此时前端展开动画尚未完全开始。
     if (appWindow.label === 'calendar') {
       void listen('calendar-popup-show', () => {
-        void repositionTaskbarPopup();
+        scheduleResize();
       })
         .then((unlisten) => {
           if (cancelled) {
