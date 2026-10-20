@@ -201,3 +201,10 @@
 .weather-lightning {width:43px;height:66px;right:82px;top:58px;opacity:.48;filter:drop-shadow(0 1px 1px #49648055) drop-shadow(0 0 10px #fce59e80);animation:lightning-reveal 7s ease-in-out infinite;}
 .weather-lightning path {fill:#ffdc78;stroke:#b98a2c;stroke-width:.8;stroke-linejoin:round;}
 @keyframes lightning-reveal {0%,53%,100%{opacity:.48;filter:drop-shadow(0 1px 1px #49648055) drop-shadow(0 0 6px #fce59e60);}60%,68%{opacity:1;filter:drop-shadow(0 0 12px #ffe39dcc);}76%{opacity:.6;}}
+
+/* Keep data-driven night and severe-weather palettes readable in the dark theme. */
+[data-calendar-shell][data-theme="dark"][data-weather-night="true"] {--weather-left:#2c4769!important;--weather-right:#1b293b!important;}
+[data-calendar-shell][data-theme="dark"][data-weather-variant="dust"] {--weather-left:#514731!important;--weather-right:#2c2b27!important;}
+[data-calendar-shell][data-theme="dark"][data-weather-variant="haze"] {--weather-left:#4a4942!important;--weather-right:#292d30!important;}
+[data-calendar-shell][data-theme="dark"][data-wind-effect="typhoon"] {--weather-left:#2e465c!important;--weather-right:#1e2c39!important;}
+[data-calendar-shell][data-theme="dark"][data-weather-night="true"] .cw-glance-alert {color:#f5e7c3;}
