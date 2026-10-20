@@ -1,10 +1,10 @@
-name: Build desktop calendar V14.9 calendar weather
+name: Build desktop calendar V14.10 weather atmosphere
 on:
   push:
-    branches: [feature/calendar-v14-9]
+    branches: [feature/weather-atmosphere-v14-10]
   workflow_dispatch:
 concurrency:
-  group: calendar-v14-9-${{ github.ref }}
+  group: weather-atmosphere-v14-10-${{ github.ref }}
   cancel-in-progress: false
 permissions:
   contents: read
@@ -41,7 +41,7 @@ jobs:
           New-Item -ItemType Directory -Force delivery | Out-Null
           $original = Get-ChildItem 'src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe' | Select-Object -First 1
           if (-not $original -or $original.Length -lt 1000000) { throw 'NSIS installer missing or unexpectedly small' }
-          Copy-Item $original.FullName 'delivery/DesktopCalendar-V14.9-Setup-x64.exe'
+          Copy-Item $original.FullName 'delivery/DesktopCalendar-V14.10-Setup-x64.exe'
           Copy-Item 'THIRD_PARTY_WEATHER.md' delivery
           "Commit: ${{ github.sha }}`nRun: ${{ github.run_id }}`nTarget: x86_64-pc-windows-msvc`nInstaller: NSIS" | Set-Content delivery/BUILD.txt
           Get-FileHash delivery/*.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $_.Path -Leaf)" } | Set-Content delivery/SHA256SUMS.txt
@@ -49,7 +49,7 @@ jobs:
           if ($bytes[0] -ne 0x4d -or $bytes[1] -ne 0x5a) { throw 'Installer is not a Windows executable' }
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-calendar-v14-9-windows-x64
+          name: desktop-calendar-v14-10-windows-x64
           path: delivery/
           retention-days: 90
           if-no-files-found: error
