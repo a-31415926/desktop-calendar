@@ -4,6 +4,7 @@ import { CalendarViewProvider } from '../../hooks/calender/CalendarViewContext.t
 import { useCalendarViewModel } from '../../hooks/calender/useCalendarViewModel.ts';
 import { useCalendarAppearance } from '../../hooks/calender/useCalendarAppearance.ts';
 import './calendarUsability.css';
+import './calendarWide.css';
 import CalendarFooter from './subs/CalendarFooter.tsx';
 import CalendarWeather from './subs/CalendarWeather.tsx';
 import CalendarHeader from './subs/CalendarHeader.tsx';
@@ -66,14 +67,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   return (
     <CalendarViewProvider value={model}>
-      <div {...model.rootProps} data-calendar-shell data-calendar-size={size}>
-        <CalendarWeather selectedDate={model.headerProps.selectedDate}>
-          <CalendarHeader />
-        </CalendarWeather>
-        <div className="calendar-scroll-body" data-calendar-scroll>
-          <CalendarMonthNav />
-          <CalendarMonthGrid />
-          <div data-calendar-footer data-no-month-scroll><CalendarFooter /></div>
+      <div {...model.rootProps} data-calendar-shell data-calendar-size={size} data-calendar-layout="wide">
+        <header className="calendar-wide-header"><CalendarHeader /></header>
+        <div className="calendar-wide-columns">
+          <aside className="calendar-wide-weather" aria-label="天气与出行参考">
+            <CalendarWeather selectedDate={model.headerProps.selectedDate}>{null}</CalendarWeather>
+          </aside>
+          <main className="calendar-wide-calendar" aria-label="月历和今日宜忌">
+            <CalendarMonthNav />
+            <CalendarMonthGrid />
+            <div data-calendar-footer data-no-month-scroll><CalendarFooter /></div>
+          </main>
         </div>
       </div>
     </CalendarViewProvider>
