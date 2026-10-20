@@ -93,19 +93,21 @@ export default function CalendarWeatherHero({ selectedDate, children }: Calendar
   const isPast = selectedKey < todayKey;
   const displayCondition = available ? condition : isPast ? '历史天气暂不可用' : '暂无天气预报';
 
+  // Only today's weather uses the real current daylight state.
+  // A selected future date represents its daily (daytime) forecast; do not
+  // misleadingly render tomorrow as night just because it is night now.
   let night = false;
-  if (isToday && current) {
-    night = current.is_day === 0;
-  } else if (hasDayForecast && daily) {
-    const nowMinutes = shanghaiMinutes(new Date(clock));
-    const sunrise = localMinutes(daily.sunrise[dayIndex]);
-    const sunset = localMinutes(daily.sunset[dayIndex]);
-    night = sunrise != null && sunset != null
-      ? nowMinutes < sunrise || nowMinutes >= sunset
-      : nowMinutes < 6 * 60 || nowMinutes >= 18 * 60;
-  } else {
-    const nowMinutes = shanghaiMinutes(new Date(clock));
-    night = nowMinutes < 6 * 60 || nowMinutes >= 18 * 60;
+  if (isToday) {
+    if (current) {
+      night = current.is_day === 0;
+    } else {
+      const nowMinutes = shanghaiMinutes(new Date(clock));
+      const sunrise = hasDayForecast ? localMinutes(daily?.sunrise[dayIndex]) : null;
+      const sunset = hasDayForecast ? localMinutes(daily?.sunset[dayIndex]) : null;
+      night = sunrise != null && sunset != null
+        ? nowMinutes < sunrise || nowMinutes >= sunset
+        : nowMinutes < 6 * 60 || nowMinutes >= 18 * 60;
+    }
   }
 
   const wet = scene === 'rain' || scene === 'storm';
