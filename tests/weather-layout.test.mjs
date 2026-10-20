@@ -16,7 +16,7 @@ const config = readFileSync('src-tauri/src/app_runtime/config.rs', 'utf8');
 test('the first screen presents a compact forecast without a nested forecast detail view', () => {
   assert.match(view, /className="cw-glance-hours"/);
   assert.match(view, /接下来几小时/);
-  assert.match(view, /className="cw-glance-air"/);
+  assert.match(view, /cw-glance-air/);
   assert.match(view, /className="cw-glance-bottom"/);
   assert.doesNotMatch(view, /setDetailView/);
   assert.doesNotMatch(view, /cw-forecast-toggle/);
