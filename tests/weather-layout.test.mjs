@@ -13,18 +13,16 @@ const footer = readFileSync('src/components/calendar/subs/CalendarFooter.tsx', '
 const taskbar = readFileSync('src-tauri/src/app_runtime/windows/hook_runtime.rs', 'utf8');
 const config = readFileSync('src-tauri/src/app_runtime/config.rs', 'utf8');
 
-test('hourly and five-day forecasts switch within a fixed-height stage', () => {
-  assert.match(view, /setDetailView/);
-  assert.match(view, /查看未来五天天气/);
-  assert.match(view, /返回逐小时天气/);
-  assert.match(view, /className="cw-hours"/);
-  assert.match(view, /className="cw-days"/);
+test('the first screen presents a compact forecast without a nested forecast detail view', () => {
+  assert.match(view, /className="cw-glance-hours"/);
+  assert.match(view, /接下来几小时/);
+  assert.match(view, /className="cw-glance-air"/);
+  assert.match(view, /className="cw-glance-bottom"/);
+  assert.doesNotMatch(view, /setDetailView/);
+  assert.doesNotMatch(view, /cw-forecast-toggle/);
+  assert.doesNotMatch(view, /<CalendarWeatherExtras/);
   assert.match(view, /temperature_2m_max/);
   assert.match(view, /precipitation_probability_max/);
-  assert.match(css, /\.cw-forecast-stage\s*\{[^}]*height:67px/s);
-  assert.match(css, /\.cw-hours\s*\{[^}]*grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/s);
-  assert.match(css, /\.cw-days\s*\{[^}]*grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/s);
-  assert.match(view, /selectedHours/);
   assert.match(css, /\.cw-settings-overlay\s*\{[^}]*position:absolute/s);
 });
 
@@ -43,11 +41,11 @@ test('weather ambience differs by condition and respects reduced-motion settings
   assert.match(hero, /precipitationMotion/);
 });
 
-test('hourly precipitation probability is labeled, not claimed as rain amount', () => {
-  assert.match(view, /降雨概率/);
-  assert.match(view, /雨概率最高/);
-  assert.match(view, /rainIsFresh/);
+test('the glance panel labels hourly rain probability and preserves source status', () => {
+  assert.match(view, /雨 \{number\(h\.probability,'% '\)\}/);
+  assert.match(view, /ageLabel\(data\?\.forecastFetchedAt/);
   assert.match(view, /Open-Meteo/);
+  assert.match(view, /cw-glance-status/);
 });
 
 test('V13 date info, auspicious days and Windows taskbar hook stay intact', () => {
