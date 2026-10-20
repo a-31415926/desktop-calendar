@@ -4,7 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 import type { Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type FormEvent } from 'react';
 import {
-  ageLabel, hourlyRows, dateKey, number, timeLabel, weatherCode,
+  ageLabel, hourlyRows, number, timeLabel, weatherCode,
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
 import { localAir, extraIsFresh } from '../../../weather/extras.ts';
