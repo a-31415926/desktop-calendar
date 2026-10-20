@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync as requireFs} from 'node:fs';
+import * as fs from 'node:fs';
 import {calendarLimits,popupPosition} from '../src/hooks/calender/calendarBounds.ts';
 import {activeAlerts,extraIsFresh,localAir,commuteSummary} from '../src/weather/extras.ts';
 const now=Date.parse('2026-10-20T16:30:00+08:00');
@@ -42,7 +42,6 @@ test('commute reference uses real matching hours and does not fabricate missing 
 });
 
 test('V14.8 is a fixed-size two-column calendar without default scrolling', () => {
-  const fs = requireFs();
   const view = fs.readFileSync('src/components/calendar/CalendarView.tsx','utf8');
   const css = fs.readFileSync('src/components/calendar/calendarWide.css','utf8');
   const weather = fs.readFileSync('src/components/calendar/subs/CalendarWeather.tsx','utf8');
