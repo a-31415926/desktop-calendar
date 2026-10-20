@@ -1,0 +1,339 @@
+
+/* V14.8  Horizontal weather + calendar. All measurements are CSS logical px,
+   so Windows 125% / 150% scaling stays in the browser's own coordinate space. */
+[data-calendar-shell][data-calendar-layout="wide"] {
+  --calendar-preferred-width: 776px;
+  --calendar-body-font: 13px;
+  --calendar-day-font: 18px;
+  --calendar-lunar-font: 11px;
+  --calendar-cell-height: 43px;
+  --calendar-cell-width: 58px;
+  width: min(776px, var(--calendar-max-width, calc(100dvw - 24px))) !important;
+  height: min(596px, var(--calendar-max-height, calc(100dvh - 24px))) !important;
+  min-height: 0;
+  max-height: var(--calendar-max-height, calc(100dvh - 24px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 10px !important;
+  gap: 0;
+}
+/* Preserve a readable calendar across existing Large/Standard/Compact preferences. */
+[data-calendar-shell][data-calendar-layout="wide"][data-calendar-size="standard"],
+[data-calendar-shell][data-calendar-layout="wide"][data-calendar-size="compact"] {
+  --calendar-preferred-width:776px;
+  --calendar-body-font:13px;
+  --calendar-day-font:18px;
+  --calendar-lunar-font:11px;
+  --calendar-cell-height:43px;
+  --calendar-cell-width:58px;
+}
+[data-calendar-layout="wide"] .calendar-wide-header {
+  height:58px;
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  padding:0 12px 7px;
+  box-sizing:border-box;
+  border-bottom:1px solid color-mix(in srgb,var(--text-sec) 13%,transparent);
+}
+[data-calendar-layout="wide"] .calendar-wide-header > div {width:100%;height:48px;margin:0;}
+[data-calendar-layout="wide"] .calendar-wide-header button {width:29px;height:29px;}
+[data-calendar-layout="wide"] .calendar-wide-columns {
+  display:grid;
+  grid-template-columns:252px minmax(0,1fr);
+  flex:1 1 auto;
+  gap:0;
+  min-height:0;
+  overflow:hidden;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather {
+  min-width:0;
+  min-height:0;
+  position:relative;
+  isolation:isolate;
+  border-right:1px solid color-mix(in srgb,var(--text-sec) 14%,transparent);
+  overflow:hidden;
+  border-radius:0 0 0 11px;
+  background:linear-gradient(160deg,
+    color-mix(in srgb,var(--card-bg) 78%,#d9eaf7),
+    color-mix(in srgb,var(--card-bg) 88%,#e8f4fa));
+}
+[data-calendar-layout="wide"] .calendar-wide-calendar {
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  padding:12px 13px 7px 16px;
+  display:flex;
+  flex-direction:column;
+  box-sizing:border-box;
+  gap:0;
+}
+/* A full six-row calendar. No automatic scrolling or date-driven viewport jump. */
+[data-calendar-layout="wide"] [data-month-nav] {
+  flex:0 0 34px;
+  position:static;
+  top:auto;
+  margin:0 0 7px;
+  padding:0 1px;
+  background:transparent;
+}
+[data-calendar-layout="wide"] [data-month-nav] button {min-width:27px;height:27px;}
+[data-calendar-layout="wide"] [data-month-grid] {
+  flex:0 0 auto;
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  grid-template-rows:31px repeat(6,43px);
+  column-gap:2px;
+  row-gap:2px;
+  justify-items:center;
+  align-items:center;
+}
+[data-calendar-layout="wide"] [data-month-grid] [data-weekday] {
+  font-size:13px;
+  height:25px;
+  line-height:20px;
+  padding:0 0 5px;
+}
+[data-calendar-layout="wide"] [data-month-grid] [data-day-cell] {
+  width:min(57px,100%);
+  height:43px;
+  min-height:43px;
+  border-radius:10px;
+}
+[data-calendar-layout="wide"] [data-month-grid] [data-date-number] {
+  font-size:18px;
+  line-height:21px;
+}
+[data-calendar-layout="wide"] [data-month-grid] [data-lunar-day] {
+  font-size:11px;
+  line-height:13px;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+[data-calendar-layout="wide"] [data-calendar-footer] {
+  flex:0 0 auto;
+  min-width:0;
+  margin-top:auto;
+  padding-top:8px;
+  border-top:1px solid color-mix(in srgb,var(--text-sec) 13%,transparent);
+  max-height:159px;
+  overflow:hidden;
+}
+[data-calendar-layout="wide"] [data-calendar-footer] > div {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  margin:0;
+  min-width:0;
+}
+[data-calendar-layout="wide"] [data-calendar-footer] section {
+  padding:7px 9px;
+  border-radius:9px;
+  min-width:0;
+}
+[data-calendar-layout="wide"] [data-calendar-footer] section > div:first-child {
+  font-size:12px;
+  margin-bottom:3px;
+}
+[data-calendar-layout="wide"] [data-calendar-footer] section [class*="countdown"] {font-size:11px;}
+[data-calendar-layout="wide"] [data-calendar-footer] [class*="yiJiContainer"] {gap:3px;}
+[data-calendar-layout="wide"] [data-calendar-footer] [class*="yiJiItem"] {font-size:12px;gap:6px;}
+[data-calendar-layout="wide"] [data-calendar-footer] [class*="yiJiText"] {
+  font-size:12px;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow:hidden;
+}
+
+/* The left side is a single integrated weather environment rather than two cards. */
+[data-calendar-layout="wide"] .calendar-wide-weather > .calendar-weather,
+[data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather.cw-unified {
+  width:100%;
+  height:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  background:transparent;
+  overflow:hidden;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather::before,
+[data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather::after {content:none;}
+[data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {
+  flex:0 0 150px;
+  height:150px;
+  min-height:150px;
+  border:0;
+  border-radius:0;
+  margin:0;
+  box-shadow:none;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-header-slot {display:none;}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-content {
+  padding:15px 14px 10px;
+  height:100%;
+  gap:8px;
+  justify-content:center;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-eyebrow {font-size:12px;}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-primary {flex-wrap:wrap;gap:8px;}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-primary strong {font-size:21px;max-width:100%;}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-temperature {font-size:33px;}
+[data-calendar-layout="wide"] .calendar-wide-weather .wh-meta {
+  font-size:11px;
+  line-height:15px;
+  white-space:normal;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather .cw-actions {max-width:135px;}
+[data-calendar-layout="wide"] .calendar-wide-weather .cw-location {
+  font-size:12px!important;
+  max-width:135px;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather .cw-details {
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+  max-height:none;
+  padding:10px 12px 8px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather .cw-rain-banner {
+  flex:0 0 auto;
+  height:auto;
+  min-height:39px;
+  padding:7px 8px;
+  background:color-mix(in srgb,var(--card-bg) 83%,#e9f2fa);
+  border-radius:9px;
+  line-height:1.55;
+  white-space:normal;
+  font-size:11px;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather .cw-rain-banner > span:nth-child(2) {
+  white-space:normal;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+[data-calendar-layout="wide"] .calendar-wide-weather .cw-mini-rain {display:none;}
+[data-calendar-layout="wide"] .cw-forecast-toggle {display:none!important;}
+[data-calendar-layout="wide"] .cw-detail-nav {
+  flex:0 0 27px;
+  margin:6px 0 0;
+  border-top:1px solid color-mix(in srgb,var(--text-sec) 17%,transparent);
+  padding:3px 0 0;
+  height:auto;
+  min-height:0;
+  gap:3px;
+}
+[data-calendar-layout="wide"] .cw-detail-nav .cw-hourly-label {gap:4px;font-size:11px;}
+[data-calendar-layout="wide"] .cw-detail-nav .cw-hourly-label span:last-child {display:none;}
+[data-calendar-layout="wide"] .cw-detail-nav .cw-detail-toggle {
+  font-size:10px!important;
+  padding:0!important;
+  flex:0 0 auto;
+}
+[data-calendar-layout="wide"] .cw-forecast-stage,
+[data-calendar-layout="wide"] .cw-hours,
+[data-calendar-layout="wide"] .cw-days {
+  height:91px;
+  min-height:91px;
+}
+[data-calendar-layout="wide"] .cw-forecast-stage {flex:0 0 91px;overflow:hidden;}
+[data-calendar-layout="wide"] .cw-hours {grid-template-columns:repeat(6,minmax(0,1fr));gap:0;}
+[data-calendar-layout="wide"] .cw-days {grid-template-columns:repeat(5,minmax(0,1fr));gap:0;}
+[data-calendar-layout="wide"] .cw-hour,
+[data-calendar-layout="wide"] .cw-day {height:91px!important;min-width:0;gap:3px;}
+[data-calendar-layout="wide"] .cw-time,
+[data-calendar-layout="wide"] .cw-prob,
+[data-calendar-layout="wide"] .cw-day-low {font-size:10px;line-height:12px;}
+[data-calendar-layout="wide"] .cw-hour strong {font-size:13px;}
+[data-calendar-layout="wide"] .cw-hour .cw-icon {width:25px;height:25px;}
+[data-calendar-layout="wide"] .cw-commute {
+  flex:0 0 auto;
+  padding:5px 0;
+  font-size:11px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+[data-calendar-layout="wide"] .cw-life-toggle {
+  flex:0 0 auto;
+  padding:6px 8px;
+  border-radius:9px;
+  font-size:11px!important;
+  background:color-mix(in srgb,var(--card-bg) 88%,#e9f2fa);
+}
+[data-calendar-layout="wide"] .cw-life-toggle span {min-width:0;}
+[data-calendar-layout="wide"] .cw-life-panel {
+  position:absolute;
+  left:7px;
+  right:7px;
+  bottom:31px;
+  z-index:45;
+  max-height:290px;
+  overflow-y:auto;
+  padding:9px;
+  border:1px solid color-mix(in srgb,var(--text-sec) 20%,transparent);
+  border-radius:11px;
+  background:var(--card-bg);
+  box-shadow:0 10px 32px rgba(20,43,67,.16);
+}
+[data-calendar-layout="wide"] .cw-warning {max-height:51px;overflow:hidden;font-size:11px;}
+[data-calendar-layout="wide"] .cw-bottom {margin-top:auto;font-size:10px;min-height:16px;}
+[data-calendar-layout="wide"] .cw-bottom > span {font-size:10px;}
+[data-calendar-layout="wide"] .cw-status {
+  display:block;
+  font-size:10px!important;
+  max-height:42px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:normal;
+}
+[data-calendar-layout="wide"] .cw-attribution {display:none;}
+[data-calendar-layout="wide"] .cw-settings-overlay {
+  position:absolute;
+  inset:7px;
+  z-index:80;
+  bottom:7px;
+  max-height:none;
+  overflow-y:auto;
+  border-radius:11px;
+  box-shadow:0 12px 35px rgba(18,39,58,.25);
+}
+[data-calendar-layout="wide"] .cw-place-editor {grid-template-columns:1fr 1fr;gap:6px;}
+[data-calendar-layout="wide"] .cw-place-editor label:first-child {grid-column:1/-1;}
+
+/* On truly small usable screens, fall back to a scrollable single column.
+   Normal 1080p/125% and 2K/125% always use the fixed 776x596 layout. */
+@media (max-width:690px), (max-height:560px) {
+  [data-calendar-shell][data-calendar-layout="wide"] {
+    height:min(720px,var(--calendar-max-height,calc(100dvh - 24px)))!important;
+    overflow-y:auto;
+  }
+  [data-calendar-layout="wide"] .calendar-wide-columns {
+    display:flex;
+    flex-direction:column;
+    overflow:visible;
+  }
+  [data-calendar-layout="wide"] .calendar-wide-weather {
+    flex:0 0 auto;
+    height:335px;
+    border-right:none;
+    border-bottom:1px solid color-mix(in srgb,var(--text-sec) 18%,transparent);
+  }
+  [data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {height:100px;min-height:100px;flex-basis:100px;}
+  [data-calendar-layout="wide"] .calendar-wide-calendar {flex:0 0 auto;}
+  [data-calendar-layout="wide"] .calendar-wide-calendar [data-month-grid] [data-day-cell] {width:100%;}
+}
