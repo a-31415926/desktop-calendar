@@ -21,8 +21,7 @@ test('the first screen presents a compact forecast without a nested forecast det
   assert.doesNotMatch(view, /setDetailView/);
   assert.doesNotMatch(view, /cw-forecast-toggle/);
   assert.doesNotMatch(view, /<CalendarWeatherExtras/);
-  assert.match(view, /temperature_2m_max/);
-  assert.match(view, /precipitation_probability_max/);
+  assert.match(view, /hours\.slice\(0,4\)/);
   assert.match(css, /\.cw-settings-overlay\s*\{[^}]*position:absolute/s);
 });
 
