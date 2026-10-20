@@ -546,7 +546,7 @@ mod tests {
         s.locations[0].latitude = 91.0;
         assert!(validate(&s).is_err());
         s.locations[0].latitude = 31.0;
-        s.selected = 2;
+        s.selected = s.locations.len();
         assert!(validate(&s).is_err());
     }
     #[test]
