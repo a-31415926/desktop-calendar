@@ -59,5 +59,5 @@ test('V14.8 is a fixed-size two-column calendar without default scrolling', () =
   assert.match(weather, /切换公司、宿舍和老家地点/);
   assert.match(backend, /老家 · 梁园/);
   assert.match(backend, /weather-v14\.before-three-places\.json/);
-  assert.match(backend, /settings\.locations\.len\(\) > 5/);
+  assert.match(backend, /s\.locations\.len\(\) > 5/);
 });
