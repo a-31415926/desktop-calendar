@@ -36,8 +36,8 @@
 .v16-sun-disc,.v16-moon {position:absolute;right:20px;top:20px;width:52px;height:52px;border-radius:50%;}
 .v16-sun-disc {background:#fff0b6;box-shadow:0 0 35px 15px #fff1af90;animation:v16-sun-drift 16s ease-in-out infinite alternate;}
 .v16-moon {background:transparent;box-shadow:inset -13px -5px #edf2d5;filter:drop-shadow(0 0 12px #f1f4ce60);animation:v16-sun-drift 18s ease-in-out infinite alternate;}
-.v16-cloud {position:absolute;right:-30px;top:70px;width:145px;height:35px;border-radius:50%;background:#ffffff9c;filter:blur(5px);animation:v16-cloud-drift 25s ease-in-out infinite alternate;}
-.v16-cloud::before {content:'';position:absolute;inset:-24px 25px 3px 34px;border-radius:50%;background:inherit;}
+.v16-cloud-shape {position:absolute;right:-30px;top:70px;width:145px;height:35px;border-radius:50%;background:#ffffff9c;filter:blur(5px);animation:v16-cloud-drift 25s ease-in-out infinite alternate;}
+.v16-cloud-shape::before {content:'';position:absolute;inset:-24px 25px 3px 34px;border-radius:50%;background:inherit;}
 .v16-cloud-b {top:210px;right:70px;opacity:.5;transform:scale(1.5);animation-duration:34s;}
 .v16-cloud .v16-cloud-a,.v16-storm .v16-cloud-a {background:#67809a60;}
 .v16-fog-ribbon {position:absolute;inset:-20%;background:repeating-linear-gradient(165deg,transparent 0 70px,#ffffff9c 100px,transparent 150px);filter:blur(13px);animation:v16-cloud-drift 25s ease-in-out infinite alternate;}
@@ -47,7 +47,7 @@
 .v16-snow i {display:block;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 4px #fff;animation:v16-snow 12s linear infinite;}
 [data-atmosphere="soft"] .v16-scene {filter:saturate(.7);}
 [data-atmosphere="soft"] .v16-scene[data-active="true"] {opacity:.55;}
-[data-theme="dark"] .v16-cloud {background:#d0e1eb45;}
+[data-theme="dark"] .v16-cloud-shape {background:#d0e1eb45;}
 /* Remove the old separate hero card and its keyed intro animations. */
 [data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero,
 [data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .wh-content {background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;border:0;animation:none!important;}
