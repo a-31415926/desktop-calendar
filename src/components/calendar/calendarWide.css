@@ -405,3 +405,86 @@
 [data-calendar-layout="wide"] .cw-time,[data-calendar-layout="wide"] .cw-prob {font-size:11px;}
 [data-calendar-layout="wide"] .cw-hour strong {font-size:15px;}
 [data-calendar-layout="wide"] .calendar-dismiss {color:var(--text-main);opacity:1;background:#8196b414;}
+
+
+/* V14.10: full-window weather atmosphere. The content remains above the
+   atmospheric layers; fog is intentionally visible across the whole calendar. */
+[data-calendar-shell][data-calendar-layout="wide"] {position:relative;isolation:isolate;background:transparent!important;}
+[data-calendar-shell][data-calendar-layout="wide"] > .calendar-weather-atmosphere {
+  position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+  background:linear-gradient(135deg,#f6f8fa 0%,#e9eef2 45%,#f7f8fa 100%);
+  transition:background 900ms ease;
+}
+[data-calendar-shell][data-calendar-layout="wide"] > .calendar-wide-header,
+[data-calendar-shell][data-calendar-layout="wide"] > .calendar-wide-columns {
+  position:relative;z-index:1;
+}
+.weather-atmosphere-layer {position:absolute;inset:-18%;pointer-events:none;opacity:0;transition:opacity 900ms ease;}
+.weather-atmosphere-layer-a {filter:blur(22px);}
+.weather-atmosphere-layer-b {filter:blur(32px);}
+.weather-atmosphere-layer-c {filter:blur(46px);}
+[data-weather-scene="neutral"] > .calendar-weather-atmosphere {background:linear-gradient(135deg,#f6f8fa,#edf1f4 55%,#f8f9fb);}
+[data-weather-scene="fog"] > .calendar-weather-atmosphere {
+  background:linear-gradient(135deg,#cbd5dc 0%,#e7ecef 36%,#cfd9df 68%,#eef1f3 100%);
+}
+[data-weather-scene="fog"] .weather-atmosphere-layer-a {
+  opacity:.86;background:
+    radial-gradient(ellipse at 18% 25%,rgba(255,255,255,.92) 0%,rgba(255,255,255,.42) 27%,transparent 54%),
+    radial-gradient(ellipse at 83% 48%,rgba(255,255,255,.84) 0%,rgba(255,255,255,.35) 25%,transparent 55%);
+  animation:calendar-fog-drift-a 17s ease-in-out infinite alternate;
+}
+[data-weather-scene="fog"] .weather-atmosphere-layer-b {
+  opacity:.72;background:
+    linear-gradient(102deg,transparent 4%,rgba(255,255,255,.72) 24%,rgba(255,255,255,.12) 45%,rgba(255,255,255,.78) 68%,transparent 94%);
+  animation:calendar-fog-drift-b 23s ease-in-out infinite alternate;
+}
+[data-weather-scene="fog"] .weather-atmosphere-layer-c {
+  opacity:.54;background:
+    radial-gradient(ellipse at 35% 78%,rgba(255,255,255,.85),transparent 48%),
+    radial-gradient(ellipse at 72% 15%,rgba(255,255,255,.64),transparent 40%);
+  animation:calendar-fog-drift-c 29s ease-in-out infinite alternate;
+}
+[data-weather-scene="cloud"],[data-weather-scene="cloud-sun"] {--weather-atmosphere-tint:rgba(167,187,202,.18);}
+[data-weather-scene="cloud"] > .calendar-weather-atmosphere,
+[data-weather-scene="cloud-sun"] > .calendar-weather-atmosphere {
+  background:linear-gradient(120deg,#e0e8ee,#f0f3f5 48%,#dce5eb);
+}
+[data-weather-scene="cloud"] .weather-atmosphere-layer-a,
+[data-weather-scene="cloud-sun"] .weather-atmosphere-layer-a {
+  opacity:.58;background:radial-gradient(ellipse at 22% 22%,rgba(255,255,255,.8),transparent 44%),radial-gradient(ellipse at 80% 40%,rgba(145,169,188,.24),transparent 46%);
+  animation:calendar-cloud-drift 34s ease-in-out infinite alternate;
+}
+[data-weather-scene="sun"] > .calendar-weather-atmosphere {
+  background:linear-gradient(120deg,#e2eef6,#f8f5e9 52%,#f8e9c9);
+}
+[data-weather-scene="sun"] .weather-atmosphere-layer-a {
+  opacity:.7;background:radial-gradient(ellipse at 82% 8%,rgba(255,219,141,.7),transparent 45%),radial-gradient(ellipse at 22% 80%,rgba(255,255,255,.62),transparent 48%);
+  animation:calendar-sun-glow 13s ease-in-out infinite alternate;
+}
+[data-weather-scene="rain"],[data-weather-scene="storm"] {--weather-atmosphere-rain:1;}
+[data-weather-scene="rain"] > .calendar-weather-atmosphere,
+[data-weather-scene="storm"] > .calendar-weather-atmosphere {
+  background:linear-gradient(125deg,#b7c8d4,#e1e8ed 52%,#c0d0dc);
+}
+[data-weather-scene="rain"] .weather-atmosphere-layer-a,
+[data-weather-scene="storm"] .weather-atmosphere-layer-a {
+  opacity:.6;background:repeating-linear-gradient(105deg,transparent 0 24px,rgba(77,127,159,.16) 25px 26px,transparent 27px 44px);
+  animation:calendar-rain-drift 1.6s linear infinite;
+}
+[data-weather-scene="snow"] > .calendar-weather-atmosphere {
+  background:linear-gradient(130deg,#dcebf3,#f7fafc 55%,#dbe9f1);
+}
+[data-weather-scene="snow"] .weather-atmosphere-layer-a {
+  opacity:.68;background:radial-gradient(circle at 15% 20%,#fff 0 2px,transparent 3px),radial-gradient(circle at 38% 67%,#fff 0 2px,transparent 3px),radial-gradient(circle at 72% 35%,#fff 0 3px,transparent 4px),radial-gradient(circle at 88% 78%,#fff 0 2px,transparent 3px);
+  background-size:150px 130px;animation:calendar-snow-drift 12s linear infinite;
+}
+@keyframes calendar-fog-drift-a {from{transform:translate3d(-4%,-1%,0) scale(1)}to{transform:translate3d(5%,2%,0) scale(1.08)}}
+@keyframes calendar-fog-drift-b {from{transform:translate3d(6%,1%,0) scale(1.04)}to{transform:translate3d(-7%,-2%,0) scale(1.12)}}
+@keyframes calendar-fog-drift-c {from{transform:translate3d(-3%,2%,0) scale(1.05)}to{transform:translate3d(4%,-2%,0) scale(1.13)}}
+@keyframes calendar-cloud-drift {from{transform:translateX(-2%) scale(1)}to{transform:translateX(3%) scale(1.05)}}
+@keyframes calendar-sun-glow {from{transform:translate3d(0,0,0) scale(1);opacity:.48}to{transform:translate3d(-2%,1%,0) scale(1.08);opacity:.82}}
+@keyframes calendar-rain-drift {from{transform:translate3d(0,-2%,0)}to{transform:translate3d(-4%,4%,0)}}
+@keyframes calendar-snow-drift {from{transform:translate3d(0,-3%,0)}to{transform:translate3d(2%,5%,0)}}
+@media (prefers-reduced-motion:reduce) {
+  .weather-atmosphere-layer {animation:none!important;transition:none!important;}
+}
