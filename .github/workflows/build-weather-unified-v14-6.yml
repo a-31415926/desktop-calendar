@@ -7,7 +7,7 @@ concurrency:
   group: weather-v14-6-${{ github.ref }}
   cancel-in-progress: true
 permissions:
-  contents: write
+  contents: read
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -30,7 +30,7 @@ jobs:
       - name: Frontend type check and build
         run: pnpm build
       - name: Windows weather adapter and credential tests
-        run: cargo test --release --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --lib weather::
+        run: 'cargo test --release --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --lib weather::'
       - name: Build Windows x64 NSIS installer
         run: pnpm tauri build --bundles nsis --target x86_64-pc-windows-msvc
       - name: Verify and package
@@ -51,12 +51,3 @@ jobs:
           path: delivery/
           retention-days: 90
           if-no-files-found: error
-      - name: Publish directly downloadable preview installer
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          $tag = 'preview-v14.6-${{ github.run_id }}'
-          $notes = "一体式天气面板；选中日期联动；更鲜明的雨雪强度；默认和风天气（在软件设置中填写个人 Host/Key）。Windows x64 NSIS 安装包。保留融合预览独立应用身份。`n`n源码提交：${{ github.sha }}。附 SHA-256 校验文件。"
-          $notes | Set-Content release-notes.txt
-          gh release create $tag delivery/* --repo '${{ github.repository }}' --target '${{ github.sha }}' --prerelease --title '桌面日历 V14.6 天气融合预览' --notes-file release-notes.txt
