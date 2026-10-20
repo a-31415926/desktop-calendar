@@ -1,4 +1,7 @@
-import React, { type CSSProperties } from 'react';
+import React, { useState, type CSSProperties } from 'react';
+import dayjs from 'dayjs';
+import type {WeatherData} from '../../weather/model.ts';
+import {CalendarWeatherContext} from '../../weather/CalendarWeatherContext.ts';
 import '../../utils/calendar/setupDayjsCalendar.ts';
 import { CalendarViewProvider } from '../../hooks/calender/CalendarViewContext.tsx';
 import { useCalendarViewModel } from '../../hooks/calender/useCalendarViewModel.ts';
@@ -52,6 +55,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 }) => {
   /** 聚合后的日历视图模型，供上下文与各子组件共享。 */
   const size = useCalendarAppearance();
+  const [weather,setWeather]=useState<WeatherData|null>(null);
   const model = useCalendarViewModel({
     enableDrag,
     dragRegion,
@@ -67,11 +71,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   return (
     <CalendarViewProvider value={model}>
+      <CalendarWeatherContext.Provider value={weather}>
       <div {...model.rootProps} data-calendar-shell data-calendar-size={size} data-calendar-layout="wide">
         <header className="calendar-wide-header"><CalendarHeader /></header>
         <div className="calendar-wide-columns">
           <aside className="calendar-wide-weather" aria-label="天气与出行参考">
-            <CalendarWeather selectedDate={model.headerProps.selectedDate}>{null}</CalendarWeather>
+            <CalendarWeather selectedDate={dayjs()} onData={setWeather}>{null}</CalendarWeather>
           </aside>
           <main className="calendar-wide-calendar" aria-label="月历和今日宜忌">
             <CalendarMonthNav />
@@ -80,6 +85,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           </main>
         </div>
       </div>
+      </CalendarWeatherContext.Provider>
     </CalendarViewProvider>
   );
 };

@@ -56,8 +56,8 @@ test('V13 date info, auspicious days and Windows taskbar hook stay intact', () =
   assert.match(config, /restore_v13_preferences_once/);
 });
 
-test('one weather data owner renders the date-aware panel above the calendar', () => {
-  assert.match(calendarView, /<CalendarWeather selectedDate=\{model\.headerProps\.selectedDate\}/);
+test('one weather data owner shares current weather with the date-aware calendar', () => {
+  assert.match(calendarView, /<CalendarWeather selectedDate=\{dayjs\(\)\}/);
   assert.doesNotMatch(calendarView, /<CalendarWeather\s*\/>/);
   assert.doesNotMatch(hero, /weather_fetch|weather_settings/);
   assert.doesNotMatch(view, /className="cw-now"/);

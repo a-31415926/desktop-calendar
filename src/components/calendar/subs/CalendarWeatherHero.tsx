@@ -46,7 +46,7 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
   const intensity = weatherIntensity(code);
   const high = hasDayForecast ? daily?.temperature_2m_max[dayIndex] : null;
   const low = hasDayForecast ? daily?.temperature_2m_min[dayIndex] : null;
-  const currentTemp = isToday ? (current?.temperature_2m ?? high) : high;
+  const currentTemp = isToday ? (current?.temperature_2m ?? null) : high;
   const isPast = selectedKey < todayKey;
   const displayCondition = available ? condition : isPast ? '历史天气暂不可用' : data?.forecast ? '暂无天气预报' : '待连接天气';
 

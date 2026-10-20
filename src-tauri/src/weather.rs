@@ -50,15 +50,15 @@ fn default_locations() -> Vec<Location> {
     vec![
         Location {
             name: "公司 · 静安".into(),
-            description: "上海静安 · 大宁德必易园附近（参考位置）".into(),
-            latitude: 31.2865,
-            longitude: 121.4490,
+            description: "上海静安 · 大宁（区域参考位置）".into(),
+            latitude: 31.29,
+            longitude: 121.45,
         },
         Location {
             name: "宿舍 · 宝山".into(),
-            description: "上海宝山 · 宝安公路站晓寓附近（参考位置）".into(),
-            latitude: 31.3730,
-            longitude: 121.4320,
+            description: "上海宝山 · 宝安公路（区域参考位置）".into(),
+            latitude: 31.37,
+            longitude: 121.43,
         },
         Location {
             name: "老家 · 梁园".into(),

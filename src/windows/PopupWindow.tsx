@@ -126,6 +126,7 @@ const PopupWindow = (): ReactElement => {
 
     const handleBrowserHideRequest = (event: Event): void => {
       const detail = (event as CustomEvent<PopupHideRequestDetail>).detail;
+      if(detail)detail.handled=true;
       startExit(detail?.after);
     };
 
@@ -153,6 +154,17 @@ const PopupWindow = (): ReactElement => {
       clearPendingTransition();
     };
   }, [clearPendingTransition, startEnter, startExit]);
+
+  useEffect(()=>{
+    const key=(event:KeyboardEvent)=>{
+      if(event.key!=='Escape'||event.defaultPrevented)return;
+      if(document.querySelector('[role="dialog"],.ant-dropdown:not(.ant-dropdown-hidden)'))return;
+      event.preventDefault();startExit();
+    };
+    window.addEventListener('keydown',key);
+    const pending=getCurrentWindow().onCloseRequested(event=>{event.preventDefault();startExit();});
+    return ()=>{window.removeEventListener('keydown',key);void pending.then(stop=>stop());};
+  },[startExit]);
 
   useEffect(() => {
     if (readyCalled.current) return;

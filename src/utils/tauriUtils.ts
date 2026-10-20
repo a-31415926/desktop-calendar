@@ -9,6 +9,7 @@ export const popupHideRequestEvent = 'li-calendar:popup-hide-request';
 
 export interface PopupHideRequestDetail {
   after?: 'open-main';
+  handled?: boolean;
 }
 
 /** 移动端应用当前支持的两种主视图。 */
@@ -40,16 +41,12 @@ function setMobileAppView(view: MobileAppView): void {
  * 再广播浏览器事件兜底触发前端退场动画，避免关闭窗口期间吞掉下一次点击。
  */
 async function requestPopupHide(after?: PopupHideRequestDetail['after']): Promise<void> {
-  try {
-    await invoke('hide_calendar');
-  } catch (error) {
-    console.error('request popup hide from backend failed', error);
-  } finally {
-    window.dispatchEvent(
-      new CustomEvent<PopupHideRequestDetail>(popupHideRequestEvent, {
-        detail: after ? { after } : {},
-      }),
-    );
+  // Hiding must not wait for the backend window-manager mutex.
+  const detail:PopupHideRequestDetail={after};
+  window.dispatchEvent(new CustomEvent<PopupHideRequestDetail>(popupHideRequestEvent,{detail}));
+  if(!detail.handled) {
+    await getCurrentWindow().hide();
+    if(after==='open-main')await invoke('open_main_window');
   }
 }
 

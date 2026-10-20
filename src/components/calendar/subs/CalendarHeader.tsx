@@ -73,7 +73,7 @@ function CalendarHeader(): ReactElement {
   /** 只让顶栏自己的时钟每秒刷新，避免整个月历因为读秒而重复计算。 */
   const [clockNow, setClockNow] = useState(() => dayjs());
   useEffect(() => {
-    const timer = window.setInterval(() => setClockNow(dayjs()), 1000);
+    const timer = window.setInterval(() => setClockNow(dayjs()), 10000);
     return () => window.clearInterval(timer);
   }, []);
   const size = useCalendarAppearance();
@@ -117,7 +117,7 @@ function CalendarHeader(): ReactElement {
               whiteSpace: 'nowrap',
             }}
           >
-            · {clockNow.format('HH:mm:ss')}
+            · {clockNow.format('HH:mm')}
           </span>
         </div>
       </div>
@@ -130,11 +130,12 @@ function CalendarHeader(): ReactElement {
           {showCloseButton && (
             <Tooltip title="收起">
               <button
-                className={styles.headerBtn}
+                className={styles.headerBtn+' calendar-dismiss'}
                 type="button"
                 aria-label="收起"
                 onClick={onClose}
               >
+                <span>收起</span>
                 <svg
                   width="12"
                   height="12"

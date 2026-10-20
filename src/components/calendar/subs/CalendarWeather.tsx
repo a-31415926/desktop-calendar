@@ -8,6 +8,7 @@ import {
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
 import { commuteSummary } from '../../../weather/extras.ts';
+import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeather.ts';
 import CalendarWeatherExtras from './CalendarWeatherExtras.tsx';
 import CalendarWeatherHero from './CalendarWeatherHero.tsx';
 import './calendarWeather.css';
@@ -56,12 +57,13 @@ function WeatherGlyph({ code, size = 30, night = false, animated = false }: Weat
   );
 }
 
-export default function CalendarWeather({ selectedDate, children }: { selectedDate: Dayjs; children: ReactNode }) {
+export default function CalendarWeather({ selectedDate, children, onData }: { selectedDate: Dayjs; children: ReactNode; onData?:(data:WeatherData|null)=>void }) {
   const root = useRef<HTMLElement | null>(null);
   const currentSettings = useRef<Settings | null>(null);
   const lastRequest = useRef(0);
   const [config, setConfig] = useState<SettingsResponse | null>(null);
   const [data, setData] = useState<WeatherData | null>(null);
+  useEffect(()=>{onData?.(data);},[data,onData]);
   const [clock, setClock] = useState(Date.now());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -121,7 +123,7 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
       if (event.target instanceof Node && !root.current?.contains(event.target)) setEditing(false);
     };
     const closeEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setEditing(false);
+      if (event.key === 'Escape') {event.preventDefault();event.stopPropagation();setEditing(false);}
     };
     document.addEventListener('pointerdown', closeOutside);
     document.addEventListener('keydown', closeEscape);
@@ -147,6 +149,7 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
   };
   const switchPlace = () => {
     if (!config || config.settings.locations.length < 2) return;
+    setData(null);
     void save({ ...config.settings, selected: (config.settings.selected + 1) % config.settings.locations.length });
   };
   const openSettings = () => {
@@ -194,6 +197,8 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
   const selectedChance = selectedIndex >= 0 ? data?.forecast?.daily.precipitation_probability_max[selectedIndex] : null;
   const provider = data?.provider ?? config?.settings.provider ?? 'qweather';
   const source = provider === 'qweather' ? '和风天气' : 'Open-Meteo · CC BY 4.0';
+  const attention=weatherAttention(data,clock);
+  const dataIssues=weatherDataIssues(data,clock);
   const issue = error || data?.forecastError || data?.saveError;
   const summary = !isToday ? selectedChance != null ? `所选日期降水概率 ${number(selectedChance, '%')}` : '所选日期暂无降水概率数据' : nowcast
     ? data?.minutely?.summary ||
@@ -215,6 +220,8 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
         </div>
       }>{children}</CalendarWeatherHero>
       <div className="cw-details">
+      {attention && <details className={'cw-attention cw-attention-'+attention.kind}><summary>{attention.kind==='official'?'官方预警 · ':''}{attention.title}{attention.count>1?`（共${attention.count}条）`:''}{attention.kind==='official'&&attention.detail&&<small className="cw-alert-impact">{attention.detail.split('\n')[0]}</small>}</summary><p>{attention.detail}</p></details>}
+      {provider === 'qweather' && <CalendarWeatherExtras data={data} clock={clock}/>}
       <div className="cw-rain-banner" title={nowcast ? '和风天气每五分钟降雨临近预报' : '降水概率参考，不代表一定降雨'}>
         <span className="cw-umbrella">☂</span><span>{stale ? '上次预报 · ' : ''}{summary}</span>
         {nowcast && <div className="cw-mini-rain" aria-label="未来两小时每五分钟累计降水量">{rainPoints.map(p => <i key={p.fxTime} title={timeLabel(p.fxTime) + ' · ' + p.precip + '毫米/5分钟'} style={{height: Math.min(18, 2 + Number(p.precip) * 12) + 'px'}}/>)}</div>}
@@ -256,14 +263,14 @@ export default function CalendarWeather({ selectedDate, children }: { selectedDa
       </div>
       </>}
       {commute && <div className="cw-commute">通勤参考 · {commute}{stale ? '（缓存）' : ''}</div>}
-      {provider === 'qweather' && <CalendarWeatherExtras data={data} clock={clock}/>}
+
       <div className="cw-bottom">
         <span>{source} · {stale ? '缓存 · ' : ''}{ageLabel(data?.forecastFetchedAt ?? 0, clock)}</span>
         <button type="button" onClick={() => { if (config) void retrieve(config.settings, true); }}
           disabled={busy || !config} aria-label="刷新天气" title="刷新天气"><ReloadOutlined /></button>
       </div>
-      {issue && <button className="cw-status cw-error" type="button" onClick={openSettings} title={issue}>{issue}</button>}
-      {isToday && data?.rainError && !issue && <p className="cw-status" title={data.rainError}>{data.rainError}</p>}
+      {issue && !data && <button className="cw-status cw-error" type="button" onClick={openSettings} title={issue}>数据异常 · {issue}</button>}
+      {dataIssues.length>0 && <details className="cw-data-issue"><summary>数据状态 · {dataIssues[0]}{dataIssues.length>1?` 等${dataIssues.length}项`:''}</summary>{dataIssues.map(message=><p key={message}>{message}</p>)}{issue&&<p>{issue}</p>}</details>}
       {provider === 'qweather' && data?.forecast?.attributions?.length ? <details className="cw-attribution"><summary>数据来源与声明</summary>{[...new Set(data.forecast.attributions)].map(a => <span key={a}>{a}</span>)}</details> : null}
       </div>
       {editing && draft && (

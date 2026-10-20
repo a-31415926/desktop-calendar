@@ -51,7 +51,7 @@ function CalendarFooter(): ReactElement | null {
   return (
     <div className={styles.footerInfo}>
       {showStatusCard && (
-        <section className={styles.footerCard}>
+        <section className={styles.footerCard} data-date-status>
           <div className={styles.footerSectionTitle}>日期信息</div>
           {hasFestivalSection && (
             <div className={styles.festivalSection}>
@@ -99,7 +99,7 @@ function CalendarFooter(): ReactElement | null {
       )}
 
       {hasYiJiSection && (
-        <section className={styles.footerCard}>
+        <section className={styles.footerCard} data-yi-ji>
           <div className={styles.footerSectionTitle}>今日宜忌</div>
           <div className={styles.footerMain}>
             <div className={styles.yiJiContainer}>
