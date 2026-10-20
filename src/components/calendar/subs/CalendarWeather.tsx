@@ -234,6 +234,8 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
             </div>}
           </div>
         </div>
+      </div>
+      <div className="cw-weather-controls">
         <button type="button" className="cw-density-toggle" aria-expanded={!appearance.calendarCompact} onClick={()=>void syncAppearance('calendarCompact', !appearance.calendarCompact)}>{appearance.calendarCompact ? '展开天气详情 ↓' : '收起天气详情 ↑'}</button>
         <div className="cw-glance-bottom">
           <span>{source} · {ageLabel(data?.forecastFetchedAt ?? 0,clock)}</span>

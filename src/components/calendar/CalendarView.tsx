@@ -1,6 +1,6 @@
 import React, { useState, type CSSProperties } from 'react';
 import { type WeatherData } from '../../weather/model.ts';
-import {selectedForecast} from '../../weather/selectedForecast.ts';
+import {atmosphereState} from '../../weather/atmosphereState.ts';
 import {CalendarWeatherContext} from '../../weather/CalendarWeatherContext.ts';
 import '../../utils/calendar/setupDayjsCalendar.ts';
 import { CalendarViewProvider } from '../../hooks/calender/CalendarViewContext.tsx';
@@ -73,12 +73,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     showCloseButton,
     style,
   });
-  const weatherScene=selectedForecast(weather,model.headerProps.selectedDate.format('YYYY-MM-DD')).scene;
+  const forecast=atmosphereState(weather,model.headerProps.selectedDate.format('YYYY-MM-DD'));
+  const weatherScene=forecast.scene;
 
   return (
     <CalendarViewProvider value={model}>
       <CalendarWeatherContext.Provider value={weather}>
       <div {...model.rootProps} data-calendar-shell data-calendar-size={size} data-calendar-layout="wide" data-weather-scene={weatherScene} data-theme={appearance.theme}
+        data-weather-night={forecast.night}
+        data-wind-effect={forecast.wind} data-cloud-amount={forecast.clouds}
+        data-weather-variant={forecast.variant}
         data-compact={appearance.calendarCompact}
         data-motion={appearance.weatherAnimation ? 'on' : 'off'}
         data-atmosphere={appearance.weatherAtmosphere}
@@ -88,8 +92,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           '--calendar-surface-opacity': appearance.calendarSurfaceOpacity / 100} as CSSProperties}>
         <header className="calendar-wide-header"><CalendarHeader /></header>
         <div className="calendar-wide-columns">
+          <WeatherAtmosphere scene={weatherScene} code={forecast.code} night={forecast.night} />
           <aside className="calendar-wide-weather" aria-label="天气与出行参考">
-            <WeatherAtmosphere scene={weatherScene} night={weatherScene !== 'neutral' && model.headerProps.selectedDate.isSame(new Date(), 'day') && weather?.forecast?.current.is_day === 0} />
             <CalendarWeather selectedDate={model.headerProps.selectedDate} onReturnToday={model.navProps.onGoToToday} onData={setWeather}>{null}</CalendarWeather>
           </aside>
           <main className="calendar-wide-calendar" aria-label="月历和今日宜忌">
