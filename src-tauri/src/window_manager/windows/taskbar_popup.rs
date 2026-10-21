@@ -11,7 +11,7 @@ use tauri::{Emitter, Manager, WebviewWindow, WindowEvent};
 use windows::Win32::{
     Foundation::RECT,
     UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO},
-    UI::WindowsAndMessaging::{GetAncestor, GetForegroundWindow, GA_ROOT},
+    UI::WindowsAndMessaging::{GetAncestor, GetForegroundWindow, SetForegroundWindow, GA_ROOT},
 };
 
 /// 表示“在系统时钟附近展示”的挂起坐标哨兵值。
@@ -211,7 +211,19 @@ impl CalendarWindowManager {
         if !was_visible || was_closing {
             let _ = popup_window.emit("calendar-popup-show", ());
         }
-        popup_window.set_focus()?;
+        // tao 0.34.8's focus fallback injects Alt when foreground permission is
+        // denied. Request ordinary activation on the GUI thread instead.
+        // If denied, keep the popup visible without synthesizing keyboard input.
+        let focus_target = popup_window.clone();
+        popup_window.run_on_main_thread(move || {
+            if let Some(hwnd) = get_window_hwnd(&focus_target) {
+                unsafe {
+                    if !SetForegroundWindow(hwnd).as_bool() {
+                        eprintln!("Windows未授予前台焦点，日历保持可见；未模拟任何按键");
+                    }
+                }
+            }
+        })?;
         Ok(())
     }
 
@@ -247,7 +259,7 @@ impl CalendarWindowManager {
         .transparent(true)
         .always_on_top(true)
         .visible(false)
-        .focused(true)
+        .focused(false)
         .skip_taskbar(true)
         .build()
         .ok()?;

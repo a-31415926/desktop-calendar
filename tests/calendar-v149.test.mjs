@@ -43,3 +43,10 @@ test('popup dismissal starts immediately even if backend commands never resolve'
 test('missing popup animation listener still hides window without closing the process',async()=>{
  const window=new EventTarget();let hidden=0;const a=api(window,async()=>hidden++,async()=>{});await a.closeOrHideCalendarWindow('popup');assert.equal(hidden,1);
 });
+
+test('calendar activation avoids the framework focus fallback that injects global Alt events',()=>{
+ const popup=readFileSync('src-tauri/src/window_manager/windows/taskbar_popup.rs','utf8');
+ assert.doesNotMatch(popup,/\.set_focus\(/);
+ assert.match(popup,/run_on_main_thread/);assert.match(popup,/SetForegroundWindow\(hwnd\)/);
+ assert.match(popup,/\.focused\(false\)/);
+});
