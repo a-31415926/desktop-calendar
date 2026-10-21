@@ -79,12 +79,8 @@ function CalendarHeader(): ReactElement {
   const size = useCalendarAppearance();
   const menu: MenuProps = {
     items: [
+      {key:'size',label:<div className="calendar-size-picker" onClick={event=>event.stopPropagation()}><span>界面大小</span><div role="group" aria-label="界面大小">{(['compact','standard','large'] as CalendarSize[]).map((value,i)=><button key={value} type="button" aria-pressed={size===value} onClick={()=>setCalendarSize(value)}>{['小','标准','大'][i]}</button>)}</div></div>},
       {key:'weather',label:'天气与地点设置',icon:<SettingOutlined/>},
-      {key:'size',label:'字号与尺寸',children:[
-        {key:'compact',label:(size==='compact'?'✓ ':'')+'小'},
-        {key:'standard',label:(size==='standard'?'✓ ':'')+'标准'},
-        {key:'large',label:(size==='large'?'✓ ':'')+'大（推荐）'},
-      ]},
       ...(showThemeButton ? [{key:'theme',label:theme==='light'?'切换深色外观':'切换浅色外观',icon:theme==='light'?<MoonOutlined/>:<SunOutlined/>}] : []),
       ...(showPinButton ? [{key:'pin',label:isPinned?'取消固定窗口':'固定窗口',icon:isPinned?<PushpinFilled/>:<PushpinOutlined/>}] : []),
       ...(showSettingsButton ? [{key:'settings',label:'更多设置',icon:<SettingOutlined/>}] : []),

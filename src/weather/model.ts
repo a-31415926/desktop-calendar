@@ -14,14 +14,14 @@ export interface WeatherData { extras?: WeatherExtras; provider?: 'qweather' | '
 // Adapted from LuckyIsland's MIT-licensed map_wmo_code. Full notice: THIRD_PARTY_WEATHER.md.
 export function weatherCode(code: number): [string, string] {
   const qweather: Record<number, [string, string]> = {
-    100: ['晴','sun'], 150: ['晴','sun'], 101: ['多云','cloud-sun'], 102: ['少云','cloud-sun'], 103: ['晴间多云','cloud-sun'], 151: ['多云','cloud-sun'], 152: ['少云','cloud-sun'], 153: ['晴间多云','cloud-sun'], 104: ['阴','cloud'],
+    100: ['晴','sun'], 150: ['晴','sun'], 101: ['多云','cloud'], 102: ['少云','cloud'], 103: ['晴间多云','cloud-sun'], 151: ['多云','cloud'], 152: ['少云','cloud'], 153: ['晴间多云','cloud-sun'], 104: ['阴','cloud'],
     300: ['阵雨','rain'], 301: ['强阵雨','rain'], 302: ['雷阵雨','storm'], 303: ['强雷阵雨','storm'], 304: ['雷雨冰雹','storm'], 305: ['小雨','rain'], 306: ['中雨','rain'], 307: ['大雨','rain'], 308: ['极端降雨','rain'], 309: ['毛毛雨','rain'], 310: ['暴雨','rain'], 311: ['大暴雨','rain'], 312: ['特大暴雨','rain'], 313: ['冻雨','rain'], 314: ['小到中雨','rain'], 315: ['中到大雨','rain'], 316: ['大到暴雨','rain'], 317: ['暴雨到大暴雨','rain'], 318: ['大暴雨到特大暴雨','rain'], 350: ['阵雨','rain'], 351: ['强阵雨','rain'], 399: ['雨','rain'],
     400: ['小雪','snow'], 401: ['中雪','snow'], 402: ['大雪','snow'], 403: ['暴雪','snow'], 404: ['雨夹雪','snow'], 405: ['雨雪','snow'], 406: ['阵雨夹雪','snow'], 407: ['阵雪','snow'], 408: ['小到中雪','snow'], 409: ['中到大雪','snow'], 410: ['大到暴雪','snow'], 456: ['阵雨夹雪','snow'], 457: ['阵雪','snow'], 499: ['雪','snow'],
     500: ['薄雾','fog'], 501: ['雾','fog'], 502: ['霾','fog'], 503: ['扬沙','fog'], 504: ['浮尘','fog'], 507: ['沙尘暴','fog'], 508: ['强沙尘暴','fog'], 509: ['浓雾','fog'], 510: ['强浓雾','fog'], 511: ['中度霾','fog'], 512: ['重度霾','fog'], 513: ['严重霾','fog'], 514: ['大雾','fog'], 515: ['特强浓雾','fog'],
   };
   if (qweather[code]) return qweather[code];
   if (code === 0) return ['晴', 'sun'];
-  if ([1, 2].includes(code)) return ['多云', 'cloud-sun'];
+  if ([1, 2].includes(code)) return ['多云', 'cloud'];
   if (code === 3) return ['阴', 'cloud'];
   if ([45, 48].includes(code)) return ['雾', 'fog'];
   if ([51, 53, 55, 56, 57].includes(code)) return ['毛毛雨', 'rain'];
@@ -78,6 +78,6 @@ export function precipitationMotion(code: number, available = true) {
   const scene = weatherCode(code)[1], intensity = weatherIntensity(code);
   const wet = scene === 'rain' || scene === 'storm';
   const snowy = scene === 'snow';
-  return { count: !available ? 0 : wet ? { light: 8, moderate: 30, heavy: 66 }[intensity] : snowy ? { light: 10, moderate: 28, heavy: 56 }[intensity] : 0,
-    seconds: wet ? { light: 1.9, moderate: 0.92, heavy: 0.44 }[intensity] : { light: 7.4, moderate: 4.8, heavy: 2.9 }[intensity] };
+  return { count: !available ? 0 : wet ? ([300,350].includes(code)?24:{ light: 16, moderate: 34, heavy: 68 }[intensity]) : snowy ? { light: 10, moderate: 28, heavy: 56 }[intensity] : 0,
+    seconds: wet ? ([300,350].includes(code)?0.78:{ light: 1.05, moderate: 0.7, heavy: 0.44 }[intensity]) : { light: 7.4, moderate: 4.8, heavy: 2.9 }[intensity] };
 }

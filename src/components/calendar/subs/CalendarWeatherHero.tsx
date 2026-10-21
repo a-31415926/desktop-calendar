@@ -72,11 +72,11 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
   const particleCount = motion.count;
   const particles = Array.from({ length: particleCount }, (_, index) => index);
   const clouded = ['cloud', 'cloud-sun', 'rain', 'storm', 'snow', 'fog'].includes(scene);
-  const sunny = scene === 'sun' || scene === 'cloud-sun';
+  const sunny = scene === 'sun';
 
   return (
     <section
-      className={`calendar-weather-hero wh-scene-${scene} ${night ? 'wh-night' : 'wh-day'} wh-intensity-${intensity}`}
+      className={`calendar-weather-hero wh-scene-${scene} ${night ? 'wh-night' : 'wh-day'} wh-intensity-${intensity}${[300,301,350,351].includes(code)?' wh-showers':''}`}
       aria-label={`${selectedDate.format('M月D日')}天气：${displayCondition}`}
     >
       <div className="wh-atmosphere" key={`${selectedKey}-${scene}-${night}-${intensity}`} aria-hidden="true">
