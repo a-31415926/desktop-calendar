@@ -4,7 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 import type { Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type FormEvent } from 'react';
 import {
-  ageLabel, number, timeLabel, weatherCode,
+  ageLabel, number, timeLabel, weatherCode, dateKey, timestamp,
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
 import { localAir, extraIsFresh, chineseAirBand } from '../../../weather/extras.ts';
@@ -62,6 +62,9 @@ function WeatherGlyph({ code, size = 30, night = false, animated = false }: Weat
 export default function CalendarWeather({ selectedDate, children, onData, onReturnToday }: { selectedDate: Dayjs; children: ReactNode; onData?:(data:WeatherData|null)=>void; onReturnToday?:()=>void }) {
   const root = useRef<HTMLElement | null>(null);
   const forecastStrip=useRef<HTMLDivElement|null>(null);
+  const [hourStart,setHourStart]=useState(0);
+  const selectedKey=selectedDate.format('YYYY-MM-DD');
+  useEffect(()=>{forecastStrip.current?.scrollTo({left:0});setHourStart(0);},[selectedKey]);
   const currentSettings = useRef<Settings | null>(null);
   const lastRequest = useRef(0);
   const [config, setConfig] = useState<SettingsResponse | null>(null);
@@ -213,8 +216,8 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
         </div>}
         {selected.isToday&&<p className="cw-rain-summary">{details.rain}</p>}
         <div className="cw-glance-forecast">
-          <div className="cw-glance-heading"><span>{selected.isToday?'未来六小时':hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span className="cw-hour-controls">{stale?'旧预报':null}<button type="button" aria-label="前六小时" onClick={()=>forecastStrip.current?.scrollBy({left:-forecastStrip.current.clientWidth,behavior:'smooth'})}>‹</button><button type="button" aria-label="后六小时" onClick={()=>forecastStrip.current?.scrollBy({left:forecastStrip.current.clientWidth,behavior:'smooth'})}>后续 ›</button></span>}</div>
-          <div className="cw-glance-hours" ref={forecastStrip} tabIndex={hours.length?0:undefined} aria-label="逐小时天气，横向滚动查看后续时段">
+          <div className="cw-glance-heading"><span>{selected.isToday?(hourStart>0&&hours[hourStart]?`${dateKey(timestamp(hours[hourStart].time)).slice(5).replace('-','/')} ${timeLabel(hours[hourStart].time)} 起`:'未来六小时'):hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span className="cw-hour-controls">{stale?'旧预报':null}<button type="button" aria-label="前六小时" onClick={()=>forecastStrip.current?.scrollBy({left:-forecastStrip.current.clientWidth,behavior:'smooth'})}>‹</button><button type="button" aria-label="后六小时" onClick={()=>forecastStrip.current?.scrollBy({left:forecastStrip.current.clientWidth,behavior:'smooth'})}>后续 ›</button></span>}</div>
+          <div className="cw-glance-hours" ref={forecastStrip} onScroll={event=>setHourStart(Math.max(0,Math.round(event.currentTarget.scrollLeft/(event.currentTarget.clientWidth/6))))} tabIndex={hours.length?0:undefined} aria-label="逐小时天气，横向滚动查看后续时段">
             {hours.map(h=>(
               <div className="cw-glance-hour" key={h.time}>
                 <span>{timeLabel(h.time)}</span>
