@@ -81,3 +81,9 @@ export function precipitationMotion(code: number, available = true) {
   return { count: !available ? 0 : wet ? ([300,350].includes(code)?24:{ light: 16, moderate: 34, heavy: 68 }[intensity]) : snowy ? { light: 10, moderate: 28, heavy: 56 }[intensity] : 0,
     seconds: wet ? ([300,350].includes(code)?0.78:{ light: 1.05, moderate: 0.7, heavy: 0.44 }[intensity]) : { light: 7.4, moderate: 4.8, heavy: 2.9 }[intensity] };
 }
+
+/** Preserve a small nonzero chance rather than rounding it to a false 0%. */
+export function probabilityLabel(value:number|null|undefined) {
+ if(value==null||!Number.isFinite(value)||value<0||value>100)return '—';
+ return value>0&&value<1?'<1%':`${Math.round(value)}%`;
+}

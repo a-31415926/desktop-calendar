@@ -8,6 +8,9 @@ fn numeric(v: &Value) -> Option<f64> {
 fn scaled(v: &Value, scale: f64) -> Value {
     numeric(v).map(|n| json!(n * scale)).unwrap_or(Value::Null)
 }
+fn probability(v: &Value) -> Value {
+    numeric(v).filter(|n| (0.0..=1.0).contains(n)).map(|n|json!(n*100.0)).unwrap_or(Value::Null)
+}
 fn code(v: &Value) -> i64 {
     numeric(v).map(|n| n as i64).unwrap_or(-1)
 }
@@ -81,7 +84,7 @@ pub(super) fn normalize(current: &Value, hourly: &Value, daily: &Value) -> Resul
             "uv_index": column(hours, |h| scaled(&h["uvIndex"], 1.0)),
             "time": column(hours, |h| h["forecastTime"].clone()),
             "temperature_2m": column(hours, |h| scaled(&h["temperature"]["value"], 1.0)),
-            "precipitation_probability": column(hours, |h| scaled(&h["precipitation"]["probability"], 100.0)),
+            "precipitation_probability": column(hours, |h| probability(&h["precipitation"]["probability"])),
             "precipitation": column(hours, |h| scaled(&h["precipitation"]["amount"]["value"], 1.0)),
             "weather_code": column(hours, |h| json!(code(&h["condition"]["code"])))
         },
@@ -133,6 +136,13 @@ pub(super) async fn fetch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn probability_preserves_missing_zero_and_small_positive_values() {
+        assert!(probability(&Value::Null).is_null());
+        assert!(probability(&json!(2)).is_null());
+        assert_eq!(probability(&json!(0)),0.0);
+        assert_eq!(probability(&json!(0.004)),0.4);
+    }
     #[test]
     fn v1_units_dates_and_missing_values_are_preserved() {
         let c = json!({"uvIndex":1,"temperature":{"value":21.5},"condition":{"code":"305"},"humidity":0.7,"wind":{"direction":{"degree":45},"scale":2,"speed":{"value":2,"unit":"m/s"}}});

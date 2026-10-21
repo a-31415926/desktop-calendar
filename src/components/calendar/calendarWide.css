@@ -696,7 +696,6 @@
 [data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour strong {font-size:14px;}
 .cw-sun-times {display:flex;justify-content:space-between;padding-top:4px;border-top:1px solid #71879d25;font-size:11px;color:var(--text-sec);line-height:18px;}
 .cw-sun-times strong {color:var(--text-main);font-weight:600;}
-.cw-life-advice {margin:0;font-size:11px;line-height:16px;color:var(--text-sec);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
 [data-calendar-shell][data-calendar-layout="wide"] .cw-glance-alert {font-size:11px;line-height:16px;max-height:42px;overflow:hidden;box-sizing:border-box;}
 [data-calendar-layout="wide"] .cw-glance-alert>span:last-child {display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
 [data-calendar-shell][data-calendar-layout="wide"] .cw-glance-status {padding:4px 7px;font-size:10px;line-height:14px;}
@@ -723,3 +722,11 @@
 
 [data-calendar-layout="wide"] .cw-glance-air {position:relative;}
 [data-calendar-layout="wide"] .cw-glance-stale {position:absolute;top:5px;right:7px;}
+
+/* V14.18: action-oriented UV and independently sourced precipitation forecasts. */
+[data-calendar-shell][data-calendar-layout="wide"] .cw-day-facts {grid-template-columns:1fr 1fr 1fr;}
+.cw-day-facts .cw-uv-protection {font-size:15px;font-weight:700;padding:1px 6px;}
+.cw-rain-block {padding:4px 0;}
+.cw-rain-note {margin:3px 0 0;font-size:10px;line-height:14px;color:var(--text-sec);}
+
+.cw-rain-block[data-rain-wet="true"] {padding:5px 7px;border-left:3px solid #cc9b40;border-radius:6px;background:#f5e8c9aa;}

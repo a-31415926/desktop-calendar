@@ -4,14 +4,14 @@ import { listen } from '@tauri-apps/api/event';
 import type { Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type FormEvent } from 'react';
 import {
-  ageLabel, number, timeLabel, weatherCode, dateKey, timestamp,
+  ageLabel, number, timeLabel, weatherCode, dateKey, timestamp, probabilityLabel,
   type Settings, type SettingsResponse, type WeatherData,
 } from '../../../weather/model.ts';
 import { localAir, extraIsFresh, chineseAirBand } from '../../../weather/extras.ts';
 import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeather.ts';
 import {selectedForecast} from '../../../weather/selectedForecast.ts';
 import {panelDetails} from '../../../weather/panelDetails.ts';
-import {dayWeatherFacts} from '../../../weather/dayWeatherFacts.ts';
+import {dayWeatherFacts,uvIndexLabel} from '../../../weather/dayWeatherFacts.ts';
 import CalendarWeatherHero from './CalendarWeatherHero.tsx';
 import './calendarWeather.css';
 
@@ -187,7 +187,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
         </div>
       }>{children}</CalendarWeatherHero>
       <div className="cw-glance">
-        {attention && (
+        {attention && !(selected.isToday&&attention.kind==='attention'&&attention.title==='未来两小时预计有降雨') && (
           <div className={'cw-glance-alert cw-glance-alert-'+attention.kind} role="status">
             <span className="cw-glance-alert-mark">{attention.kind==='official'?'⚠':'●'}</span>
             <span>{attention.kind==='official'?'当前官方预警 · ':!selected.isToday?'今日提醒 · ':''}{attention.title}</span>
@@ -196,6 +196,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
         {dataIssues.length>0 && (
           <div className="cw-glance-status" role="status">数据状态 · {dataIssues[0]}</div>
         )}
+        {selected.isToday&&<div className="cw-rain-block" data-rain-wet={details.wetRain}><p className="cw-rain-summary">{details.rain}</p>{details.rainNote&&<p className="cw-rain-note">{details.rainNote}</p>}</div>}
         {provider==='qweather' && (() => {
           const air=localAir(data?.extras?.air);
           const fresh=extraIsFresh(data?.extras?.air,clock,60*60000);
@@ -209,12 +210,11 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           </div>;
         })()}
         {facts&&<div className={"cw-day-facts"+(facts.today?"":" cw-day-facts-future")} aria-label={`${selectedDate.format('M月D日')}天气要点`}>
-          <div title={`数据来源：和风天气；强度按中国天气网五档划分。${facts.uvProtection.tip}`}><span>{facts.today?'当前紫外线':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${facts.uvProtection.strength} · 指数${number(facts.uv)}`:facts.uvProtection.label}</strong></div>
+          <div title={`紫外线指数。${facts.uvProtection.tip}`}><span>{facts.today?'紫外线指数':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?uvIndexLabel(facts.uv):facts.uvProtection.label}</strong></div>
           <div><span>{facts.today?'风向风力':'最大风速'}</span><strong>{facts.today?details.wind:number(facts.wind,' km/h')}</strong></div>
           {facts.today&&<div><span>空气湿度</span><strong>{number(facts.humidity,'%')}</strong></div>}
-          <p className="cw-uv-guidance">{facts.uvStale?<span>旧UV · </span>:null}{facts.today&&facts.uvMax!=null&&<span className="cw-uv-maximum">今日最高 {number(facts.uvMax)}</span>}{facts.uvProtection.guidance&&<span>{facts.today&&facts.uvMax!=null?' · ':''}{facts.uvProtection.guidance}</span>}</p>
+          <p className="cw-uv-guidance">{facts.uvStale?<span>旧UV · </span>:null}{facts.showUvMax&&<span className="cw-uv-maximum">今日最高 {uvIndexLabel(facts.uvMax)}</span>}{facts.uvProtection.guidance&&<span>{facts.showUvMax?' · ':''}{facts.uvProtection.guidance}</span>}</p>
         </div>}
-        {selected.isToday&&<p className="cw-rain-summary">{details.rain}</p>}
         <div className="cw-glance-forecast">
           <div className="cw-glance-heading"><span>{selected.isToday?(hourStart>0&&hours[hourStart]?`${dateKey(timestamp(hours[hourStart].time)).slice(5).replace('-','/')} ${timeLabel(hours[hourStart].time)} 起`:'未来六小时'):hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span className="cw-hour-controls">{stale?'旧预报':null}<button type="button" aria-label="前六小时" onClick={()=>forecastStrip.current?.scrollBy({left:-forecastStrip.current.clientWidth,behavior:'smooth'})}>‹</button><button type="button" aria-label="后六小时" onClick={()=>forecastStrip.current?.scrollBy({left:forecastStrip.current.clientWidth,behavior:'smooth'})}>后续 ›</button></span>}</div>
           <div className="cw-glance-hours" ref={forecastStrip} onScroll={event=>setHourStart(Math.max(0,Math.round(event.currentTarget.scrollLeft/(event.currentTarget.clientWidth/6))))} tabIndex={hours.length?0:undefined} aria-label="逐小时天气，横向滚动查看后续时段">
@@ -223,7 +223,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
                 <span>{timeLabel(h.time)}</span>
                 <WeatherGlyph code={h.code} size={23}/>
                 <strong>{number(h.temp,'°')}</strong>
-                {h.probability!=null && <small>雨 {number(h.probability,'%')}</small>}
+                {h.probability!=null && <small>雨 {probabilityLabel(h.probability)}</small>}
               </div>
             ))}
             {!hours.length && <div className="cw-selected-summary">
@@ -233,7 +233,6 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           </div>
         </div>
         {details.sun&&<div className="cw-sun-times"><span>日出 <strong>{details.sun.rise}</strong></span><span>日落 <strong>{details.sun.set}</strong></span></div>}
-        {details.life&&<p className="cw-life-advice" title={details.life}>穿衣 · {details.life}</p>}
         <div className="cw-glance-bottom">
           <span>{source} · {ageLabel(data?.forecastFetchedAt ?? 0,clock)}</span>
           <button type="button" onClick={()=>{if(config)void retrieve(config.settings,true)}} disabled={busy||!config} aria-label="刷新天气" title="刷新天气"><ReloadOutlined/></button>

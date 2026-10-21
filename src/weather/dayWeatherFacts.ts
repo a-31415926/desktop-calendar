@@ -33,8 +33,12 @@ export function dayWeatherFacts(data:WeatherData|null,day:string,now=Date.now())
   if(!f&& !uvLife)return null;
   if(day!==today&&i<0&&!uvLife)return null;
   const category=day===today?uvCategory(score):uvLife?.category&&freshLife?uvLife.category:uvCategory(score)??uvLife?.category??null;
-  return {uv:score,uvMax,uvStale:!forecastFresh(data,now),uvCategory:category,uvProtection:uvProtection(score),uvCached:!!category&&score==null&&!freshLife,
+  return {uv:score,uvMax,showUvMax:day===today&&uvMax!=null&&(score==null||uvMax!==score),uvStale:!forecastFresh(data,now),uvCategory:category,uvProtection:uvProtection(score),uvCached:!!category&&score==null&&!freshLife,
     wind:finite(day===today?f?.current.wind_speed_10m:i>=0?f?.daily.wind_speed_10m_max?.[i]:null),
     humidity:day===today?finite(f?.current.relative_humidity_2m):null,
     today:day===today};
+}
+
+export function uvIndexLabel(value:number|null|undefined) {
+ return value!=null&&Number.isFinite(value)&&value>=0?String(Math.round(value*100)/100):'—';
 }

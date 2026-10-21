@@ -23,3 +23,12 @@ test('hourly UV matches each forecast timestamp, preserving zero and missing val
  const f={hourly:{time:['2026-10-20T09:00+08:00','2026-10-20T10:00+08:00','2026-10-20T11:00+08:00'],temperature_2m:[20,21,22],weather_code:[100,100,100],precipitation_probability:[0,0,0],precipitation:[0,0,0],uv_index:[0,2,null]}};
  assert.deepEqual(selectedHours(f,'2026-10-20',now).map(h=>h.uv),[0,2,null]);
 });
+
+test('daily UV maximum is shown exactly when different or current index is missing',()=>{
+ const v=d();
+ for(const [current,maximum,shown] of [[4,4,false],[3,4,true],[0,0,false],[null,4,true],[4,null,false],[3.6,4,true]]){
+  v.forecast.current.uv_index=current;v.forecast.daily.uv_index_max[0]=maximum;
+  assert.equal(dayWeatherFacts(v,'2026-10-20',now).showUvMax,shown);
+ }
+ assert.equal(dayWeatherFacts(d(),'2026-10-21',now).showUvMax,false);
+});
