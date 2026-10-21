@@ -4,8 +4,8 @@ export interface Settings { locations: Place[]; selected: number; host: string; 
 export interface SettingsResponse { settings: Settings; hasKey: boolean }
 export interface Forecast {
   attributions?: string[];
-  current: { time: string; temperature_2m: number | null; apparent_temperature: number | null; relative_humidity_2m: number | null; weather_code: number; wind_speed_10m: number | null; is_day: number };
-  hourly: { time: string[]; temperature_2m: (number | null)[]; precipitation_probability: (number | null)[]; precipitation: (number | null)[]; weather_code: number[] };
+  current: { uv_index?: number | null; time: string; temperature_2m: number | null; apparent_temperature: number | null; relative_humidity_2m: number | null; weather_code: number; wind_speed_10m: number | null; is_day: number };
+  hourly: { uv_index?: (number | null)[]; time: string[]; temperature_2m: (number | null)[]; precipitation_probability: (number | null)[]; precipitation: (number | null)[]; weather_code: number[] };
   daily: { wind_speed_10m_max?: (number | null)[]; uv_index_max?: (number | null)[]; time: string[]; weather_code: number[]; temperature_2m_max: (number | null)[]; temperature_2m_min: (number | null)[]; precipitation_probability_max: (number | null)[]; sunrise: string[]; sunset: string[] };
 }
 export interface Rain { updateTime: string; summary: string; minutely: { fxTime: string; precip: string; type: string }[] }
@@ -71,7 +71,7 @@ export function dateKey(now = Date.now()): string {
 export function selectedHours(f: Forecast | null, selected: string, now = Date.now()) {
   if (!f || selected < dateKey(now)) return [];
   const cutoff = selected === dateKey(now) ? now - 3600000 : timestamp(selected);
-  return f.hourly.time.map((time, i) => ({time, temp: f.hourly.temperature_2m[i], probability: f.hourly.precipitation_probability[i], precip: f.hourly.precipitation[i], code: f.hourly.weather_code[i]}))
+  return f.hourly.time.map((time, i) => ({time, uv:f.hourly.uv_index?.[i]??null, temp: f.hourly.temperature_2m[i], probability: f.hourly.precipitation_probability[i], precip: f.hourly.precipitation[i], code: f.hourly.weather_code[i]}))
     .filter(h => timestamp(h.time) >= cutoff && (selected === dateKey(now) || dateKey(timestamp(h.time)) === selected)).slice(0, 6);
 }
 export function precipitationMotion(code: number, available = true) {

@@ -202,10 +202,10 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           </div>;
         })()}
         {facts&&<div className={"cw-day-facts"+(facts.today?"":" cw-day-facts-future")} aria-label={`${selectedDate.format('M月D日')}天气要点`}>
-          <div title={`${facts.uvCategory?`和风等级：${facts.uvCategory}${facts.uvCached?'（缓存）':''}。`:''}${facts.uvProtection.tip}`}><span>{facts.today?'今日最高UV':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${number(facts.uv)} · ${facts.uvProtection.strength}`:facts.uvProtection.label}</strong></div>
+          <div title={`${facts.uvCategory?`和风等级：${facts.uvCategory}${facts.uvCached?'（缓存）':''}。`:''}${facts.uvProtection.tip}`}><span>{facts.today?'当前紫外线':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${number(facts.uv)} · ${facts.uvProtection.strength}`:facts.uvProtection.label}</strong></div>
           <div><span>{facts.today?'当前风速':'最大风速'}</span><strong>{number(facts.wind,' km/h')}</strong></div>
           {facts.today&&<div><span>空气湿度</span><strong>{number(facts.humidity,'%')}</strong></div>}
-          <p className="cw-uv-guidance">{facts.uvProtection.tip}</p>
+          <p className="cw-uv-guidance">{facts.uvStale?'缓存参考 · ':''}{facts.uvProtection.tip}{facts.today&&facts.uvMax!=null?`；今日最高 ${number(facts.uvMax)}`:''}</p>
         </div>}
         <div className="cw-glance-forecast">
           <div className="cw-glance-heading"><span>{selected.isToday?'接下来几小时':hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span>{stale?'预报可能已过期':'逐小时预报'}</span>}</div>
@@ -216,6 +216,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
                 <WeatherGlyph code={h.code} size={23}/>
                 <strong>{number(h.temp,'°')}</strong>
                 {h.probability!=null && <small>雨 {number(h.probability,'%')}</small>}
+                {h.uv!=null&&Number.isFinite(h.uv)&&h.uv>=0&&<small title="该时段紫外线预报">UV {number(h.uv)}</small>}
               </div>
             ))}
             {!hours.length && <div className="cw-selected-summary">

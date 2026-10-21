@@ -1,5 +1,6 @@
 import {dateKey,type WeatherData} from './model.ts';
 import {extraIsFresh} from './extras.ts';
+import {forecastFresh} from './calendarWeather.ts';
 const finite=(n:number|null|undefined)=>n!=null&&Number.isFinite(n)?n:null;
 // WHO recommends sun protection at UVI >= 3; this uses UVI, never the life-index level.
 // https://www.who.int/news-room/questions-and-answers/item/radiation-the-ultraviolet-(uv)-index/
@@ -25,11 +26,13 @@ export function dayWeatherFacts(data:WeatherData|null,day:string,now=Date.now())
   const uvLife=indices?.value?.daily.find(index=>index.type==='5'&&index.date===day);
   const freshLife=extraIsFresh(indices,now,12*3600000);
   const raw=i>=0?finite(f?.daily.uv_index_max?.[i]):null;
-  const score=raw!=null&&raw>=0?raw:null;
+  const uvMax=raw!=null&&raw>=0?raw:null;
+  const currentUv=finite(f?.current.uv_index);
+  const score=day===today?(currentUv!=null&&currentUv>=0?currentUv:null):uvMax;
   if(!f&& !uvLife)return null;
   if(day!==today&&i<0&&!uvLife)return null;
-  const category=uvLife?.category&&freshLife?uvLife.category:uvCategory(score)??uvLife?.category??null;
-  return {uv:score,uvCategory:category,uvProtection:uvProtection(score),uvCached:!!category&&score==null&&!freshLife,
+  const category=day===today?uvCategory(score):uvLife?.category&&freshLife?uvLife.category:uvCategory(score)??uvLife?.category??null;
+  return {uv:score,uvMax,uvStale:!forecastFresh(data,now),uvCategory:category,uvProtection:uvProtection(score),uvCached:!!category&&score==null&&!freshLife,
     wind:finite(day===today?f?.current.wind_speed_10m:i>=0?f?.daily.wind_speed_10m_max?.[i]:null),
     humidity:day===today?finite(f?.current.relative_humidity_2m):null,
     today:day===today};

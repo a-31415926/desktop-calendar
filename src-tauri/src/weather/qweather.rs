@@ -67,6 +67,7 @@ pub(super) fn normalize(current: &Value, hourly: &Value, daily: &Value) -> Resul
     Ok(json!({
         "attributions": attrs,
         "current": {
+            "uv_index": scaled(&current["uvIndex"], 1.0),
             "time": "", "temperature_2m": scaled(&current["temperature"]["value"], 1.0),
             "apparent_temperature": scaled(&current["feelsLike"]["value"], 1.0),
             "relative_humidity_2m": scaled(&current["humidity"], 100.0),
@@ -75,6 +76,7 @@ pub(super) fn normalize(current: &Value, hourly: &Value, daily: &Value) -> Resul
             "is_day": -1
         },
         "hourly": {
+            "uv_index": column(hours, |h| scaled(&h["uvIndex"], 1.0)),
             "time": column(hours, |h| h["forecastTime"].clone()),
             "temperature_2m": column(hours, |h| scaled(&h["temperature"]["value"], 1.0)),
             "precipitation_probability": column(hours, |h| scaled(&h["precipitation"]["probability"], 100.0)),
@@ -131,10 +133,17 @@ mod tests {
     use super::*;
     #[test]
     fn v1_units_dates_and_missing_values_are_preserved() {
-        let c = json!({"temperature":{"value":21.5},"condition":{"code":"305"},"humidity":0.7,"wind":{"speed":{"value":2,"unit":"m/s"}}});
-        let h = json!({"hours":[{"forecastTime":"2026-10-20T09:00+08:00","temperature":{"value":22},"condition":{"code":"306"},"precipitation":{"probability":0.65}}]});
-        let d = json!({"days":[{"forecastStartTime":"2026-10-19T22:00+08:00","astro":{"solarNoon":"2026-10-20T12:00+08:00"},"temperatureMax":{"value":25},"temperatureMin":{"value":17},"daytime":{"condition":{"code":"307"},"precipitation":{"probability":0.8}},"nighttime":{"precipitation":{"probability":0.2}}}]});
+        let c = json!({"uvIndex":1,"temperature":{"value":21.5},"condition":{"code":"305"},"humidity":0.7,"wind":{"speed":{"value":2,"unit":"m/s"}}});
+        let h = json!({"hours":[{"forecastTime":"2026-10-20T09:00+08:00","temperature":{"value":22},"condition":{"code":"306"},"uvIndex":3,"precipitation":{"probability":0.65}}]});
+        let d = json!({"days":[{"forecastStartTime":"2026-10-19T22:00+08:00","astro":{"solarNoon":"2026-10-20T12:00+08:00"},"uvIndexMax":4,"temperatureMax":{"value":25},"temperatureMin":{"value":17},"daytime":{"condition":{"code":"307"},"precipitation":{"probability":0.8}},"nighttime":{"precipitation":{"probability":0.2}}}]});
         let v = normalize(&c, &h, &d).unwrap();
+        assert_eq!(v["current"]["uv_index"],1.0);
+        assert_eq!(v["hourly"]["uv_index"][0],3.0);
+        assert_eq!(v["daily"]["uv_index_max"][0],4.0);
+        let mut missing=c.clone(); missing.as_object_mut().unwrap().remove("uvIndex");
+        assert!(normalize(&missing,&h,&d).unwrap()["current"]["uv_index"].is_null());
+        missing["uvIndex"]=json!(0);
+        assert_eq!(normalize(&missing,&h,&d).unwrap()["current"]["uv_index"],0.0);
         assert_eq!(v["daily"]["time"][0], "2026-10-20");
         assert_eq!(v["hourly"]["precipitation_probability"][0], 65.0);
         assert_eq!(v["daily"]["precipitation_probability_max"][0], 80.0);
