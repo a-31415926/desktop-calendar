@@ -96,7 +96,7 @@ export function useCalendarViewModel({
   style,
 }: CalendarViewModelInput): CalendarViewModel {
   /** 当前主题状态与主题切换方法。 */
-  const { theme, toggleTheme, isDark } = useCalendarTheme();
+  const { theme, toggleTheme } = useCalendarTheme();
   /** 当前窗口是否置顶，以及置顶切换方法。 */
   const { isPinned, togglePin } = useCalendarPin();
   /** 全局配置数据，用于决定页脚与窗口效果。 */
@@ -128,7 +128,7 @@ export function useCalendarViewModel({
   /** 由样式 hook 计算出的 className 映射。 */
   const { styles } = useCalendarViewStyles({
     transparent: effectiveTransparent,
-    isDark,
+    isDark: false, // The weather canvas uses a light palette in every system theme.
     backgroundOpacity: effectiveBackgroundOpacity,
   });
 

@@ -4,7 +4,7 @@ export interface Settings { locations: Place[]; selected: number; host: string; 
 export interface SettingsResponse { settings: Settings; hasKey: boolean }
 export interface Forecast {
   attributions?: string[];
-  current: { uv_index?: number | null; time: string; temperature_2m: number | null; apparent_temperature: number | null; relative_humidity_2m: number | null; weather_code: number; wind_speed_10m: number | null; is_day: number };
+  current: { wind_direction?: number | null; wind_scale?: number | null; uv_index?: number | null; time: string; temperature_2m: number | null; apparent_temperature: number | null; relative_humidity_2m: number | null; weather_code: number; wind_speed_10m: number | null; is_day: number };
   hourly: { uv_index?: (number | null)[]; time: string[]; temperature_2m: (number | null)[]; precipitation_probability: (number | null)[]; precipitation: (number | null)[]; weather_code: number[] };
   daily: { wind_speed_10m_max?: (number | null)[]; uv_index_max?: (number | null)[]; time: string[]; weather_code: number[]; temperature_2m_max: (number | null)[]; temperature_2m_min: (number | null)[]; precipitation_probability_max: (number | null)[]; sunrise: string[]; sunset: string[] };
 }
@@ -68,11 +68,11 @@ export function rainIsFresh(data: WeatherData | null, now = Date.now()): boolean
 export function dateKey(now = Date.now()): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(now));
 }
-export function selectedHours(f: Forecast | null, selected: string, now = Date.now()) {
+export function selectedHours(f: Forecast | null, selected: string, now = Date.now(), limit=6) {
   if (!f || selected < dateKey(now)) return [];
   const cutoff = selected === dateKey(now) ? now - 3600000 : timestamp(selected);
   return f.hourly.time.map((time, i) => ({time, uv:f.hourly.uv_index?.[i]??null, temp: f.hourly.temperature_2m[i], probability: f.hourly.precipitation_probability[i], precip: f.hourly.precipitation[i], code: f.hourly.weather_code[i]}))
-    .filter(h => timestamp(h.time) >= cutoff && (selected === dateKey(now) || dateKey(timestamp(h.time)) === selected)).slice(0, 6);
+    .filter(h => timestamp(h.time) >= cutoff && (selected === dateKey(now) || dateKey(timestamp(h.time)) === selected)).slice(0, limit);
 }
 export function precipitationMotion(code: number, available = true) {
   const scene = weatherCode(code)[1], intensity = weatherIntensity(code);

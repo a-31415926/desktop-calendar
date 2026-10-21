@@ -442,7 +442,7 @@ fn fit_popup(
     let width = width.min(area_width.saturating_sub(2 * gap as u32)).max(1);
     let height = height.min(area_height.saturating_sub(gap as u32)).max(1);
     (
-        left + area_width as i32 - width as i32 - gap,
+        left + area_width as i32 - width as i32,
         top + area_height as i32 - height as i32,
         width,
         height,
@@ -461,7 +461,7 @@ mod tests {
         ] {
             let (x, y, pw, ph) = fit_popup(left, top, w, h, 900, 1600, gap);
             assert!(x >= left + gap && y >= top + gap);
-            assert!(x + pw as i32 <= left + w as i32 - gap);
+            assert_eq!(x + pw as i32, left + w as i32);
             assert_eq!(y + ph as i32, top + h as i32);
         }
     }

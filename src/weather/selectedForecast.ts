@@ -9,7 +9,7 @@ export function selectedForecast(data:WeatherData|null,selected:string,now=Date.
   const code=available?(isToday?f!.current.weather_code:f!.daily.weather_code[index]):undefined;
   return {isToday,isPast,available,index,code,
     scene:available&&forecastFresh(data,now)&&code!=null?weatherCode(code)[1]:'neutral',
-    hours:selectedHours(f??null,selected,now).slice(0,4),
+    hours:selectedHours(f??null,selected,now,24),
     high:index>=0?f?.daily.temperature_2m_max[index]:null,
     low:index>=0?f?.daily.temperature_2m_min[index]:null,
     probability:index>=0?f?.daily.precipitation_probability_max[index]:null,

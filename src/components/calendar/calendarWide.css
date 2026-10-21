@@ -677,3 +677,49 @@
 .wh-showers .wh-rain-particles {animation:wh-shower-density 3.8s ease-in-out infinite;}
 @keyframes wh-shower-density {0%,100%{opacity:.5}35%,65%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.wh-showers .wh-rain-particles{animation:none;}}
+
+/* Weak UV uses a quiet tint, distinct from moderate exposure. */
+.cw-day-facts [data-uv-risk="weak"] {color:#416d48;background:#e9f1e4;}
+
+/* V14.17: useful facts on the first screen, consistent light canvas. */
+[data-calendar-shell][data-calendar-layout="wide"] {--text-main:#1f2933!important;--text-sec:#596b7b!important;--card-bg:#f7fafc!important;--accent:#1677d2!important;background:#f5f8fa!important;}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {height:94px;min-height:94px;flex-basis:94px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance {padding:6px 12px;gap:5px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air {padding:5px 8px;gap:2px;}
+.cw-air-particles {font-size:10px;line-height:14px;color:#536779;white-space:nowrap;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-day-facts {grid-template-columns:1.25fr 1fr .8fr;gap:4px;padding:5px 0;}
+.cw-day-facts .cw-uv-protection {font-size:11px;}
+.cw-rain-summary {font-size:11px;line-height:16px;margin:0;color:#355f7d;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hours {display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 10px)/6);grid-template-columns:none;gap:2px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;padding-bottom:3px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour {scroll-snap-align:start;gap:3px;font-size:10px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour small {font-size:10px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour strong {font-size:14px;}
+.cw-sun-times {display:flex;justify-content:space-between;padding-top:4px;border-top:1px solid #71879d25;font-size:11px;color:var(--text-sec);line-height:18px;}
+.cw-sun-times strong {color:var(--text-main);font-weight:600;}
+.cw-life-advice {margin:0;font-size:11px;line-height:16px;color:var(--text-sec);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-alert {font-size:11px;line-height:16px;max-height:42px;overflow:hidden;box-sizing:border-box;}
+[data-calendar-layout="wide"] .cw-glance-alert>span:last-child {display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-status {padding:4px 7px;font-size:10px;line-height:14px;}
+
+.cw-hour-controls {display:flex;align-items:center;gap:5px;}
+.cw-hour-controls button {padding:0 3px;border:0;background:transparent;color:#286b9c;font:inherit;cursor:pointer;line-height:16px;}
+.cw-hour-controls button:focus-visible {outline:2px solid #1677d2;outline-offset:1px;}
+
+/* Reserve space for warnings without shrinking or hiding the weather facts. */
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {height:88px;min-height:88px;flex-basis:88px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance {gap:4px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air {padding:4px 8px;line-height:14px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-air strong {line-height:18px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-label {line-height:14px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-day-facts>div>span {line-height:14px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-day-facts strong {line-height:17px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-heading {line-height:16px;margin-bottom:4px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour {line-height:13px;gap:2px;padding:2px 0;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hour strong {line-height:16px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-hours {padding-bottom:1px;}
+
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance {gap:3px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-status {padding:3px 7px;}
+
+[data-calendar-layout="wide"] .cw-glance-air {position:relative;}
+[data-calendar-layout="wide"] .cw-glance-stale {position:absolute;top:5px;right:7px;}

@@ -5,7 +5,7 @@ import {selectedHours} from '../src/weather/model.ts';
 const now=Date.parse('2026-10-20T09:00+08:00');
 const d=()=>({forecastFetchedAt:now/1000,forecastError:null,forecast:{current:{uv_index:1,wind_speed_10m:8,relative_humidity_2m:70},daily:{time:['2026-10-20','2026-10-21'],uv_index_max:[4,10],wind_speed_10m_max:[12,18]}},extras:{indices:{value:{daily:[{date:'2026-10-20',type:'5',category:'弱'}]},fetchedAt:now/1000,error:null}}});
 test('today uses current UV 1 even when daily max is 4; future still uses matching daily maximum',()=>{
- const f=dayWeatherFacts(d(),'2026-10-20',now);assert.equal(f.uv,1);assert.equal(f.uvMax,4);assert.equal(f.uvProtection.strength,'低');assert.equal(f.wind,8);assert.equal(f.humidity,70);assert.equal(f.uvStale,false);
+ const f=dayWeatherFacts(d(),'2026-10-20',now);assert.equal(f.uv,1);assert.equal(f.uvMax,4);assert.equal(f.uvProtection.strength,'最弱');assert.equal(f.wind,8);assert.equal(f.humidity,70);assert.equal(f.uvStale,false);
  const future=dayWeatherFacts(d(),'2026-10-21',now);assert.equal(future.uv,10);assert.equal(future.uvCategory,'很强');assert.equal(future.wind,18);assert.equal(future.humidity,null);
 });
 test('zero current UV is valid; missing, negative and non-finite current UV never fall back to daily maximum',()=>{

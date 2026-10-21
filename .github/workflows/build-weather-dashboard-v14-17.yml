@@ -1,0 +1,56 @@
+name: Build desktop calendar V14.17 weather details and holidays
+on:
+  push:
+    branches: [feature/weather-dashboard-v14-17]
+  workflow_dispatch:
+concurrency:
+  group: weather-dashboard-v14-17-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: pnpm install --frozen-lockfile
+      - name: Weather dates, freshness, intensity and calendar regressions
+        run: node --experimental-strip-types --test tests/*.test.mjs
+      - name: Frontend type check and build
+        run: pnpm build
+      - name: Windows weather adapter and credential tests
+        run: |
+          cargo test --release --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --lib weather::
+          cargo test --release --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --lib window_manager::windows::taskbar_popup::tests
+      - name: Build Windows x64 NSIS installer
+        run: pnpm tauri build --bundles nsis --target x86_64-pc-windows-msvc
+      - name: Verify and package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force delivery | Out-Null
+          $original = Get-ChildItem 'src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe' | Select-Object -First 1
+          if (-not $original -or $original.Length -lt 1000000) { throw 'NSIS installer missing or unexpectedly small' }
+          Copy-Item $original.FullName 'delivery/DesktopCalendar-V14.17-Setup-x64.exe'
+          Copy-Item 'THIRD_PARTY_WEATHER.md' delivery
+          "Commit: ${{ github.sha }}`nRun: ${{ github.run_id }}`nTarget: x86_64-pc-windows-msvc`nInstaller: NSIS" | Set-Content delivery/BUILD.txt
+          Get-FileHash delivery/*.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $_.Path -Leaf)" } | Set-Content delivery/SHA256SUMS.txt
+          $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path 'delivery/DesktopCalendar-V14.17-Setup-x64.exe'))
+          if ($bytes[0] -ne 0x4d -or $bytes[1] -ne 0x5a) { throw 'Installer is not a Windows executable' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-calendar-v14-17-windows-x64
+          path: delivery/
+          retention-days: 90
+          if-no-files-found: error
+
