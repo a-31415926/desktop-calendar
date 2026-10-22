@@ -217,7 +217,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
         </div>}
         <div className="cw-glance-forecast">
           <div className="cw-glance-heading"><span>{selected.isToday?(hourStart>0&&hours[hourStart]?`${dateKey(timestamp(hours[hourStart].time)).slice(5).replace('-','/')} ${timeLabel(hours[hourStart].time)} 起`:'未来六小时'):hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span className="cw-hour-controls">{stale?'旧预报':null}<button type="button" aria-label="前六小时" onClick={()=>forecastStrip.current?.scrollBy({left:-forecastStrip.current.clientWidth,behavior:'smooth'})}>‹</button><button type="button" aria-label="后六小时" onClick={()=>forecastStrip.current?.scrollBy({left:forecastStrip.current.clientWidth,behavior:'smooth'})}>后续 ›</button></span>}</div>
-          <div className="cw-glance-hours" ref={forecastStrip} onScroll={event=>setHourStart(Math.max(0,Math.round(event.currentTarget.scrollLeft/(event.currentTarget.clientWidth/6))))} tabIndex={hours.length?0:undefined} aria-label="逐小时天气，横向滚动查看后续时段">
+          {hours.length>0?<div className="cw-glance-hours" ref={forecastStrip} onScroll={event=>setHourStart(Math.max(0,Math.round(event.currentTarget.scrollLeft/(event.currentTarget.clientWidth/6))))} tabIndex={0} aria-label="逐小时天气，横向滚动查看后续时段">
             {hours.map(h=>(
               <div className="cw-glance-hour" key={h.time}>
                 <span>{timeLabel(h.time)}</span>
@@ -226,11 +226,13 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
                 {h.probability!=null && <small>雨 {probabilityLabel(h.probability)}</small>}
               </div>
             ))}
-            {!hours.length && <div className="cw-selected-summary">
-              {!selected.isPast&&selected.available&&<><p>最高 {number(selected.high,'°')} / 最低 {number(selected.low,'°')}</p><p>当日降雨概率 {number(selected.probability,'%')}</p></>}
-              <p className="cw-glance-empty">{!data&&busy?'正在获取天气…':selected.empty}</p>
-            </div>}
-          </div>
+          </div>:<div className="cw-selected-summary" aria-label="所选日期日预报摘要">
+            {!selected.isPast&&selected.available&&<>
+              <div className="cw-summary-temperatures"><div><span>最高气温</span><strong>{number(selected.high,'°')}</strong></div><div><span>最低气温</span><strong>{number(selected.low,'°')}</strong></div></div>
+              <div className="cw-summary-rain"><span>当日降水概率</span><strong>{probabilityLabel(selected.probability)}</strong></div>
+            </>}
+            <p className="cw-glance-empty">{!data&&busy?'正在获取天气…':selected.empty}</p>
+          </div>}
         </div>
         {details.sun&&<div className="cw-sun-times"><span>日出 <strong>{details.sun.rise}</strong></span><span>日落 <strong>{details.sun.set}</strong></span></div>}
         <div className="cw-glance-bottom">
