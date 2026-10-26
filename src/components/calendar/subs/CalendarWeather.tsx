@@ -173,8 +173,8 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
   const stale = !!data?.forecast && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
   const provider = data?.provider ?? config?.settings.provider ?? 'qweather';
   const source = provider === 'qweather' ? '和风天气' : 'Open-Meteo · CC BY 4.0';
-  const attention=weatherAttention(data,clock);
-  const dataIssues=weatherDataIssues(data,clock);
+  const attention=selected.isToday?weatherAttention(data,clock):null;
+  const dataIssues=weatherDataIssues(data,clock,selected.isToday);
   const issue = error || data?.forecastError || data?.saveError;
 
   return (
@@ -197,7 +197,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           <div className="cw-glance-status" role="status">数据状态 · {dataIssues[0]}</div>
         )}
         {selected.isToday&&<div className="cw-rain-block" data-rain-wet={details.wetRain}><p className="cw-rain-summary">{details.rain}</p>{details.rainNote&&<p className="cw-rain-note">{details.rainNote}</p>}</div>}
-        {provider==='qweather' && (() => {
+        {selected.isToday && provider==='qweather' && (() => {
           const air=localAir(data?.extras?.air);
           const fresh=extraIsFresh(data?.extras?.air,clock,60*60000);
           const band=chineseAirBand(air);
@@ -210,10 +210,10 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           </div>;
         })()}
         {facts&&<div className={"cw-day-facts"+(facts.today?"":" cw-day-facts-future")} aria-label={`${selectedDate.format('M月D日')}天气要点`}>
-          <div title={`紫外线指数。${facts.uvProtection.tip}`}><span>{facts.today?'紫外线指数':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?uvIndexLabel(facts.uv):facts.uvProtection.label}</strong></div>
-          <div><span>{facts.today?'风向风力':'最大风速'}</span><strong>{facts.today?details.wind:number(facts.wind,' km/h')}</strong></div>
+          {(facts.today||facts.uv!=null)&&<div title={`采用中国天气网五档强度。${facts.uvProtection.tip}`}><span>{facts.today?'当前紫外线':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${uvIndexLabel(facts.uv)} · ${facts.uvProtection.strength}`:facts.uvProtection.label}</strong></div>}
+          {(facts.today||facts.wind!=null)&&<div><span>{facts.today?'风向风力':'最大风速'}</span><strong>{facts.today?details.wind:number(facts.wind,' km/h')}</strong></div>}
           {facts.today&&<div><span>空气湿度</span><strong>{number(facts.humidity,'%')}</strong></div>}
-          <p className="cw-uv-guidance">{facts.uvStale?<span>旧UV · </span>:null}{facts.showUvMax&&<span className="cw-uv-maximum">今日最高 {uvIndexLabel(facts.uvMax)}</span>}{facts.uvProtection.guidance&&<span>{facts.showUvMax?' · ':''}{facts.uvProtection.guidance}</span>}</p>
+          {(facts.today||facts.uv!=null)&&<p className="cw-uv-guidance">{facts.uvStale?<span>旧UV · </span>:null}{!facts.today&&<span>当日防晒参考 · </span>}{facts.showUvMax&&<span className="cw-uv-maximum">今日最高 {uvIndexLabel(facts.uvMax)}</span>}{facts.uvProtection.guidance&&<span>{facts.showUvMax?' · ':''}{facts.uvProtection.guidance}</span>}</p>}
         </div>}
         <div className="cw-glance-forecast">
           <div className="cw-glance-heading"><span>{selected.isToday?(hourStart>0&&hours[hourStart]?`${dateKey(timestamp(hours[hourStart].time)).slice(5).replace('-','/')} ${timeLabel(hours[hourStart].time)} 起`:'未来六小时'):hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span className="cw-hour-controls">{stale?'旧预报':null}<button type="button" aria-label="前六小时" onClick={()=>forecastStrip.current?.scrollBy({left:-forecastStrip.current.clientWidth,behavior:'smooth'})}>‹</button><button type="button" aria-label="后六小时" onClick={()=>forecastStrip.current?.scrollBy({left:forecastStrip.current.clientWidth,behavior:'smooth'})}>后续 ›</button></span>}</div>
@@ -229,7 +229,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           </div>:<div className="cw-selected-summary" aria-label="所选日期日预报摘要">
             {!selected.isPast&&selected.available&&<>
               <div className="cw-summary-temperatures"><div><span>最高气温</span><strong>{number(selected.high,'°')}</strong></div><div><span>最低气温</span><strong>{number(selected.low,'°')}</strong></div></div>
-              <div className="cw-summary-rain"><span>当日降水概率</span><strong>{probabilityLabel(selected.probability)}</strong></div>
+              {selected.probability!=null&&<div className="cw-summary-rain"><span>当日降水概率</span><strong>{probabilityLabel(selected.probability)}</strong></div>}
             </>}
             <p className="cw-glance-empty">{!data&&busy?'正在获取天气…':selected.empty}</p>
           </div>}

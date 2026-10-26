@@ -7,6 +7,14 @@ import {calendarDayWeather,weatherAttention,weatherDataIssues} from '../src/weat
 const now=Date.parse('2026-10-20T11:00:00+08:00');
 const entry=value=>({value,fetchedAt:now/1000,error:null});
 const data=()=>({provider:'qweather',forecastFetchedAt:now/1000,forecastError:null,rainError:null,forecast:{current:{temperature_2m:25,weather_code:100},daily:{time:['2026-10-20','2026-10-21'],weather_code:[100,306],temperature_2m_max:[27,24],temperature_2m_min:[18,16],precipitation_probability_max:[0,80]},hourly:{time:['2026-10-20T12:00+08:00'],temperature_2m:[26],weather_code:[100],precipitation_probability:[0],precipitation:[0]}},extras:{air:entry({indexes:[{code:'cn-mee',aqi:60,category:'良'}]}),alerts:entry({metadata:{zeroResult:true}}),indices:entry({daily:[]})}});
+
+test('future dates exclude current-service failures but retain daily forecast failures and staleness',()=>{
+ const d=data();d.extras.air.error='timeout';d.extras.alerts.error='403';d.rainError='offline';d.forecast.current.temperature_2m=null;
+ assert.ok(weatherDataIssues(d,now).length>=4);
+ assert.deepEqual(weatherDataIssues(d,now,false),[]);
+ d.forecastError='offline';assert.deepEqual(weatherDataIssues(d,now,false),['天气获取失败，已有数据仅供参考']);
+ d.forecastError=null;d.forecastFetchedAt-=3600;assert.deepEqual(weatherDataIssues(d,now,false),['天气数据已过期']);
+});
 test('calendar weather never leaks to past, unforecast, stale or missing dates',()=>{
  const d=data();assert.equal(calendarDayWeather(d,'2026-10-19',now),null);assert.equal(calendarDayWeather(d,'2026-10-25',now),null);
  assert.equal(calendarDayWeather(d,'2026-10-21',now).code,306);

@@ -42,21 +42,21 @@ export function weatherAttention(data:WeatherData|null,now=Date.now()) {
     return {kind:'attention',title:'未来两小时预计有降雨',detail:data?.minutely?.summary??'每五分钟降水临近预报',count:1};
   return null;
 }
-export function weatherDataIssues(data:WeatherData|null,now=Date.now()) {
+export function weatherDataIssues(data:WeatherData|null,now=Date.now(),current=true) {
   if(!data)return [];
   const items:string[]=[];
   if(data.forecastError)items.push('天气获取失败，已有数据仅供参考');
   else if(!data.forecast)items.push('天气数据暂缺');
   else if(!forecastFresh(data,now))items.push('天气数据已过期');
-  if(data.forecast && data.forecast.current.temperature_2m==null)items.push('当前温度暂缺');
+  if(current && data.forecast && data.forecast.current.temperature_2m==null)items.push('当前温度暂缺');
   const ext=data.extras;
-  if(data.provider==='qweather') {
+  if(current && data.provider==='qweather') {
     if(ext?.alerts.error)items.push('预警获取失败，无法确认预警状态');
     else if(!extraIsFresh(ext?.alerts,now,20*60000))items.push('预警数据暂缺或过期');
     if(ext?.air.error)items.push('空气质量获取失败');
     else if(!localAir(ext?.air))items.push('空气质量暂缺');
     else if(!extraIsFresh(ext?.air,now,60*60000))items.push('空气质量为旧数据');
   }
-  if(data.rainError)items.push('短时降雨不可用');
+  if(current && data.rainError)items.push('短时降雨不可用');
   return items;
 }
