@@ -12,6 +12,7 @@ import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeath
 import {selectedForecast} from '../../../weather/selectedForecast.ts';
 import {panelDetails} from '../../../weather/panelDetails.ts';
 import {dayWeatherFacts,uvIndexLabel} from '../../../weather/dayWeatherFacts.ts';
+import {windFacts} from '../../../weather/windFacts.ts';
 import CalendarWeatherHero from './CalendarWeatherHero.tsx';
 import './calendarWeather.css';
 
@@ -170,6 +171,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
   const hours=selected.hours;
   const details=panelDetails(data,selectedDate.format('YYYY-MM-DD'),clock);
   const facts=dayWeatherFacts(data,selectedDate.format('YYYY-MM-DD'),clock);
+  const wind=windFacts(facts?.wind,facts?.today?data?.forecast?.current.wind_scale:null,facts?.today?data?.forecast?.current.wind_direction:null);
   const stale = !!data?.forecast && (!!data.forecastError || clock - data.forecastFetchedAt * 1000 > 45 * 60000);
   const provider = data?.provider ?? config?.settings.provider ?? 'qweather';
   const source = provider === 'qweather' ? '和风天气' : 'Open-Meteo · CC BY 4.0';
@@ -210,10 +212,15 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
           </div>;
         })()}
         {facts&&<div className={"cw-day-facts"+(facts.today?"":" cw-day-facts-future")} aria-label={`${selectedDate.format('M月D日')}天气要点`}>
-          {(facts.today||facts.uv!=null)&&<div title={`采用中国天气网五档强度。${facts.uvProtection.tip}`}><span>{facts.today?'当前紫外线':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${uvIndexLabel(facts.uv)} · ${facts.uvProtection.strength}`:facts.uvProtection.label}</strong></div>}
-          {(facts.today||facts.wind!=null)&&<div><span>{facts.today?'风向风力':'最大风速'}</span><strong>{facts.today?details.wind:number(facts.wind,' km/h')}</strong></div>}
-          {facts.today&&<div><span>空气湿度</span><strong>{number(facts.humidity,'%')}</strong></div>}
-          {(facts.today||facts.uv!=null)&&<p className="cw-uv-guidance">{facts.uvStale?<span>旧UV · </span>:null}{!facts.today&&<span>当日防晒参考 · </span>}{facts.showUvMax&&<span className="cw-uv-maximum">今日最高 {uvIndexLabel(facts.uvMax)}</span>}{facts.uvProtection.guidance&&<span>{facts.showUvMax?' · ':''}{facts.uvProtection.guidance}</span>}</p>}
+          {(facts.today||facts.uv!=null)&&<div className="cw-fact-uv" title={`采用中国天气网五档强度。${facts.uvProtection.tip}`}><span className="cw-fact-label"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="4"/><path d="M10 1v2m0 14v2M1 10h2m14 0h2M3.6 3.6 5 5m10 10 1.4 1.4M3.6 16.4 5 15M15 5l1.4-1.4"/></svg>{facts.today?'当前紫外线':'当日最高UV'}</span><strong className="cw-uv-protection" data-uv-risk={facts.uvProtection.risk}>{facts.uv!=null?`${uvIndexLabel(facts.uv)} · ${facts.uvProtection.strength}`:facts.uvProtection.label}</strong>
+            <p className="cw-uv-guidance">{facts.uvStale?<span>旧UV · </span>:null}{facts.showUvMax&&<span className="cw-uv-maximum">今日最高 {uvIndexLabel(facts.uvMax)}<br/></span>}{facts.uvProtection.guidance}</p>
+          </div>}
+          {(facts.today||wind.level!=null)&&<div className="cw-fact-wind" data-wind-risk={wind.risk} title={`依据标准风级表的现象说明，出行建议仅供参考。${wind.speed!=null?`风速 ${number(wind.speed,' km/h')}。`:''}${wind.advice}`}>
+            <span className="cw-fact-label"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 18V2m0 2 12 1v6L4 9m4-5v6m4-5v6M2 18h5"/></svg>{facts.today?'当前风况':'当日最大风力'}</span>
+            <strong className="cw-wind-level">{wind.direction&&facts.today?wind.direction+' · ':''}{wind.level!=null?wind.level+'级':'数据暂缺'}</strong>
+            <p className="cw-wind-observation">{wind.observation}</p>
+            {wind.level!=null&&<p className="cw-wind-advice">{wind.advice}</p>}
+          </div>}
         </div>}
         <div className="cw-glance-forecast">
           <div className="cw-glance-heading"><span>{selected.isToday?(hourStart>0&&hours[hourStart]?`${dateKey(timestamp(hours[hourStart].time)).slice(5).replace('-','/')} ${timeLabel(hours[hourStart].time)} 起`:'未来六小时'):hours.length?`${selectedDate.format('M月D日')}逐小时`:'所选日期天气'}</span>{!selected.isToday&&onReturnToday?<button type="button" className="cw-return-today" onClick={onReturnToday}>回到今天</button>:<span className="cw-hour-controls">{stale?'旧预报':null}<button type="button" aria-label="前六小时" onClick={()=>forecastStrip.current?.scrollBy({left:-forecastStrip.current.clientWidth,behavior:'smooth'})}>‹</button><button type="button" aria-label="后六小时" onClick={()=>forecastStrip.current?.scrollBy({left:forecastStrip.current.clientWidth,behavior:'smooth'})}>后续 ›</button></span>}</div>

@@ -748,3 +748,16 @@
 .cw-summary-rain {display:flex;align-items:center;justify-content:space-between;padding:0 8px;gap:10px;}
 .cw-summary-rain strong {font-size:18px;white-space:nowrap;color:var(--text-main);}
 [data-calendar-shell][data-calendar-layout="wide"] .cw-selected-summary .cw-glance-empty {width:100%;box-sizing:border-box;text-align:center;font-size:12px;line-height:1.6;margin:0;padding:3px 4px;white-space:normal;overflow-wrap:normal;}
+
+/* Two readable weather facts; humidity remains in the data model, outside the first screen. */
+[data-calendar-shell][data-calendar-layout="wide"] .cw-day-facts {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:3px 0;}
+.cw-day-facts .cw-fact-label {display:flex;align-items:center;gap:4px;}
+.cw-fact-label svg {width:14px;height:14px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.cw-fact-uv .cw-fact-label svg {color:#a5792d;}
+.cw-fact-wind .cw-fact-label svg {color:#59849e;}
+.cw-day-facts .cw-wind-level {font-size:15px;line-height:20px;}
+.cw-fact-wind[data-wind-risk="attention"] .cw-wind-level {color:#91610c;}
+.cw-fact-wind[data-wind-risk="high"] .cw-wind-level {color:#a3372c;}
+.cw-day-facts .cw-uv-guidance,.cw-wind-observation,.cw-wind-advice {margin:2px 0 0;font-size:11px;line-height:16px;color:var(--text-sec);overflow-wrap:anywhere;}
+.cw-wind-advice {font-size:10px;}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-forecast {min-height:94px;}

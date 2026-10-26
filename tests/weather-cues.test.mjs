@@ -17,8 +17,9 @@ test('UV strengths and visible advice distinguish all five exposure bands',()=>{
 test('Chinese UV boundaries use the displayed rounded index and gentle weak-band guidance',()=>{
  assert.deepEqual([0,2,3,4,5,6,7,9,10,15].map(n=>uvProtection(n).strength),['最弱','最弱','弱','弱','中等','中等','强','强','很强','很强']);
  assert.equal(uvProtection(2.6).strength,'弱');
- assert.equal(uvProtection(4).guidance,'建议防晒，外出注意遮阳');
+ assert.equal(uvProtection(4).guidance,'建议防晒，注意遮阳');
  assert.equal(uvProtection(1).guidance,'防晒需求较低');
  for(const n of [null,undefined,-1,NaN,Infinity])assert.equal(uvProtection(n).risk,'unknown');
 });
+
 
