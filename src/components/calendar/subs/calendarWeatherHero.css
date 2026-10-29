@@ -148,9 +148,12 @@
 
 /* Keep the nowcast source inside the wide header at every canvas scale. */
 [data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {
-  flex:0 0 112px!important;height:112px!important;min-height:112px!important;
+  flex:0 0 104px!important;height:104px!important;min-height:104px!important;
 }
 [data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .wh-content {
-  padding:6px 13px!important;gap:3px!important;
+  padding:3px 13px!important;gap:2px!important;
 }
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance{gap:2px}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-bottom{min-height:18px;height:18px;padding-top:0;line-height:16px;flex-shrink:0}
+[data-calendar-shell][data-calendar-layout="wide"] .cw-glance-bottom button{height:18px;min-height:18px;padding:0 3px;line-height:16px}
 
