@@ -345,7 +345,7 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
         .and_then(|v| v["daily"]["time"].as_array())
         .map_or(true, |days| days.len() < 7);
     if !fresh(cache.forecast_attempt, 60)
-        && (force || old_short_forecast || !fresh(cache.forecast_fetched_at, 1800))
+        && (force || old_short_forecast || !fresh(cache.forecast_fetched_at, 300))
     {
         cache.forecast_attempt = now();
         let result = if settings.provider == "qweather" {
@@ -377,7 +377,7 @@ pub async fn weather_fetch(app: AppHandle, index: usize, force: bool) -> Result<
     }
     if configured
         && !fresh(cache.rain_attempt, 60)
-        && (force || !fresh(cache.minutely_fetched_at, 600))
+        && (force || !fresh(cache.minutely_fetched_at, 300))
     {
         cache.rain_attempt = now();
         let result = get_json(

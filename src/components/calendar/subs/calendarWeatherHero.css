@@ -130,6 +130,7 @@
 }
 
 
+.wh-rain-source{font-size:10px;line-height:14px;color:var(--wh-muted);flex-shrink:0}
 /* Rain strength: sparse drizzle, denser mid rain, fast long heavy rain. */
 .wh-intensity-light .wh-rain-particles .wh-particle {width:1px;height:6px;opacity:.45;}
 .wh-intensity-moderate .wh-rain-particles .wh-particle {width:1.7px;height:15px;opacity:.8;}

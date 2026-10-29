@@ -11,7 +11,7 @@ use tauri::{Emitter, Manager, WebviewWindow, WindowEvent};
 use windows::Win32::{
     Foundation::RECT,
     UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO},
-    UI::WindowsAndMessaging::{GetAncestor, GetForegroundWindow, SetForegroundWindow, GA_ROOT},
+    UI::WindowsAndMessaging::{GetAncestor, GetForegroundWindow, SetForegroundWindow, GA_ROOT, GA_ROOTOWNER},
 };
 
 /// 表示“在系统时钟附近展示”的挂起坐标哨兵值。
@@ -271,6 +271,8 @@ impl CalendarWindowManager {
         let ignore_focus_loss_until = Instant::now() + STARTUP_FOCUS_GRACE_PERIOD;
         let app_handle_for_event = app_handle.clone();
 
+        let watch_pinned = is_pinned.clone();
+        let watch_tick = popup_last_show_input_tick.clone();
         popup_window.on_window_event(move |event| match event {
             WindowEvent::Focused(true) => {
                 popup_has_gained_focus_clone.store(true, Ordering::SeqCst);
@@ -322,6 +324,12 @@ impl CalendarWindowManager {
                             }
                             let foreground_root_hwnd = GetAncestor(foreground_hwnd, GA_ROOT);
                             let foreground_isize = foreground_root_hwnd.0 as isize;
+                            if crate::windows_hook::IS_MENU_OPEN.load(Ordering::SeqCst)
+                                || app_handle_for_check.webview_windows().values().any(|w|
+                                    get_window_hwnd(w).is_some_and(|h| h == foreground_root_hwnd
+                                        || h == GetAncestor(foreground_hwnd, GA_ROOTOWNER))) {
+                                return false;
+                            }
                             if foreground_isize == popup_hwnd {
                                 return false;
                             }
@@ -344,6 +352,38 @@ impl CalendarWindowManager {
             _ => {}
         });
 
+        // Windows may deny activation entirely, so Focused(false) never fires.
+        // Watch real new input as a fallback; never inject Alt or other keys.
+        let watched = popup_window.clone();
+        let app = app_handle.clone();
+        std::thread::spawn(move || loop {
+            std::thread::sleep(Duration::from_millis(100));
+            if !watched.is_visible().unwrap_or(false)
+                || POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst)
+                || watch_pinned.load(Ordering::SeqCst)
+                || crate::windows_hook::IS_MENU_OPEN.load(Ordering::SeqCst) { continue; }
+            let new_input = CalendarWindowManager::current_last_input_tick()
+                .is_some_and(|tick| tick != watch_tick.load(Ordering::SeqCst));
+            if !new_input { continue; }
+            let foreign = unsafe {
+                let fg = GetForegroundWindow();
+                if fg.0.is_null() { false } else {
+                    let root = GetAncestor(fg, GA_ROOT);
+                    let owner = GetAncestor(fg, GA_ROOTOWNER);
+                    !app.webview_windows().values().any(|w| get_window_hwnd(w)
+                        .is_some_and(|hwnd| hwnd == root || hwnd == owner))
+                }
+            };
+            if foreign && CalendarWindowManager::begin_popup_hide_transition(&watched) {
+                let _ = watched.emit("calendar-popup-hide", ());
+                // Animation is optional: a missed webview event must not leave a stuck window.
+                let fallback=watched.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(450));
+                    if POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst) { let _ = fallback.hide(); }
+                });
+            }
+        });
         Some(popup_window)
     }
 

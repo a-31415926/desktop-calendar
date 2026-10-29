@@ -5,6 +5,7 @@ import {
   type WeatherData,
 } from '../../../weather/model.ts';
 import './calendarWeatherHero.css';
+import {currentRain} from '../../../weather/currentRain.ts';
 
 
 function shanghaiDateKey(date: Date): string {
@@ -42,13 +43,14 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
   const hasDayForecast = dayIndex >= 0 && !isPast;
   const current = data?.forecast?.current;
   const available = isToday ? !!current : hasDayForecast;
-  const code = isToday && current ? current.weather_code : hasDayForecast ? (daily?.weather_code[dayIndex] ?? 3) : 3;
+  const rainNow=isToday?currentRain(data,clock):null;
+  const code = isToday && current ? (rainNow?.active?rainNow.code:current.weather_code) : hasDayForecast ? (daily?.weather_code[dayIndex] ?? 3) : 3;
   const [condition, scene] = weatherCode(code);
   const intensity = weatherIntensity(code);
   const high = hasDayForecast ? daily?.temperature_2m_max[dayIndex] : null;
   const low = hasDayForecast ? daily?.temperature_2m_min[dayIndex] : null;
   const currentTemp = isToday ? (current?.temperature_2m ?? null) : high;
-  const displayCondition = available ? condition : isPast ? '历史天气暂不可用' : data?.forecast ? '暂无天气预报' : '待连接天气';
+  const displayCondition = available ? (rainNow?.active?rainNow.label:condition) : isPast ? '历史天气暂不可用' : data?.forecast ? '暂无天气预报' : '待连接天气';
 
   // Only today's weather uses the real current daylight state.
   // A selected future date represents its daily (daytime) forecast; do not
@@ -105,7 +107,7 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
       <div className="wh-header-slot">{children}</div>
       <div className="wh-content" key={`${selectedKey}-${scene}-${night}`}>
         <div className="wh-eyebrow">
-          <span>{stale ? '缓存天气 · ' : ''}{isToday ? '当前天气' : isPast ? `${selectedDate.format('M月D日')} · 历史日期` : `${selectedDate.format('M月D日')}预报`}</span>
+          <span>{stale ? '缓存天气 · ' : ''}{isToday ? '当前附近天气' : isPast ? `${selectedDate.format('M月D日')} · 历史日期` : `${selectedDate.format('M月D日')}预报`}</span>
           {actions}
         </div>
         <div className="wh-primary">
@@ -120,6 +122,7 @@ export default function CalendarWeatherHero({ selectedDate, children, data, cloc
               : `最高 ${number(high, '°')} · 最低 ${number(low, '°')} · ${night ? '夜间' : '白天'}预报`
             : error ? '请查看面板提示或打开天气设置' : isPast ? '当前数据源未提供所选日期的历史天气' : data?.forecast ? '所选日期超出当前预报范围' : '等待连接天气服务'}
         </div>
+        {rainNow?.active&&<div className="wh-rain-source">{rainNow.source}</div>}
       </div>
     </section>
   );

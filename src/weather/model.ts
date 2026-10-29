@@ -61,7 +61,7 @@ export function hourlyRows(f: Forecast | null, now = Date.now()) {
 }
 export function futureRain(rain: Rain | null, now = Date.now()) { return (rain?.minutely ?? []).filter(p => timestamp(p.fxTime) >= now - 5 * 60000 && timestamp(p.fxTime) <= now + 2 * 3600000); }
 export function rainIsFresh(data: WeatherData | null, now = Date.now()): boolean {
-  return !!data?.minutely && !data.rainError && now - data.minutelyFetchedAt * 1000 < 15 * 60000 && now - timestamp(data.minutely.updateTime) < 20 * 60000 && futureRain(data.minutely, now).length > 0;
+  return !!data?.minutely && now - data.minutelyFetchedAt * 1000 >= -60000 && now - timestamp(data.minutely.updateTime) >= -60000 && !data.rainError && now - data.minutelyFetchedAt * 1000 < 15 * 60000 && now - timestamp(data.minutely.updateTime) < 20 * 60000 && futureRain(data.minutely, now).length > 0;
 }
 
 

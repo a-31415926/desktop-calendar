@@ -10,6 +10,7 @@ import {
 import { localAir, extraIsFresh, chineseAirBand } from '../../../weather/extras.ts';
 import {weatherAttention,weatherDataIssues} from '../../../weather/calendarWeather.ts';
 import {selectedForecast} from '../../../weather/selectedForecast.ts';
+import {currentRain} from '../../../weather/currentRain.ts';
 import {panelDetails} from '../../../weather/panelDetails.ts';
 import {dayWeatherFacts,uvIndexLabel} from '../../../weather/dayWeatherFacts.ts';
 import {windFacts} from '../../../weather/windFacts.ts';
@@ -169,6 +170,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
 
   const selected=selectedForecast(data,selectedDate.format('YYYY-MM-DD'),clock);
   const hours=selected.hours;
+  const rainNow=selected.isToday?currentRain(data,clock):null;
   const details=panelDetails(data,selectedDate.format('YYYY-MM-DD'),clock);
   const facts=dayWeatherFacts(data,selectedDate.format('YYYY-MM-DD'),clock);
   const wind=windFacts(facts?.wind,facts?.today?data?.forecast?.current.wind_scale:null,facts?.today?data?.forecast?.current.wind_direction:null);
@@ -198,7 +200,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
         {dataIssues.length>0 && (
           <div className="cw-glance-status" role="status">数据状态 · {dataIssues[0]}</div>
         )}
-        {selected.isToday&&<div className="cw-rain-block" data-rain-wet={details.wetRain}><p className="cw-rain-summary">{details.rain}</p>{details.rainNote&&<p className="cw-rain-note">{details.rainNote}</p>}</div>}
+        {selected.isToday&&<div className="cw-rain-block" data-rain-wet={details.wetRain}><p className="cw-rain-summary">{rainNow?.active?'出门带伞，留意路面湿滑':details.rain}</p>{(rainNow?.conflict||details.rainNote)&&<p className="cw-rain-note">{rainNow?.conflict?'实时接口报'+weatherCode(data!.forecast!.current.weather_code)[0]+'，与短时降雨预报有差异':details.rainNote}</p>}</div>}
         {selected.isToday && provider==='qweather' && (() => {
           const air=localAir(data?.extras?.air);
           const fresh=extraIsFresh(data?.extras?.air,clock,60*60000);
@@ -243,7 +245,7 @@ export default function CalendarWeather({ selectedDate, children, onData, onRetu
         </div>
         {details.sun&&<div className="cw-sun-times"><span>日出 <strong>{details.sun.rise}</strong></span><span>日落 <strong>{details.sun.set}</strong></span></div>}
         <div className="cw-glance-bottom">
-          <span>{source} · {ageLabel(data?.forecastFetchedAt ?? 0,clock)}</span>
+          <span>{source} · 请求于 {ageLabel(data?.forecastFetchedAt ?? 0,clock)}</span>
           <button type="button" onClick={()=>{if(config)void retrieve(config.settings,true)}} disabled={busy||!config} aria-label="刷新天气" title="刷新天气"><ReloadOutlined/></button>
         </div>
         {issue && !data && <div className="cw-glance-status cw-glance-error" role="status">天气数据不可用</div>}
