@@ -145,3 +145,12 @@
 .wh-eyebrow .cw-actions {margin-top:-3px;margin-bottom:-3px;}
 .wh-rain-particles {left:48%;opacity:.9;}
 .wh-snow-particles {left:42%;}
+
+/* Keep the nowcast source inside the wide header at every canvas scale. */
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .calendar-weather-hero {
+  flex:0 0 112px!important;height:112px!important;min-height:112px!important;
+}
+[data-calendar-shell][data-calendar-layout="wide"] .calendar-wide-weather .wh-content {
+  padding:6px 13px!important;gap:3px!important;
+}
+
