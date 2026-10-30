@@ -23,7 +23,6 @@ export function popupTransitions(effects:Effects) {
       if(next<epoch)return;
       if(next===epoch&&!wanted&&timer!==undefined){after=then??after;return;}
       epoch=next;wanted=false;after=then??after;clear();effects.visible(false);
-      void effects.requestClose(next).catch(effects.error);
       timer=effects.schedule(()=>{
         timer=undefined;
         if(wanted||epoch!==next)return;
@@ -33,6 +32,8 @@ export function popupTransitions(effects:Effects) {
           }
         }).catch(effects.error);
       },167);
+      // Register the transition before native acknowledgement can echo a hide event.
+      void effects.requestClose(next).catch(effects.error);
     },
     current:()=>epoch,
     dispose:clear,

@@ -24,4 +24,9 @@ test('duplicate close requests share one timer and normal dismissal still comple
 test('100 rapid reopen cycles reject every expired timer',()=>{
  const {p,calls,timers}=harness();for(let i=1;i<=100;i++){p.enter(i);p.exit(i);}p.enter(101);timers.forEach(fn=>fn());assert.equal(calls.some(c=>c[0]==='hide'),false);
 });
+test('an immediate native close acknowledgement cannot recursively schedule closing',()=>{
+ let requests=0,timers=0,p;
+ p=popupTransitions({visible:()=>{},schedule:()=>++timers,cancel:()=>{},requestClose:async e=>{requests++;assert.ok(requests<3);p.exit(e)},finishHide:async()=>true,afterHide:async()=>{},error:e=>{throw e}});
+ p.enter(1);p.exit(1);assert.equal(requests,1);assert.equal(timers,1);
+});
 
