@@ -6,6 +6,39 @@ use crate::AppState;
 use std::sync::atomic::Ordering;
 use tauri::{AppHandle, State, WebviewWindow};
 
+#[tauri::command]
+pub fn popup_snapshot(window: WebviewWindow) -> Result<serde_json::Value, String> {
+    if window.label() != "calendar" { return Err("非日历窗口".into()); }
+    #[cfg(windows)]
+    let closing = CalendarWindowManager::popup_is_closing();
+    #[cfg(not(windows))]
+    let closing = false;
+    Ok(serde_json::json!({"epoch":crate::popup_epoch::POPUP_EPOCH.current(),
+        "visible":window.is_visible().unwrap_or(false) && !closing}))
+}
+
+#[tauri::command]
+pub fn popup_request_close(window: WebviewWindow, epoch: u64) -> Result<(), String> {
+    if window.label() != "calendar" { return Err("非日历窗口".into()); }
+    #[cfg(windows)]
+    CalendarWindowManager::request_popup_hide(&window, epoch);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn popup_finish_hide(window: WebviewWindow, epoch: u64) -> Result<bool, String> {
+    if window.label() != "calendar" { return Err("非日历窗口".into()); }
+    let target=window.clone();
+    let (sender,receiver)=tokio::sync::oneshot::channel();
+    window.run_on_main_thread(move || {
+        let result=if crate::popup_epoch::POPUP_EPOCH.accepts(epoch) {
+            target.hide().map(|_|true).map_err(|e|e.to_string())
+        } else { Ok(false) };
+        let _=sender.send(result);
+    }).map_err(|e|e.to_string())?;
+    receiver.await.map_err(|e|e.to_string())?
+}
+
 /// 内部辅助函数：执行需要操作 `window_manager` 的闭包，并处理锁定和错误转换。
 ///
 /// * `state` - 应用状态
@@ -102,7 +135,7 @@ pub async fn hide_calendar(state: State<'_, AppState>) -> Result<(), String> {
 ///
 /// * `app_handle` - 应用程序句柄
 #[tauri::command]
-pub async fn open_main_window(app_handle: AppHandle, window: WebviewWindow) -> Result<(), String> {
+pub async fn open_main_window(app_handle: AppHandle, window: WebviewWindow, popup_epoch: Option<u64>) -> Result<(), String> {
     let current_window_label = window.label().to_string();
     let current_window = window.clone();
     let main_thread_app_handle = app_handle.clone();
@@ -111,6 +144,9 @@ pub async fn open_main_window(app_handle: AppHandle, window: WebviewWindow) -> R
     app_handle
         .run_on_main_thread(move || {
             let result: Result<(), String> = (|| {
+                if popup_epoch.is_some_and(|epoch| !crate::popup_epoch::POPUP_EPOCH.accepts(epoch)) {
+                    return Ok(());
+                }
                 if current_window_label == "calendar" {
                     current_window.hide().map_err(|error| error.to_string())?;
                 }
@@ -159,3 +195,4 @@ pub fn get_system_time_millis_since_epoch() -> Result<u64, String> {
         .map_err(|e| format!("系统时间无效: {}", e))?;
     u64::try_from(duration.as_millis()).map_err(|_| "时间戳超出可表示范围".to_string())
 }
+

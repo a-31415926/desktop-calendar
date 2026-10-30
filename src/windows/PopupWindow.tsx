@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import {popupTransitions} from '../utils/popupTransitions.ts';
 import CalendarView from '../components/calendar/CalendarView.tsx';
 import { WINDOW_RADIUS } from '../constants/window.ts';
 import { useWindowCornerMask } from '../hooks/useWindowCornerMask.ts';
@@ -33,65 +34,21 @@ const PopupWindow = (): ReactElement => {
   const { data } = useConfigSync();
   const { isWindowsEffect: windowTransparency, macosEffect: windowEffect } = data;
   const [popupVisible, setPopupVisible] = useState(false);
-  const popupVisibleRef = useRef(false);
-  const enterFrameRef = useRef<number | null>(null);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingAfterHideRef = useRef<PopupHideRequestDetail['after']>(undefined);
-
-  const clearPendingTransition = useCallback((): void => {
-    if (enterFrameRef.current !== null) {
-      cancelAnimationFrame(enterFrameRef.current);
-      enterFrameRef.current = null;
-    }
-    if (hideTimerRef.current !== null) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
-  }, []);
-
-  const startEnter = useCallback((): void => {
-    if (popupVisibleRef.current) return;
-    clearPendingTransition();
-    pendingAfterHideRef.current = undefined;
-    popupVisibleRef.current = true;
-
-    // 原生窗口 show 后再触发展开。初始状态本身已经被完全裁掉，
-    // 因此不会像 V8/V9 那样先漏出完整窗口一帧再开始动画。
-    enterFrameRef.current = requestAnimationFrame(() => {
-      enterFrameRef.current = null;
-      setPopupVisible(true);
-    });
-  }, [clearPendingTransition]);
-
-  const startExit = useCallback(
-    (after?: PopupHideRequestDetail['after']): void => {
-      pendingAfterHideRef.current = after ?? pendingAfterHideRef.current;
-      if (!popupVisibleRef.current && hideTimerRef.current !== null) return;
-
-      clearPendingTransition();
-      popupVisibleRef.current = false;
-      setPopupVisible(false);
-
-      hideTimerRef.current = setTimeout(() => {
-        hideTimerRef.current = null;
-        const afterHide = pendingAfterHideRef.current;
-        pendingAfterHideRef.current = undefined;
-        const appWindow = getCurrentWindow();
-
-        void (async () => {
-          try {
-            await appWindow.hide();
-            if (afterHide === 'open-main') {
-              await invoke('open_main_window');
-            }
-          } catch (error) {
-            console.error('popup exit transition failed', error);
-          }
-        })();
-      }, POPUP_EXIT_MS);
-    },
-    [clearPendingTransition],
-  );
+  const transition = useRef<ReturnType<typeof popupTransitions>|null>(null);
+  if (!transition.current) transition.current=popupTransitions({
+    visible:setPopupVisible,
+    schedule:(fn,ms)=>setTimeout(fn,ms),
+    cancel:handle=>clearTimeout(handle as ReturnType<typeof setTimeout>),
+    requestClose:epoch=>invoke('popup_request_close',{epoch}),
+    finishHide:epoch=>invoke<boolean>('popup_finish_hide',{epoch}),
+    afterHide:epoch=>invoke('open_main_window',{popupEpoch:epoch}),
+    error:error=>console.error('popup transition failed',error),
+  });
+  const clearPendingTransition=useCallback(()=>transition.current!.dispose(),[]);
+  const startEnter=useCallback((epoch:number)=>transition.current!.enter(epoch),[]);
+  const startExit=useCallback((after?:PopupHideRequestDetail['after'])=>{
+    transition.current!.exit(transition.current!.current(),after);
+  },[]);
 
   useEffect(() => {
     if (isWindows) {
@@ -134,11 +91,11 @@ const PopupWindow = (): ReactElement => {
 
     void (async () => {
       try {
-        const removeShow = await listen('calendar-popup-show', () => startEnter());
+        const removeShow = await listen<number>('calendar-popup-show', event => startEnter(event.payload));
         if (cancelled) removeShow();
         else unlistenShow = removeShow;
 
-        const removeHide = await listen('calendar-popup-hide', () => startExit());
+        const removeHide = await listen<number>('calendar-popup-hide', event => transition.current!.exit(event.payload));
         if (cancelled) removeHide();
         else unlistenHide = removeHide;
       } catch (error) {
@@ -184,7 +141,8 @@ const PopupWindow = (): ReactElement => {
       }
       unlistenResize?.();
       resizeObserver?.disconnect();
-      void invoke('popup_ready').then(startEnter).catch(console.error);
+      void invoke('popup_ready').then(()=>invoke<{epoch:number;visible:boolean}>('popup_snapshot'))
+        .then(snapshot=>{if(snapshot.visible&&transition.current!.current()===0)startEnter(snapshot.epoch);}).catch(console.error);
     };
 
     const tryFireWhenSized = async (): Promise<void> => {
@@ -289,3 +247,4 @@ const PopupWindow = (): ReactElement => {
 };
 
 export default PopupWindow;
+

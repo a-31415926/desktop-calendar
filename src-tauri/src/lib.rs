@@ -13,6 +13,8 @@ mod menu;
 mod window_manager;
 #[cfg(desktop)]
 mod weather;
+#[cfg(desktop)]
+mod popup_epoch;
 #[cfg(all(desktop, windows))]
 mod windows_hook;
 #[cfg(desktop)]
@@ -20,7 +22,7 @@ use commands::{
     apply_custom_clock_text, get_clock_text, get_macos_tray_bar_icon,
     get_macos_tray_date_icon_style, get_macos_tray_icon_px, get_macos_tray_title_template,
     get_supported_window_effects, get_system_time_millis_since_epoch, greet, hide_calendar,
-    open_main_window, popup_ready,
+    open_main_window, popup_ready, popup_snapshot, popup_request_close, popup_finish_hide,
     restore_default_clock, set_calendar_pin, set_desktop_widget_enabled,
     set_macos_tray_bar_icon, set_macos_tray_date_icon_style, set_macos_tray_icon_px,
     set_macos_tray_title_template, set_macos_vibrancy, set_taskbar_widget_enabled_command,
@@ -119,6 +121,9 @@ pub fn run() {
             get_system_time_millis_since_epoch,
             greet,
             popup_ready,
+            popup_snapshot,
+            popup_request_close,
+            popup_finish_hide,
             toggle_calendar,
             show_calendar,
             hide_calendar,
@@ -201,3 +206,4 @@ pub fn run() {
         eprintln!("运行 Tauri 应用时出错: {}", e);
     }
 }
+

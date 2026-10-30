@@ -9,6 +9,7 @@ pub mod windows;
 pub use common::{
     get_system_time_millis_since_epoch, greet, hide_calendar, open_main_window, popup_ready,
     set_calendar_pin, show_calendar, toggle_calendar, toggle_calendar_at_position,
+    popup_snapshot, popup_request_close, popup_finish_hide,
 };
 
 #[cfg(not(windows))]
@@ -29,3 +30,4 @@ pub use windows::{
     set_macos_tray_title_template, set_macos_vibrancy, set_taskbar_widget_enabled_command,
     test_clock_detection,
 };
+

@@ -2,6 +2,7 @@
 use super::{get_window_hwnd, refresh_shared_frameless_window, CalendarWindowManager};
 use crate::window_manager::shared::popup_manager::PopupManager;
 use crate::windows_hook::get_taskbar_info;
+use crate::popup_epoch::POPUP_EPOCH;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
@@ -28,9 +29,7 @@ impl PopupManager for CalendarWindowManager {
     fn hide_popup(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.suppress_popup_auto_hide.store(false, Ordering::SeqCst);
         if let Some(popup_window) = &self.taskbar_popup_window {
-            if Self::begin_popup_hide_transition(popup_window) {
-                let _ = popup_window.emit("calendar-popup-hide", ());
-            }
+            Self::request_popup_hide(popup_window, POPUP_EPOCH.current());
         }
         Ok(())
     }
@@ -159,12 +158,26 @@ impl CalendarWindowManager {
 
     /// 进入逻辑关闭阶段，并立即撤掉原生毛玻璃底板。
     /// 前端随后继续播放 V10 的收回动画，这样动画结束前不会留下整块浅色空壳。
-    fn begin_popup_hide_transition(popup_window: &WebviewWindow) -> bool {
-        if POPUP_HIDE_IN_PROGRESS.swap(true, Ordering::SeqCst) {
-            return false;
-        }
-        Self::clear_window_vibrancy(popup_window);
-        true
+    pub fn popup_is_closing() -> bool { POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst) }
+
+    // All decisions and actual native hides run on the GUI thread. A callback
+    // from an earlier opening can neither change the new state nor hide it.
+    pub fn request_popup_hide(window: &WebviewWindow, epoch: u64) {
+        let target=window.clone();
+        let _ = window.run_on_main_thread(move || {
+            if !POPUP_EPOCH.accepts(epoch) || POPUP_HIDE_IN_PROGRESS.swap(true, Ordering::SeqCst) { return; }
+            Self::clear_window_vibrancy(&target);
+            let _ = target.emit("calendar-popup-hide", epoch);
+            std::thread::spawn(move || {
+                std::thread::sleep(Duration::from_millis(450));
+                let fallback=target.clone();
+                let _ = target.run_on_main_thread(move || {
+                    if POPUP_EPOCH.accepts(epoch) && POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst) {
+                        let _ = fallback.hide();
+                    }
+                });
+            });
+        });
     }
 
     fn present_popup_window(
@@ -202,20 +215,20 @@ impl CalendarWindowManager {
             self.popup_last_show_input_tick.store(last_input_tick, Ordering::SeqCst);
         }
 
+        let epoch = POPUP_EPOCH.next();
         // 如果用户在关闭动画尚未结束时再次点击任务栏，立即取消“正在关闭”。
         // 即使原生窗口物理上还 visible，也重新向前端发送 show 事件，让它反向展开。
-        let was_closing = POPUP_HIDE_IN_PROGRESS.swap(false, Ordering::SeqCst);
+        POPUP_HIDE_IN_PROGRESS.store(false, Ordering::SeqCst);
         self.reapply_saved_popup_vibrancy(popup_window);
-        let was_visible = popup_window.is_visible().unwrap_or(false);
         popup_window.show()?;
-        if !was_visible || was_closing {
-            let _ = popup_window.emit("calendar-popup-show", ());
-        }
+        // Always resynchronize the webview, even if the native frame remained visible.
+        let _ = popup_window.emit("calendar-popup-show", epoch);
         // tao 0.34.8's focus fallback injects Alt when foreground permission is
         // denied. Request ordinary activation on the GUI thread instead.
         // If denied, keep the popup visible without synthesizing keyboard input.
         let focus_target = popup_window.clone();
         popup_window.run_on_main_thread(move || {
+            if !POPUP_EPOCH.accepts(epoch) || !focus_target.is_visible().unwrap_or(false) { return; }
             if let Some(hwnd) = get_window_hwnd(&focus_target) {
                 unsafe {
                     if !SetForegroundWindow(hwnd).as_bool() {
@@ -272,12 +285,12 @@ impl CalendarWindowManager {
         let app_handle_for_event = app_handle.clone();
 
         let watch_pinned = is_pinned.clone();
-        let watch_tick = popup_last_show_input_tick.clone();
         popup_window.on_window_event(move |event| match event {
             WindowEvent::Focused(true) => {
                 popup_has_gained_focus_clone.store(true, Ordering::SeqCst);
             }
             WindowEvent::Focused(false) => {
+                let epoch=POPUP_EPOCH.current();
                 if !popup_window_handle.is_visible().unwrap_or(false)
                     || POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst)
                     || Instant::now() < ignore_focus_loss_until
@@ -339,13 +352,9 @@ impl CalendarWindowManager {
                             true
                         });
 
-                    if should_hide
-                        && CalendarWindowManager::begin_popup_hide_transition(
-                            &popup_window_for_check,
-                        )
-                    {
+                    if should_hide {
                         suppress_auto_hide_for_check.store(false, Ordering::SeqCst);
-                        let _ = popup_window_for_check.emit("calendar-popup-hide", ());
+                        CalendarWindowManager::request_popup_hide(&popup_window_for_check, epoch);
                     }
                 });
             }
@@ -356,14 +365,22 @@ impl CalendarWindowManager {
         // Watch real new input as a fallback; never inject Alt or other keys.
         let watched = popup_window.clone();
         let app = app_handle.clone();
-        std::thread::spawn(move || loop {
+        std::thread::spawn(move || {
+          let mut watch_epoch=0;
+          let mut input_baseline=0;
+          loop {
             std::thread::sleep(Duration::from_millis(100));
+            let epoch=POPUP_EPOCH.current();
             if !watched.is_visible().unwrap_or(false)
                 || POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst)
                 || watch_pinned.load(Ordering::SeqCst)
                 || crate::windows_hook::IS_MENU_OPEN.load(Ordering::SeqCst) { continue; }
-            let new_input = CalendarWindowManager::current_last_input_tick()
-                .is_some_and(|tick| tick != watch_tick.load(Ordering::SeqCst));
+            let tick=CalendarWindowManager::current_last_input_tick().unwrap_or(0);
+            if epoch != watch_epoch {
+                watch_epoch=epoch; input_baseline=tick; continue;
+            }
+            let new_input=tick!=input_baseline;
+            input_baseline=tick;
             if !new_input { continue; }
             let foreign = unsafe {
                 let fg = GetForegroundWindow();
@@ -374,15 +391,8 @@ impl CalendarWindowManager {
                         .is_some_and(|hwnd| hwnd == root || hwnd == owner))
                 }
             };
-            if foreign && CalendarWindowManager::begin_popup_hide_transition(&watched) {
-                let _ = watched.emit("calendar-popup-hide", ());
-                // Animation is optional: a missed webview event must not leave a stuck window.
-                let fallback=watched.clone();
-                std::thread::spawn(move || {
-                    std::thread::sleep(Duration::from_millis(450));
-                    if POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst) { let _ = fallback.hide(); }
-                });
-            }
+            if foreign { CalendarWindowManager::request_popup_hide(&watched, epoch); }
+          }
         });
         Some(popup_window)
     }
@@ -518,3 +528,4 @@ mod tests {
         }
     }
 }
+
