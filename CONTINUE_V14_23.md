@@ -9,7 +9,9 @@ Code paths fixed:
 - External-input observer takes a fresh input baseline for each opening, avoiding treating the opening click as a new outside action. Pinned mode, app-owned windows and native menus remain exceptions.
 - Initial renderer readiness can synchronize a missing show event from a native visibility snapshot without overriding a later user transition.
 
-Tests: 62 frontend regressions including forced late timers, out-of-order hide events, in-flight replies, duplicate closes and 100 rapid reopen cycles. Rust epoch tests reject stale closes over repeated openings. CI tests weather, window positioning and popup epochs before building Windows x64 NSIS.
+Tests: 63 frontend regressions including forced late timers, out-of-order hide events, in-flight replies, duplicate closes and 100 rapid reopen cycles. Rust epoch tests reject stale closes over repeated openings. CI tests weather, window positioning and popup epochs before building Windows x64 NSIS.
 
 No personal credentials or private locations are added to public files. No local installation or reboot is implied by a successful build. Final run/installer evidence belongs in the delivery note after verification.
+
+- Immediate native close acknowledgement is idempotent: the renderer registers its exit timer before requesting native closing. Covered by a synchronous acknowledgement regression.
 
