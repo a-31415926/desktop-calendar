@@ -161,8 +161,8 @@ unsafe extern "system" fn mouse_hook_proc(code: i32, wparam: WPARAM, lparam: LPA
         return CallNextHookEx(None, code, wparam, lparam);
     }
 
-    let is_down = msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN;
-    let is_up = msg == WM_LBUTTONUP || msg == WM_RBUTTONUP;
+    let is_down = crate::popup_input::pointer_phase(msg)==crate::popup_input::PointerPhase::Down;
+    let is_up = crate::popup_input::pointer_phase(msg)==crate::popup_input::PointerPhase::Up;
 
     if !is_down && !is_up {
         return CallNextHookEx(None, code, wparam, lparam);
@@ -173,6 +173,7 @@ unsafe extern "system" fn mouse_hook_proc(code: i32, wparam: WPARAM, lparam: LPA
     let y = mouse_struct.pt.y;
 
     if is_mouse_in_clock_area(x, y) {
+        if msg==WM_MBUTTONDOWN || msg==WM_MBUTTONUP { return CallNextHookEx(None,code,wparam,lparam); }
         // 全屏前台（游戏/全屏视频等）时不拦截，避免吞掉本应交给前台的鼠标消息
         if is_foreground_fullscreen() {
             return CallNextHookEx(None, code, wparam, lparam);
@@ -210,5 +211,16 @@ unsafe extern "system" fn mouse_hook_proc(code: i32, wparam: WPARAM, lparam: LPA
         return LRESULT(1);
     }
 
+    // Observe a separate outside press, but never consume it. Mouse-up,
+    // movement and the clock opening gesture cannot enter this path.
+    if is_down {
+        if let Ok(sender_guard)=EVENT_SENDER.try_lock() {
+            if let Some(sender)=sender_guard.as_ref() {
+                let button=match msg { WM_RBUTTONDOWN=>MouseButton::Right,WM_MBUTTONDOWN=>MouseButton::Middle,_=>MouseButton::Left };
+                let _=sender.send(ClickEvent{x,y,in_clock_area:false,button});
+            }
+        }
+    }
     CallNextHookEx(None, code, wparam, lparam)
 }
+

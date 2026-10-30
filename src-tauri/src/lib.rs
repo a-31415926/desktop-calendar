@@ -15,6 +15,8 @@ mod window_manager;
 mod weather;
 #[cfg(desktop)]
 mod popup_epoch;
+#[cfg(desktop)]
+mod popup_input;
 #[cfg(all(desktop, windows))]
 mod windows_hook;
 #[cfg(desktop)]

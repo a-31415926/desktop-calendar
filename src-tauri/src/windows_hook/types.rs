@@ -7,6 +7,8 @@ pub enum MouseButton {
     Left,
     /// 鼠标右键。
     Right,
+    /// 鼠标中键（仅用于外部按下通知）。
+    Middle,
 }
 
 /// 低级鼠标钩子解析后投递到异步运行时的一条点击记录。
@@ -21,3 +23,4 @@ pub struct ClickEvent {
     /// 触发事件的鼠标按键。
     pub button: MouseButton,
 }
+

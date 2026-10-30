@@ -63,11 +63,17 @@ pub async fn start_hook_listener(
         }
 
         if !click_event.in_clock_area {
+            if let Ok(guard)=window_manager.lock() {
+                if let Some(manager)=guard.as_ref() {
+                    manager.dismiss_on_outside_press(click_event.x,click_event.y);
+                }
+            }
             continue;
         }
         match click_event.button {
             MouseButton::Left => handle_left_click(&window_manager, click_event.x, click_event.y),
             MouseButton::Right => handle_right_click(&app_handle),
+            MouseButton::Middle => {},
         }
     }
 }
@@ -108,3 +114,4 @@ fn handle_right_click(app_handle: &AppHandle) {
         }
     }
 }
+
