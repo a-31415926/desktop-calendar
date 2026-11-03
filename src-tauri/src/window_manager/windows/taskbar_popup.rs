@@ -19,6 +19,7 @@ const PENDING_SHOW_NEAR_CLOCK: (i32, i32) = (99_999, 99_999);
 
 /// 原生窗口在前端退场动画结束前仍然处于 visible 状态。
 /// 单独记录逻辑关闭状态，避免这段时间里下一次任务栏点击再次被误判成“关闭”。
+static POPUP_WEBVIEW_READY: AtomicBool = AtomicBool::new(false);
 static POPUP_HIDE_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
 
 impl PopupManager for CalendarWindowManager {
@@ -45,7 +46,7 @@ impl PopupManager for CalendarWindowManager {
     /// 在系统时钟附近显示日历窗口，首次创建时先缓存展示意图等待前端就绪。
     fn show_popup_near_clock(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // 检查后端是否已存活名为 "calendar" 的窗口
-        let has_live_popup_window = self.app_handle.get_webview_window("calendar").is_some();
+        let has_live_popup_window = Self::popup_is_ready() && self.app_handle.get_webview_window("calendar").is_some();
         if let Some(popup_window) = self.ensure_taskbar_popup_window() {
             // 如果窗口刚被创建且前端尚未就绪，则缓存系统时钟附近展示请求
             if !has_live_popup_window {
@@ -80,7 +81,7 @@ impl PopupManager for CalendarWindowManager {
         click_x: i32,
         click_y: i32,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let has_live_popup_window = self.app_handle.get_webview_window("calendar").is_some();
+        let has_live_popup_window = Self::popup_is_ready() && self.app_handle.get_webview_window("calendar").is_some();
         if let Some(popup_window) = self.ensure_taskbar_popup_window() {
             if !has_live_popup_window {
                 // 记录点击坐标，待前端准备好后再展示
@@ -107,6 +108,7 @@ impl PopupManager for CalendarWindowManager {
 
     /// 在前端弹窗就绪后处理此前缓存的展示请求。
     fn on_popup_ready(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        POPUP_WEBVIEW_READY.store(true, Ordering::SeqCst);
         // 如果存在挂起的坐标则进行处理
         if let Some((click_x, click_y)) = self.pending_popup_click_position.take() {
             println!("日历前端已就绪，执行挂起的显示请求 ({}, {})", click_x, click_y);
@@ -166,6 +168,8 @@ impl CalendarWindowManager {
             }
         });
     }
+
+    pub fn popup_is_ready() -> bool { POPUP_WEBVIEW_READY.load(Ordering::SeqCst) }
 
     pub fn popup_is_closing() -> bool { POPUP_HIDE_IN_PROGRESS.load(Ordering::SeqCst) }
 
@@ -265,6 +269,7 @@ impl CalendarWindowManager {
         _suppress_popup_auto_hide: Arc<AtomicBool>,
         _popup_last_show_input_tick: Arc<std::sync::atomic::AtomicU32>,
     ) -> Option<WebviewWindow> {
+        POPUP_WEBVIEW_READY.store(false, Ordering::SeqCst);
         let popup_window = tauri::WebviewWindowBuilder::new(
             app_handle,
             "calendar",
@@ -303,6 +308,10 @@ impl CalendarWindowManager {
         }
 
         if self.taskbar_popup_window.is_none() {
+            if let Some(existing) = self.app_handle.get_webview_window("calendar") {
+                self.taskbar_popup_window = Some(existing);
+                return self.taskbar_popup_window.as_ref();
+            }
             let popup_window = Self::build_popup_window(
                 &self.app_handle.clone(),
                 self.is_pinned.clone(),

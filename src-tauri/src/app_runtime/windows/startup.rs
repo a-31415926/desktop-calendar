@@ -2,6 +2,7 @@
 use super::hook_runtime::start_taskbar_runtime;
 use crate::window_manager::CalendarWindowManager;
 use crate::AppState;
+use crate::window_manager::shared::popup_manager::PopupManager;
 use std::sync::atomic::Ordering;
 use tauri::{AppHandle, State};
 
@@ -33,7 +34,7 @@ pub fn spawn_windows_concurrently(
 ) {
     // ── 第一步：锁内取出 build 弹窗所需的 Arc 字段（极短暂持锁）─────────
     // 无论是否开启"替换任务栏日历"，只要 should_show_startup_popup 为真就需要弹窗
-    let popup_arcs = if should_show_startup_popup {
+    let popup_arcs = if taskbar_widget_enabled || should_show_startup_popup {
         state
             .window_manager
             .lock()
@@ -44,7 +45,7 @@ pub fn spawn_windows_concurrently(
     };
 
     // ── 同时需要桌面 + 启动弹窗：单线程顺序 build，避免与桌面并发冲突 ──
-    if desktop_widget_enabled && should_show_startup_popup {
+    if desktop_widget_enabled && (taskbar_widget_enabled || should_show_startup_popup) {
         if let Some((is_pinned, suppress_auto_hide, last_tick)) = popup_arcs {
             state.desktop_init_started.store(true, Ordering::SeqCst);
             let app_handle_seq = app_handle.clone();
@@ -92,12 +93,7 @@ pub fn spawn_windows_concurrently(
                     if let Ok(mut guard) = wm_arc.lock() {
                         if let Some(wm) = guard.as_mut() {
                             wm.attach_popup_window(popup_window);
-                            wm.set_startup_popup_persistence(true);
-                            if let Some((x, y)) = tray_pos {
-                                wm.queue_show_at_position_on_ready(x, y);
-                            } else {
-                                wm.queue_show_near_clock_on_ready();
-                            }
+                            queue_startup_show(wm, should_show_startup_popup, tray_pos);
                         }
                     }
                 })
@@ -136,10 +132,6 @@ pub fn spawn_windows_concurrently(
         // Hook 运行时在当前线程启动
         start_taskbar_runtime(app_handle.clone(), state);
 
-        if !should_show_startup_popup {
-            return;
-        }
-
         if let Some((is_pinned, suppress_auto_hide, last_tick)) = popup_arcs {
             let app_handle_p = app_handle.clone();
             let wm_arc_p = state.window_manager.clone();
@@ -157,8 +149,7 @@ pub fn spawn_windows_concurrently(
                     if let Ok(mut guard) = wm_arc_p.lock() {
                         if let Some(wm) = guard.as_mut() {
                             wm.attach_popup_window(popup_window);
-                            wm.set_startup_popup_persistence(true);
-                            wm.queue_show_near_clock_on_ready();
+                            queue_startup_show(wm, should_show_startup_popup, None);
                         }
                     }
                 })
@@ -189,12 +180,7 @@ pub fn spawn_windows_concurrently(
                     if let Ok(mut guard) = wm_arc_p.lock() {
                         if let Some(wm) = guard.as_mut() {
                             wm.attach_popup_window(popup_window);
-                            wm.set_startup_popup_persistence(true);
-                            if let Some((x, y)) = tray_pos {
-                                wm.queue_show_at_position_on_ready(x, y);
-                            } else {
-                                wm.queue_show_near_clock_on_ready();
-                            }
+                            queue_startup_show(wm, should_show_startup_popup, tray_pos);
                         }
                     }
                 })
@@ -202,3 +188,15 @@ pub fn spawn_windows_concurrently(
         }
     }
 }
+
+// Preload and visibility are separate decisions. Autostart only warms the webview.
+fn queue_startup_show(wm:&mut CalendarWindowManager, show:bool, position:Option<(i32,i32)>) {
+    if show {
+        wm.set_startup_popup_persistence(true);
+        if let Some((x,y))=position { wm.queue_show_at_position_on_ready(x,y); }
+        else { wm.queue_show_near_clock_on_ready(); }
+    }
+    // A fast webview can report ready before the background builder attaches it.
+    if CalendarWindowManager::popup_is_ready() { let _=wm.on_popup_ready(); }
+}
+
