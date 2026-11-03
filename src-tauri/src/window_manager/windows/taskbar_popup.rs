@@ -304,6 +304,7 @@ impl CalendarWindowManager {
             && self.app_handle.get_webview_window("calendar").is_none()
         {
             self.taskbar_popup_window = None;
+            POPUP_WEBVIEW_READY.store(false, Ordering::SeqCst);
             POPUP_HIDE_IN_PROGRESS.store(false, Ordering::SeqCst);
         }
 
@@ -325,6 +326,7 @@ impl CalendarWindowManager {
 
     /// 关闭并释放任务栏弹窗窗口实例。
     pub fn close_calendar_window(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        POPUP_WEBVIEW_READY.store(false, Ordering::SeqCst);
         POPUP_HIDE_IN_PROGRESS.store(false, Ordering::SeqCst);
         if let Some(popup_window) = self.taskbar_popup_window.take() {
             popup_window.close()?;
