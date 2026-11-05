@@ -41,7 +41,10 @@ function CalendarFooter(): ReactElement | null {
     `${selectedSolar.getYear()}-${String(selectedSolar.getMonth()).padStart(2, '0')}-${String(selectedSolar.getDay()).padStart(2, '0')}`,
   ).startOf('day');
   const selectedHoliday = getCalendarHoliday(selectedDate);
-  const holidayLabel = selectedHoliday ? calendarHolidayLabel(selectedHoliday) : undefined;
+  const festivalAlreadyListed = selectedHoliday && selectedFestivals.some(
+    (festival) => festival.replace(/节$/, '') === selectedHoliday.name.replace(/节$/, ''),
+  );
+  const holidayLabel = selectedHoliday ? calendarHolidayLabel(selectedHoliday, !festivalAlreadyListed) : undefined;
   const today = dayjs().startOf('day');
   const relativeDays = selectedDate.diff(today, 'day');
   const relativeLabel =
@@ -91,11 +94,15 @@ function CalendarFooter(): ReactElement | null {
             </span>
           </div>
           {hasCountdownSection && holidayCountdown && (
-            <div className={styles.countdown}>
+            <div
+              className={styles.countdown}
+              title={`${holidayCountdown.date} · ${holidayCountdown.name}${holidayCountdown.statutory ? '法定假日' : '放假'}`}
+              data-holiday-countdown
+            >
               <ClockCircleOutlined className={styles.countdownIcon} />
               <span>
-                距离 {holidayCountdown.date} {holidayCountdown.name}{holidayCountdown.statutory && '法定假日'} 还有{' '}
-                <strong>{holidayCountdown.days}</strong> 天
+                距{holidayCountdown.name}{holidayCountdown.statutory && '法定假日'}{' '}
+                <strong>{holidayCountdown.days} 天</strong>
               </span>
             </div>
           )}

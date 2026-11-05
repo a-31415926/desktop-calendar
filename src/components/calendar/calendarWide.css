@@ -338,7 +338,7 @@
 [data-calendar-layout="wide"] [data-calendar-footer]>div {gap:3px;}
 [data-calendar-layout="wide"] [data-calendar-footer] section {background:transparent;padding:3px 2px;border:0;border-radius:0;}
 [data-calendar-layout="wide"] [data-calendar-footer] section>div:first-child {display:none;}
-[data-calendar-layout="wide"] [data-date-status] {display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+[data-calendar-layout="wide"] [data-date-status] {display:flex;align-items:center;gap:2px 7px;flex-wrap:wrap;}
 [data-calendar-layout="wide"] [data-date-status] [class*="footerDivider"] {display:none;}
 [data-calendar-layout="wide"] [data-date-status] [class*="festivalSection"],[data-calendar-layout="wide"] [data-date-status] [class*="countdown"] {margin:0;padding:0;}
 [data-calendar-layout="wide"] [data-yi-ji] [class*="yiJiContainer"] {gap:3px;}

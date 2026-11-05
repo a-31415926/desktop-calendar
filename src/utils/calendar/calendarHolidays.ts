@@ -36,10 +36,11 @@ export function getCalendarHoliday(date: Dayjs): CalendarHoliday | undefined {
   return holiday ? { name: holiday.getName(), kind: holiday.isWork() ? 'work' : 'rest' } : undefined;
 }
 
-export function calendarHolidayLabel(holiday: CalendarHoliday): string {
+export function calendarHolidayLabel(holiday: CalendarHoliday, includeName = true): string {
+  const prefix = includeName ? holiday.name : '';
   switch (holiday.kind) {
-    case 'statutory': return `${holiday.name}法定假日`;
-    case 'work': return `${holiday.name}调休上班`;
-    case 'rest': return `${holiday.name}放假`;
+    case 'statutory': return `${prefix}法定假日`;
+    case 'work': return `${prefix}调休上班`;
+    case 'rest': return `${prefix}放假`;
   }
 }
