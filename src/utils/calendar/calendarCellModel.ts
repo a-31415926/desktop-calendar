@@ -1,6 +1,9 @@
 import { type Dayjs } from 'dayjs';
-import { HolidayUtil, Solar } from 'lunar-typescript';
+import { Solar } from 'lunar-typescript';
 import { getAllFestivals } from './calendarFestivals.ts';
+import { calendarHolidayLabel, getCalendarHoliday } from './calendarHolidays.ts';
+
+const publicFestivals = new Set(['元旦节', '春节', '除夕', '劳动节', '端午节', '中秋节', '国庆节']);
 
 /** 单元格右上角「休 / 班」角标类型：休假日或调休工作日 */
 export type CalendarCellBadgeVariant = 'rest' | 'work';
@@ -46,10 +49,14 @@ export function getCalendarCellViewModel(
   const lunar = solar.getLunar();
   const jieQi = lunar.getJieQi();
   const allFestivals = getAllFestivals(date);
+  const publicFestival = allFestivals.find((name) => publicFestivals.has(name));
+  const holiday = getCalendarHoliday(date);
 
   let displayText = lunar.getDayInChinese();
   if (jieQi) {
     displayText = jieQi;
+  } else if (publicFestival && holiday && holiday.kind !== 'work') {
+    displayText = publicFestival;
   } else if (lunar.getDay() === 1) {
     displayText = `${lunar.getMonthInChinese()}月`;
   } else {
@@ -62,23 +69,16 @@ export function getCalendarCellViewModel(
   const isToday = date.isSame(calendarToday, 'date');
   const isSelected = selectedDate.isSame(date, 'date');
   const isOtherMonth = date.month() !== panelMonth.month();
-  const h = HolidayUtil.getHoliday(date.get('year'), date.get('month') + 1, date.get('date'));
-  const isHoliday = h?.isWork() === false;
-  const isWorkday = h?.isWork() === true;
-  const isWeekend = date.day() === 0 || date.day() === 6;
-  const badgeText = isHoliday ? '休' : isWorkday && isWeekend ? '班' : '';
-  const badgeVariant: CalendarCellBadgeVariant | null = badgeText
-    ? isHoliday
-      ? 'rest'
-      : 'work'
+  const badgeVariant: CalendarCellBadgeVariant | null = holiday
+    ? holiday.kind === 'work' ? 'work' : 'rest'
     : null;
-  // 只有法定休假且当天本身存在主要节日名称时才做完整杏橘底色。
-  // 国庆/春节等连休的其它日期仅保留「休」角标，避免一大片同色方块压住月历。
-  const publicFestivals = new Set(['元旦节', '春节', '除夕', '劳动节', '端午节', '中秋节', '国庆节']);
-  const isFestivalHoliday = Boolean(isHoliday && (jieQi === '清明' || allFestivals.some(name => publicFestivals.has(name))));
+  const badgeText = holiday?.kind === 'statutory' ? '假' : badgeVariant === 'rest' ? '休' : badgeVariant === 'work' ? '班' : '';
+  const isFestivalHoliday = badgeVariant === 'rest' && Boolean(jieQi === '清明' || publicFestival);
 
   const cellFestivals = [...allFestivals];
   if (jieQi) cellFestivals.unshift(jieQi);
+  if (holiday) cellFestivals.unshift(calendarHolidayLabel(holiday));
+  if (holiday?.kind === 'statutory') cellFestivals.push('调休待公布');
 
   return {
     date,

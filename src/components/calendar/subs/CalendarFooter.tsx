@@ -7,6 +7,7 @@ import React, { type ReactElement } from 'react';
 import { useCalendarViewContext } from '../../../hooks/calender/CalendarViewContext.tsx';
 import type { HolidayCountdownInfo } from '../../../hooks/calender/useHolidayCountdown.ts';
 import type { CalendarViewClassNames } from '../../../styles/useCalendarViewStyles.ts';
+import { calendarHolidayLabel, getCalendarHoliday } from '../../../utils/calendar/calendarHolidays.ts';
 
 export interface CalendarFooterProps {
   styles: CalendarViewClassNames;
@@ -39,6 +40,8 @@ function CalendarFooter(): ReactElement | null {
   const selectedDate = dayjs(
     `${selectedSolar.getYear()}-${String(selectedSolar.getMonth()).padStart(2, '0')}-${String(selectedSolar.getDay()).padStart(2, '0')}`,
   ).startOf('day');
+  const selectedHoliday = getCalendarHoliday(selectedDate);
+  const holidayLabel = selectedHoliday ? calendarHolidayLabel(selectedHoliday) : undefined;
   const today = dayjs().startOf('day');
   const relativeDays = selectedDate.diff(today, 'day');
   const relativeLabel =
@@ -55,7 +58,7 @@ function CalendarFooter(): ReactElement | null {
           <div className={styles.footerSectionTitle}>日期信息</div>
           {hasFestivalSection && (
             <div className={styles.festivalSection}>
-              {selectedFestivals.length > 0 ? (
+              {selectedFestivals.length > 0 || holidayLabel ? (
                 <div className={styles.festivalList}>
                   {selectedFestivals.map((name, index) => (
                     <React.Fragment key={`${name}-${index}`}>
@@ -68,11 +71,12 @@ function CalendarFooter(): ReactElement | null {
                           {name}
                         </button>
                       </Tooltip>
-                      {index < selectedFestivals.length - 1 && (
+                      {(index < selectedFestivals.length - 1 || holidayLabel) && (
                         <span className={styles.festivalSeparator}>·</span>
                       )}
                     </React.Fragment>
                   ))}
+                  {holidayLabel && <span>{holidayLabel}</span>}
                 </div>
               ) : (
                 <div className={styles.festivalEmpty}>当前无节假日</div>
@@ -90,7 +94,7 @@ function CalendarFooter(): ReactElement | null {
             <div className={styles.countdown}>
               <ClockCircleOutlined className={styles.countdownIcon} />
               <span>
-                距离 {holidayCountdown.date} {holidayCountdown.name} 还有{' '}
+                距离 {holidayCountdown.date} {holidayCountdown.name}{holidayCountdown.statutory && '法定假日'} 还有{' '}
                 <strong>{holidayCountdown.days}</strong> 天
               </span>
             </div>

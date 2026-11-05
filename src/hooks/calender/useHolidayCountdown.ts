@@ -1,11 +1,12 @@
 import type { Dayjs } from 'dayjs';
-import { HolidayUtil } from 'lunar-typescript';
+import { getCalendarHoliday } from '../../utils/calendar/calendarHolidays.ts';
 
 /** 距离下一个「非工作日」法定节假日的展示文案所需字段 */
 export type HolidayCountdownInfo = {
   name: string;
   date: string;
   days: number;
+  statutory: boolean;
 };
 
 /**
@@ -19,18 +20,15 @@ export function useHolidayCountdown(today: Dayjs): HolidayCountdownInfo | null {
   }
   const startOf = today.startOf('day');
   const maxSearchDays = 365;
-  for (let i = 0; i < maxSearchDays; i++) {
+  for (let i = 1; i < maxSearchDays; i++) {
     const date = startOf.add(i, 'day');
-    const h = HolidayUtil.getHoliday(date.year(), date.month() + 1, date.date());
-    if (h && !h.isWork()) {
-      const diff = date.diff(startOf, 'day');
-      if (diff === 0) {
-        continue;
-      }
+    const holiday = getCalendarHoliday(date);
+    if (holiday && holiday.kind !== 'work') {
       return {
-        name: h.getName(),
+        name: holiday.name,
         date: date.format('YYYY年M月D日'),
-        days: diff,
+        days: i,
+        statutory: holiday.kind === 'statutory',
       };
     }
   }
