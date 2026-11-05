@@ -69,16 +69,13 @@ export function getCalendarCellViewModel(
   const isToday = date.isSame(calendarToday, 'date');
   const isSelected = selectedDate.isSame(date, 'date');
   const isOtherMonth = date.month() !== panelMonth.month();
-  const badgeVariant: CalendarCellBadgeVariant | null = holiday
-    ? holiday.kind === 'work' ? 'work' : 'rest'
-    : null;
-  const badgeText = holiday?.kind === 'statutory' ? '假' : badgeVariant === 'rest' ? '休' : badgeVariant === 'work' ? '班' : '';
+  const badgeVariant = holiday?.kind ?? null;
+  const badgeText = badgeVariant === 'rest' ? '休' : badgeVariant === 'work' ? '班' : '';
   const isFestivalHoliday = badgeVariant === 'rest' && Boolean(jieQi === '清明' || publicFestival);
 
   const cellFestivals = [...allFestivals];
   if (jieQi) cellFestivals.unshift(jieQi);
   if (holiday) cellFestivals.unshift(calendarHolidayLabel(holiday));
-  if (holiday?.kind === 'statutory') cellFestivals.push('调休待公布');
 
   return {
     date,

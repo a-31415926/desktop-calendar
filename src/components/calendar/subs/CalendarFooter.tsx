@@ -96,12 +96,12 @@ function CalendarFooter(): ReactElement | null {
           {hasCountdownSection && holidayCountdown && (
             <div
               className={styles.countdown}
-              title={`${holidayCountdown.date} · ${holidayCountdown.name}${holidayCountdown.statutory ? '法定假日' : '放假'}`}
+              title={`${holidayCountdown.date} · ${holidayCountdown.name}放假`}
               data-holiday-countdown
             >
               <ClockCircleOutlined className={styles.countdownIcon} />
               <span>
-                距{holidayCountdown.name}{holidayCountdown.statutory && '法定假日'}{' '}
+                距{holidayCountdown.name}{' '}
                 <strong>{holidayCountdown.days} 天</strong>
               </span>
             </div>

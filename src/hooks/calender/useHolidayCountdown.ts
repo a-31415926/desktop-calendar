@@ -6,7 +6,6 @@ export type HolidayCountdownInfo = {
   name: string;
   date: string;
   days: number;
-  statutory: boolean;
 };
 
 /**
@@ -28,7 +27,6 @@ export function useHolidayCountdown(today: Dayjs): HolidayCountdownInfo | null {
         name: holiday.name,
         date: date.format('YYYY年M月D日'),
         days: i,
-        statutory: holiday.kind === 'statutory',
       };
     }
   }

@@ -5,7 +5,6 @@ import type { Dayjs } from 'dayjs';
 import { type ReactElement, useEffect, useRef } from 'react';
 import { useCalendarViewContext } from '../../../hooks/calender/CalendarViewContext.tsx';
 import type { CalendarViewClassNames } from '../../../styles/useCalendarViewStyles.ts';
-import { isHolidaySchedulePending } from '../../../utils/calendar/calendarHolidays.ts';
 
 /** 鼠标滚轮 / 触控板累计到这个纵向距离后才切换一个月，避免高灵敏设备一次飞过多个月份。 */
 const WHEEL_MONTH_THRESHOLD = 48;
@@ -88,11 +87,6 @@ function CalendarMonthNav(): ReactElement {
     <div className={styles.calendarNav} data-month-nav title="在月份标题上滚轮换月">
       <div className={styles.navTitle}>
         {panelMonth.year()}年{panelMonth.month() + 1}月
-        {isHolidaySchedulePending(panelMonth.year()) && (
-          <span className="calendar-holiday-schedule-status" title="已标注法定假日，连休与补班日期待正式通知">
-            调休待公布
-          </span>
-        )}
       </div>
       <div className={styles.navBtns}>
         <Tooltip title="回到今天">

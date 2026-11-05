@@ -1,35 +1,36 @@
 import type { Dayjs } from 'dayjs';
 import { HolidayUtil } from 'lunar-typescript';
 
-// 内地法定假日依据国务院令第795号，农历与节气日期对照香港天文台2027年年历。
-// https://www.gov.cn/zhengce/zhengceku/202411/content_6986381.htm
-// https://www.hko.gov.hk/tc/gts/time/calendar/pdf/files/2027.pdf
-const statutoryDays2027: Readonly<Record<string, string | undefined>> = {
-  '2027-01-01': '元旦',
-  '2027-02-05': '春节',
-  '2027-02-06': '春节',
-  '2027-02-07': '春节',
-  '2027-02-08': '春节',
-  '2027-04-05': '清明节',
-  '2027-05-01': '劳动节',
-  '2027-05-02': '劳动节',
-  '2027-06-09': '端午节',
-  '2027-09-15': '中秋节',
-  '2027-10-01': '国庆节',
-  '2027-10-02': '国庆节',
-  '2027-10-03': '国庆节',
-};
+type CalendarHoliday = { name: string; kind: 'rest' | 'work' };
 
-type CalendarHoliday = { name: string; kind: 'statutory' | 'rest' | 'work' };
+// 国办发明电〔2026〕10号：2027 年放假和补班日期。
+// https://www.gov.cn/zhengce/content/202611/content_7085101.htm
+const restPeriods2027 = [
+  ['元旦', '01', 1, 3],
+  ['春节', '02', 5, 13],
+  ['清明节', '04', 3, 5],
+  ['劳动节', '05', 1, 5],
+  ['端午节', '06', 9, 9],
+  ['中秋节', '09', 15, 15],
+  ['国庆节', '10', 1, 7],
+] as const;
 
-export function isHolidaySchedulePending(year: number): boolean {
-  return year === 2027;
+const holidays2027 = new Map<string, CalendarHoliday>([
+  ['01-31', { name: '春节', kind: 'work' }],
+  ['02-14', { name: '春节', kind: 'work' }],
+  ['05-08', { name: '劳动节', kind: 'work' }],
+  ['09-26', { name: '国庆节', kind: 'work' }],
+  ['10-09', { name: '国庆节', kind: 'work' }],
+]);
+for (const [name, month, firstDay, lastDay] of restPeriods2027) {
+  for (let day = firstDay; day <= lastDay; day++) {
+    holidays2027.set(`${month}-${String(day).padStart(2, '0')}`, { name, kind: 'rest' });
+  }
 }
 
 export function getCalendarHoliday(date: Dayjs): CalendarHoliday | undefined {
-  if (isHolidaySchedulePending(date.year())) {
-    const name = statutoryDays2027[date.format('YYYY-MM-DD')];
-    return name ? { name, kind: 'statutory' } : undefined;
+  if (date.year() === 2027) {
+    return holidays2027.get(date.format('MM-DD'));
   }
 
   const holiday = HolidayUtil.getHoliday(date.year(), date.month() + 1, date.date());
@@ -39,7 +40,6 @@ export function getCalendarHoliday(date: Dayjs): CalendarHoliday | undefined {
 export function calendarHolidayLabel(holiday: CalendarHoliday, includeName = true): string {
   const prefix = includeName ? holiday.name : '';
   switch (holiday.kind) {
-    case 'statutory': return `${prefix}法定假日`;
     case 'work': return `${prefix}调休上班`;
     case 'rest': return `${prefix}放假`;
   }
